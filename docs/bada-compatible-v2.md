@@ -168,8 +168,10 @@ Schema: [schemas/describe.schema.json](schemas/describe.schema.json).
 
 A problem in `layouts`, `settings` or `dictionary` doesn't fail the session: what is wrong isn't
 loaded, as §6.6 says, and the session starts with the rest (with the engine's defaults, if the
-settings were refused). The harness reads what was wrong by sending the same event with nothing to
-change (`{"type": "settings"}`, `{"type": "layout"}`), which answers the problems of the last change.
+settings were refused). The harness reads what was wrong by sending the same event with nothing to change (`{"type": "settings"}`,
+`{"type": "layout"}`), which answers the problems of the last change. That is the last layout's, of
+several: a harness that wants each layout's problems sends its layouts one `layout` event at a time
+instead.
 
 ### 3.4 Memory and threads
 
@@ -184,7 +186,9 @@ As v1 (§4), with the session and borrowed buffers added:
 - **An engine** is used by one thread at a time, and may move between threads. **A session** locks
   itself: session events may come from any thread while its engines are in use.
 - **Nothing unwinds across the boundary.** An engine catches its own panics: the reply is
-  `ok: false` with `error.code: "panic"`, and the engine has reset itself (§6.2).
+  `ok: false` with `error.code: "panic"`, and the engine has reset itself (§6.2). Where a panic
+  can't be caught (WebAssembly, where it is a trap), the harness treats the trap as `panic` and
+  makes the session and its engines anew.
 - Text is UTF-8. Positions (caret, segment lengths) are counted in Unicode scalar values, never bytes.
 
 ## 4. Key codes
@@ -229,7 +233,9 @@ An engine ignores fields it doesn't know in an event whose type it knows. An unk
 `ok: false` with `unknown-event`, and changes nothing.
 
 - **`key`**: one press the harness wants read. The harness sends every key the key table doesn't
-  take (§9), and never a language key or Caps Lock. `repeat: true` marks a repeat of a held key.
+  take (§9), and never a language key or Caps Lock. It doesn't send a modifier or a lock pressed
+  by itself (Shift, Control, Alt, Meta, Num Lock) either: that is no key press, and an engine that
+  gets one changes nothing and passes it on. `repeat: true` marks a repeat of a held key.
   A key pressed with ⌃ or ⌘ is a shortcut: the engine commits what's staged and passes it on as the
   physical key, with no `types`, whatever the layout puts there (§7.2).
 - **`action`**: a request by name, in place of v1's keys in disguise. The engine's own are in
@@ -252,8 +258,8 @@ An engine ignores fields it doesn't know in an event whose type it knows. An unk
   Nothing is committed: a harness that commits on a click sends `flush` after it. A row the menu
   doesn't have answers `bad-row`.
 - **`text`**: the harness's answer to a reply's `ask`, once (§6.3): `selection`, the selected text
-  (`""` if nothing is selected or something is marked); `before` and `after`, the text around the
-  caret, no longer than asked. A `text` event nobody asked for changes nothing.
+  (`""` if nothing is selected or something is marked); `before` and `after`, the text around the caret, no longer than asked (with text marked or
+  selected: around that text). A `text` event nobody asked for changes nothing.
 - **`flush`**: commits what's staged, as when the field loses focus; afterwards nothing is staged.
   `cause` says why: `blur`, `click` (a click in the text), `edit` (the app changed the text) or
   `harness` (the default).
@@ -293,7 +299,7 @@ fields they don't know.
 | `commit` | `""` | Text to insert now | the same |
 | `replace` | `"marked"` | What `commit` replaces. `"marked"`: the marked text, or the selection when nothing is marked. `"selection"`: the selection, even when text is marked | `replace_selection` |
 | `consumed` | false | The engine took the key. false: **the app gets the key too**, after the commit | the same |
-| `types` | null | With `consumed: false` on a typing key: the text the key should type, by the layout (§6.4). null: the engine has no say | The harnesses' own JIS legend tables |
+| `types` | null | With `consumed: false` on a typing key or Space: the text the key should type, by the layout (§6.4). null: the engine has no say | The harnesses' own JIS legend tables |
 | `preedit.text` | `""` | The marked text after the commit. `""`: nothing is marked | `preedit` |
 | `preedit.caret` | the end | The caret's place in `text` | none |
 | `preedit.segments` | `[]` | `text` cut into parts, in order: `len` and `kind`, one of `live` (still being read), `fixed` (`fix`, or a picked entry typed past: it no longer changes) and `picked` (the row the user moved to). A harness without `segments` draws `text` | none |
@@ -357,7 +363,8 @@ press(event):
 ```
 
 So **commit, then act** (Space, Enter, Esc with a preedit) is one reply with `commit` set and
-`consumed: false`, as v1. A click in the text, or an edit by the app, commits what's staged: the
+`consumed: false`, as v1. An engine writes `replace: "selection"` only when it has nothing staged,
+so nothing is marked then. A click in the text, or an edit by the app, commits what's staged: the
 harness sends `flush` and applies it before the field changes (as v1 §7.6).
 
 ### 6.4 Keys passed on
@@ -878,8 +885,8 @@ The first settings file has **no muhenkan layout and zero henkan profiles**.
 - With no profile, a key that would enter henkan (かな, 変換, a toggle) doesn't: the harness opens
   the settings window on its **onboarding**. The engine is not asked.
 - **Easy mode**: pick the muhenkan layout and one henkan layout (`en-qwerty` and `ja-romaji`, say).
-  That writes `muhenkan.layout` and one profile with that one layout, and the key that was pressed
-  works from then on.
+  That writes `muhenkan.layout` and one profile with that one layout (its id `main`, its name the
+  layout's), and the key that was pressed works from then on.
 - **Skip**: the full settings, right away.
 - The same from the command line, for an agent: `bada settings set engine.muhenkan.layout
   '"en-qwerty"'` and `bada profile add main --layouts ja-romaji`.
@@ -924,9 +931,10 @@ keys as W3C codes so a file moves between platforms:
 - **`when`**: `muhenkan`, `henkan`, or `profile:<id>` (henkan, with that profile in use). The
   binding holds only then. **The most specific binding that holds wins** (a profile's, then a
   mode's, then one with no `when`); among equals, the later one in the list.
-- **`do`**: a list, and **the first action that applies runs** (§9.2). If none applies the key is
-  swallowed.
-- **`cycle`**: the profiles `profile.next` and `profile.prev` go through, in order.
+- **`do`**: a list, and **the first action that applies runs** (§9.2). If none applies the key is swallowed. A binding
+  runs once for each press: the repeats of a held key that has a binding are swallowed.
+- **`cycle`**: the profiles `profile.next` and `profile.prev` go through, in order. One it names
+  that the settings don't have is skipped.
 - **`henkan_enters`**: the profile that `mode:henkan` and the toggle enter: `"last"`, the one last
   used (the first of the list, before any was), or a profile's id.
 - **`caps_lock`**, **`caps_rule`**: §9.4.
@@ -957,8 +965,7 @@ reply.
 
 An action doesn't apply when it would change nothing, and then the next one of the list is tried.
 **With no profile at all, any action that would enter henkan opens the onboarding instead** (§8.3).
-On a `select` that leaves muhenkan, the harness's profile becomes the one selected, and the one
-before it is what `profile.last` goes back to.
+Whenever a `select` changes the profile, the one before it is what `profile.last` goes back to.
 
 ### 9.3 The keys a binding can be on
 
@@ -989,12 +996,16 @@ wherever the harness detects both keys; no default binds one (§9.5).
   them, and the other key is handled as usual.
 - **A key that is part of a bound pair runs its own binding late**: not when it is pressed, but when
   it is released alone, or as soon as another key that makes no bound pair with it is pressed
-  (before that key is handled). A key that is part of no bound pair runs when it is pressed, as
-  always.
+  (before that key is handled). A key that is part of no bound pair runs when it is pressed, as always.
+- **A key waits only for a pair binding that holds when the key is pressed** (its `when`): a pair
+  bound for henkan makes no key wait in muhenkan.
+- "Another key" is any key, a modifier included. The repeats of a held key are not presses.
+- A key that waited and turns out to have no binding of its own goes to the OS then, where the
+  platform lets the harness post a key; elsewhere it is dropped.
 
 **Any other key, once the OS allows it.** With the permissions it needs, the harness takes any chord
-as a binding: `ctrl+alt+shift+meta+Space`, an F key, a modifier pressed and released alone (its
-code, `AltRight`).
+as a binding: `ctrl+alt+shift+meta+Space`, an F key, a modifier pressed and released alone (its code, `AltRight`), which runs when it is released if no
+other key was pressed in between.
 
 - **macOS**: Accessibility (the key tap), and Input Monitoring for keys read at the HID level.
 - **Windows, Linux**: the text service is handed the focused app's keys, modifiers included, so
@@ -1019,13 +1030,14 @@ is the lock, and two settings say what the lock does, as v1 (§7.7):
 - The lock affects only what the **app** is given: with it on, the letters of `types` are typed in
   capitals (§6.4). The engine gets the same events, so henkan composition ignores it.
 - **`caps_rule`** says what the lock types in muhenkan: `allcaps` (the default), or `upper_snake`,
-  where the harness also flushes and types `_` for Space and a space for ⌥Space, without sending the
-  key.
+  where the harness also flushes and types `_` for Space (with ⇧ or without) and a space for ⌥Space, without sending the key.
 
 ### 9.5 Defaults
 
 Defaults come with the keyboard, so nothing in the standard is "home". A settings file with no
-`keys.bindings` gets its keyboard's preset; one that has them is used as it is. The other fields
+`keys.bindings` gets its keyboard's preset; one that has them, an empty list included, is used as
+it is. A harness that can't tell which keyboard it has lets the user choose, and keeps the choice in
+its own part of the settings. The other fields
 default to `"cycle": []`, `"henkan_enters": "last"`, `"caps_lock": "respect"`, `"caps_rule": "allcaps"`.
 
 **JIS on a Mac**: v1's behaviour, key for key.

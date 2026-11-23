@@ -62,6 +62,24 @@ const SET_SCORE: f64 = 80.0;
 const SET_KNOWN: f64 = 5.0;
 const SET_OWN: f64 = 40.0;
 
+/// The modifiers and locks: not key presses of their own.
+const MODIFIERS: [&str; 14] = [
+    "ShiftLeft",
+    "ShiftRight",
+    "ControlLeft",
+    "ControlRight",
+    "AltLeft",
+    "AltRight",
+    "MetaLeft",
+    "MetaRight",
+    "OSLeft",
+    "OSRight",
+    "Fn",
+    "CapsLock",
+    "NumLock",
+    "ScrollLock",
+];
+
 /// One row of the menu, before it is written.
 #[derive(Clone, Debug, Default)]
 struct Entry {
@@ -648,6 +666,11 @@ impl Field {
 
     pub fn key(&mut self, event: &KeyEvent) -> Result<Reply, Error> {
         let carried = self.sync();
+        // A modifier or a lock by itself is no key press: a harness shouldn't send one (§5), and
+        // one that does must not lose what is staged.
+        if MODIFIERS.contains(&event.code.as_str()) {
+            return Ok(self.finish(carried, false));
+        }
         if self.orphan && self.mode == Mode::Henkan {
             return Err(Error::new(code::NO_PROFILE, "this field's profile was removed: it needs a select"));
         }

@@ -253,6 +253,25 @@ fn korean_composes_and_commits_then_acts() {
 }
 
 #[test]
+fn a_modifier_alone_is_no_key_press() {
+    let session = Session::new(json!({"main": ["ko-2-set"]}));
+    let field = session.field(Some("main"));
+    field.typed("gk");
+    for key in ["ShiftLeft", "AltRight", "MetaLeft", "ControlLeft", "CapsLock"] {
+        let out = field.key(key);
+        assert_eq!((out.commit.as_str(), out.preedit.text.as_str(), out.consumed), ("", "하", false), "{key}");
+    }
+    assert_eq!(field.typed("s").preedit.text, "한", "and composition goes on");
+    // Every reply writes its caret, an empty one too.
+    let raw = field.send(json!({"type": "reset"}));
+    assert_eq!(raw["preedit"], json!({"text": "", "caret": 0, "segments": []}));
+    // The session's layouts are listed in the order describe has them.
+    let listed: Vec<String> =
+        session.event(json!({"type": "layout"})).layouts.unwrap().into_iter().map(|l| l.id).collect();
+    assert_eq!(&listed[..3], ["en-qwerty", "en-qwerty-us", "en-dvorak"]);
+}
+
+#[test]
 fn an_empty_slot_commits_and_types_nothing() {
     let session = Session::new(json!({"main": ["ko-2-set"]}));
     let field = session.field(Some("main"));

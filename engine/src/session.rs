@@ -349,7 +349,12 @@ impl Session {
     /// A `layout` event (§7.6).
     pub fn layout(&self, change: Change, dry: bool) -> SessionReply {
         let mut state = self.state.write().unwrap_or_else(|p| p.into_inner());
-        let list = |layouts: &BTreeMap<String, Arc<Layout>>| Some(layouts.values().map(|l| l.info()).collect());
+        // The stock layouts in their own order, as `P_describe` lists them; then the user's, by id.
+        let list = |layouts: &BTreeMap<String, Arc<Layout>>| {
+            let shipped = stock().iter().filter_map(|s| layouts.get(s.id()));
+            let own = layouts.values().filter(|l| !l.stock);
+            Some(shipped.chain(own).map(|l| l.info()).collect())
+        };
         let mut custom = state.custom.clone();
         let mut problems = Vec::new();
         match change {

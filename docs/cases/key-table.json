@@ -64,7 +64,9 @@
         {"on": "Lang1", "do": ["mode:henkan"]},
         {"on": "Lang1", "do": ["mode.toggle"]},
         {"on": "Convert", "do": ["profile:gone", "menu.next"]},
-        {"on": "KanaMode", "do": ["mode:henkan"]}
+        {"on": "KanaMode", "do": ["mode:henkan"]},
+        {"on": "F13", "do": ["profile.next", "pass"]},
+        {"on": "Lang1+Lang2", "do": ["none"], "when": "henkan"}
       ],
       "cycle": ["gone"], "henkan_enters": "work", "caps_lock": "respect", "caps_rule": "allcaps"
     }
@@ -147,7 +149,9 @@
     {"name": "mode:henkan in henkan does nothing", "table": "odd", "profiles": "four", "state": {"mode": "henkan", "profile": "ja", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "KanaMode", "expect": {"then": "swallow", "binding": 3, "ran": null}},
     {"name": "an action naming a profile that isn't there doesn't apply", "table": "odd", "profiles": "four", "state": {"mode": "henkan", "profile": "main", "menu_rows": 2, "staged": "한", "caps_lock": false}, "press": "Convert", "expect": {"then": "action", "binding": 2, "ran": "menu.next", "name": "menu.next"}},
     {"name": "…and with nothing else to run the key is swallowed", "table": "odd", "profiles": "four", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "Convert", "expect": {"then": "swallow", "binding": 2, "ran": null}},
-    {"name": "with no profile at all, any profile action opens the onboarding", "table": "odd", "profiles": "none", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "Convert", "expect": {"then": "onboarding", "binding": 2, "ran": "profile:gone"}}
+    {"name": "with no profile at all, any profile action opens the onboarding", "table": "odd", "profiles": "none", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "Convert", "expect": {"then": "onboarding", "binding": 2, "ran": "profile:gone"}},
+    {"name": "…the next of the cycle too", "table": "odd", "profiles": "none", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "F13", "expect": {"then": "onboarding", "binding": 4, "ran": "profile.next"}},
+    {"name": "a cycle that names only profiles that aren't there goes nowhere", "table": "odd", "profiles": "four", "state": {"mode": "henkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "F13", "expect": {"then": "pass", "binding": 4, "ran": "pass"}}
   ],
   "sequences": [
     {"name": "a pair runs when both keys are up", "table": "example", "profiles": "four", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "keys": ["down:Lang1", "down:KanaMode", "up:Lang1", "up:KanaMode"], "expect": [{"at": 3, "then": "select", "binding": 11, "ran": "profile:sym", "mode": "henkan", "profile": "sym"}]},
@@ -158,6 +162,8 @@
     {"name": "one after the other is not a pair", "table": "example", "profiles": "four", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "keys": ["down:Lang1", "up:Lang1", "down:KanaMode", "up:KanaMode"], "expect": [{"at": 1, "then": "select", "binding": 2, "ran": "profile:main", "mode": "henkan", "profile": "main"}, {"at": 3, "then": "select", "binding": 6, "ran": "profile:ja", "mode": "henkan", "profile": "ja"}]},
     {"name": "two keys of bound pairs that aren't a pair together: each its own", "table": "example", "profiles": "four", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "keys": ["down:Lang1", "down:Convert", "up:Lang1", "up:Convert"], "expect": [{"at": 1, "then": "select", "binding": 2, "ran": "profile:main", "mode": "henkan", "profile": "main"}, {"at": 3, "then": "select", "binding": 5, "ran": "profile:work", "mode": "henkan", "profile": "work"}]},
     {"name": "with no pair bound, a language key runs when it is pressed", "table": "jis-mac", "profiles": "one", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "keys": ["down:Lang1", "up:Lang1"], "expect": [{"at": 0, "then": "select", "binding": 1, "ran": "profile.first", "mode": "henkan", "profile": "main"}]},
+    {"name": "a key waits only for a pair binding that holds when it is pressed", "table": "odd", "profiles": "four", "state": {"mode": "muhenkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "keys": ["down:Lang1", "up:Lang1"], "expect": [{"at": 0, "then": "select", "binding": 1, "ran": "mode.toggle", "mode": "henkan", "profile": "work"}]},
+    {"name": "…and where it holds, the key waits", "table": "odd", "profiles": "four", "state": {"mode": "henkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "keys": ["down:Lang1", "up:Lang1"], "expect": [{"at": 1, "then": "select", "binding": 1, "ran": "mode.toggle", "mode": "muhenkan", "profile": "main"}]},
     {"name": "…so two of them together are just one and then the other", "table": "jis-mac", "profiles": "one", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "keys": ["down:Lang1", "down:KanaMode", "up:Lang1", "up:KanaMode"], "expect": [{"at": 0, "then": "select", "binding": 1, "ran": "profile.first", "mode": "henkan", "profile": "main"}, {"at": 1, "then": "pass", "binding": null, "ran": null}]}
   ]
 }

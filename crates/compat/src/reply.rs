@@ -94,15 +94,25 @@ pub struct Segment {
 }
 
 /// The marked text after the commit.
-#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(default)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Preedit {
     /// `""`: nothing is marked.
+    #[serde(default)]
     pub text: String,
-    /// The caret's place in `text`, in Unicode scalar values. Missing: the end.
+    /// The caret's place in `text`, in Unicode scalar values. A reader takes a missing one as the
+    /// end; a writer always writes it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub caret: Option<usize>,
     /// `text` cut into parts, in order; their lengths add up to its length.
+    #[serde(default)]
     pub segments: Vec<Segment>,
+}
+
+impl Default for Preedit {
+    /// Nothing marked.
+    fn default() -> Self {
+        Preedit { text: String::new(), caret: Some(0), segments: Vec::new() }
+    }
 }
 
 impl Preedit {
