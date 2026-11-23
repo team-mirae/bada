@@ -1,0 +1,138 @@
+{
+  "abi": {
+    "name": "bada-compatible",
+    "major": 2,
+    "minor": 0
+  },
+  "engine": {
+    "id": "com.teammirae.bada",
+    "version": "0.1.0",
+    "name": {
+      "en": "bada",
+      "ko": "바다",
+      "ja": "バダ"
+    }
+  },
+  "events": [
+    "key",
+    "action",
+    "select",
+    "pick",
+    "text",
+    "flush",
+    "reset",
+    "state",
+    "settings",
+    "layout",
+    "dictionary"
+  ],
+  "features": [
+    "segments",
+    "around",
+    "custom-layouts"
+  ],
+  "keyboards": [
+    "jis"
+  ],
+  "data": [
+    {
+      "name": "ko-words",
+      "required": false
+    },
+    {
+      "name": "kanji",
+      "required": false,
+      "borrow": true
+    },
+    {
+      "name": "key-models",
+      "required": false,
+      "borrow": true
+    }
+  ],
+  "layouts": [
+    {
+      "id": "ja-kana",
+      "name": {
+        "en": "Japanese - Kana",
+        "ko": "일본어 - 가나",
+        "ja": "日本語 - かな"
+      },
+      "kind": "henkan",
+      "read": "kana",
+      "lang": "ja",
+      "actions": [
+        {
+          "id": "katakana",
+          "label": {
+            "en": "Katakana"
+          }
+        }
+      ],
+      "options": {},
+      "stock": true,
+      "modified": false
+    },
+    {
+      "id": "uni-emojis",
+      "name": {
+        "en": "Unicode - Emojis"
+      },
+      "kind": "henkan",
+      "read": "search",
+      "lang": "und",
+      "actions": [],
+      "options": {
+        "skin_tones": {
+          "type": "order",
+          "of": [
+            "none",
+            "light",
+            "medium-light",
+            "medium",
+            "medium-dark",
+            "dark"
+          ],
+          "default": [
+            "none",
+            "light",
+            "medium-light",
+            "medium",
+            "medium-dark",
+            "dark"
+          ],
+          "title": {
+            "en": "Skin tones, in the order they are offered"
+          }
+        }
+      },
+      "stock": true,
+      "modified": false
+    }
+  ],
+  "actions": [
+    "menu.next",
+    "menu.prev",
+    "fix",
+    "width.full",
+    "width.half"
+  ],
+  "settings": {
+    "format": "bada-settings/2",
+    "schema": {
+      "type": "object"
+    },
+    "defaults": {
+      "muhenkan": {
+        "layout": null
+      },
+      "henkan": {
+        "defaults": {},
+        "profiles": []
+      }
+    }
+  },
+  "limits": {
+    "profiles": 32
+  }
+}

@@ -1,0 +1,159 @@
+{
+  "format": "bada-settings/2",
+  "engine": {
+    "muhenkan": {
+      "layout": "en-qwerty"
+    },
+    "henkan": {
+      "defaults": {
+        "weights": {},
+        "script_forms": false,
+        "options": {
+          "uni-emojis": {
+            "skin_tones": [
+              "none",
+              "medium"
+            ]
+          }
+        }
+      },
+      "profiles": [
+        {
+          "id": "main",
+          "name": "한국어",
+          "layouts": [
+            "ko-2-set"
+          ]
+        },
+        {
+          "id": "work",
+          "name": "work",
+          "layouts": [
+            "en-qwerty",
+            "ko-2-set",
+            "ja-romaji"
+          ],
+          "weights": {
+            "en-qwerty": 0.8
+          }
+        },
+        {
+          "id": "ja",
+          "name": "日本語",
+          "layouts": [
+            "ja-kana"
+          ],
+          "script_forms": true,
+          "fkeys": {
+            "intercept": true,
+            "keys": {
+              "F7": "ja-kana.katakana"
+            }
+          }
+        },
+        {
+          "id": "sym",
+          "name": "symbols",
+          "layouts": [
+            "uni-symbols",
+            "uni-emojis"
+          ]
+        }
+      ]
+    }
+  },
+  "keys": {
+    "bindings": [
+      {
+        "on": "CapsLock",
+        "do": [
+          "mode.toggle"
+        ]
+      },
+      {
+        "on": "Lang2",
+        "do": [
+          "mode:muhenkan"
+        ]
+      },
+      {
+        "on": "Lang1",
+        "do": [
+          "profile:main",
+          "menu.next"
+        ]
+      },
+      {
+        "on": "shift+Lang1",
+        "do": [
+          "menu.prev"
+        ],
+        "when": "henkan"
+      },
+      {
+        "on": "ctrl+Lang1",
+        "do": [
+          "fix"
+        ],
+        "when": "henkan"
+      },
+      {
+        "on": "Convert",
+        "do": [
+          "profile:work",
+          "menu.next"
+        ]
+      },
+      {
+        "on": "KanaMode",
+        "do": [
+          "profile:ja",
+          "menu.next"
+        ]
+      },
+      {
+        "on": "Lang1",
+        "do": [
+          "menu.next",
+          "profile:main"
+        ],
+        "when": "profile:ja"
+      },
+      {
+        "on": "ctrl+alt+shift+meta+Space",
+        "do": [
+          "profile.next"
+        ]
+      },
+      {
+        "on": "KanaMode+Lang1",
+        "do": [
+          "profile:sym"
+        ]
+      },
+      {
+        "on": "Backquote",
+        "do": [
+          "width.full"
+        ]
+      },
+      {
+        "on": "shift+Backquote",
+        "do": [
+          "width.half"
+        ]
+      }
+    ],
+    "cycle": [
+      "main",
+      "work",
+      "ja"
+    ],
+    "henkan_enters": "last",
+    "caps_lock": "respect",
+    "caps_rule": "allcaps"
+  },
+  "harness": {
+    "com.teammirae.bada.mac": {}
+  }
+}

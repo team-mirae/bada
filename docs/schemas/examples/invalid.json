@@ -1,0 +1,346 @@
+[
+  {
+    "schema": "event",
+    "why": "select with henkan needs a profile",
+    "value": {
+      "type": "select",
+      "mode": "henkan"
+    }
+  },
+  {
+    "schema": "event",
+    "why": "set and patch together",
+    "value": {
+      "type": "settings",
+      "set": {},
+      "patch": {}
+    }
+  },
+  {
+    "schema": "event",
+    "why": "removing a layout needs its id",
+    "value": {
+      "type": "layout",
+      "value": null
+    }
+  },
+  {
+    "schema": "event",
+    "why": "a type the standard doesn't have",
+    "value": {
+      "type": "focus"
+    }
+  },
+  {
+    "schema": "reply",
+    "why": "ok false without an error",
+    "value": {
+      "ok": false
+    }
+  },
+  {
+    "schema": "reply",
+    "why": "a segment kind the standard doesn't have",
+    "value": {
+      "ok": true,
+      "preedit": {
+        "text": "a",
+        "caret": 1,
+        "segments": [
+          {
+            "len": 1,
+            "kind": "bold"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "schema": "settings",
+    "why": "a profile id that is the wrong shape",
+    "value": {
+      "format": "bada-settings/2",
+      "engine": {
+        "henkan": {
+          "profiles": [
+            {
+              "id": "Main Profile",
+              "name": "x",
+              "layouts": [
+                "ko-2-set"
+              ]
+            }
+          ]
+        }
+      }
+    }
+  },
+  {
+    "schema": "settings",
+    "why": "an integer layout id",
+    "value": {
+      "format": "bada-settings/2",
+      "engine": {
+        "muhenkan": {
+          "layout": 0
+        }
+      }
+    }
+  },
+  {
+    "schema": "settings",
+    "why": "an action the key table doesn't have",
+    "value": {
+      "format": "bada-settings/2",
+      "keys": {
+        "bindings": [
+          {
+            "on": "Lang1",
+            "do": [
+              "mode.next"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "schema": "settings",
+    "why": "the old format",
+    "value": {
+      "format": "bada-settings/1",
+      "settings": {}
+    }
+  },
+  {
+    "schema": "layout",
+    "why": "a jamo role in a layout that types directly",
+    "value": {
+      "format": "bada-layout/2",
+      "id": "en-qwerty-underscore",
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "muhenkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "KeyA": {
+          "base": {
+            "t": "ㅁ",
+            "r": "c"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      }
+    }
+  },
+  {
+    "schema": "layout",
+    "why": "a field the format doesn't have",
+    "value": {
+      "format": "bada-layout/2",
+      "id": "en-qwerty-underscore",
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "muhenkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "Digit0": {
+          "shift": {
+            "t": "_",
+            "r": "x"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      },
+      "input": "direct"
+    }
+  },
+  {
+    "schema": "layout",
+    "why": "an integer id",
+    "value": {
+      "format": "bada-layout/2",
+      "id": 15,
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "muhenkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "Digit0": {
+          "shift": {
+            "t": "_",
+            "r": "x"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      }
+    }
+  },
+  {
+    "schema": "layout",
+    "why": "a henkan layout that types directly",
+    "value": {
+      "format": "bada-layout/2",
+      "id": "en-qwerty-underscore",
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "henkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "Digit0": {
+          "shift": {
+            "t": "_",
+            "r": "x"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      }
+    }
+  },
+  {
+    "schema": "layout",
+    "why": "a key that isn't one of the 48 or Space",
+    "value": {
+      "format": "bada-layout/2",
+      "id": "en-qwerty-underscore",
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "muhenkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "Enter": {
+          "base": {
+            "t": "x",
+            "r": "x"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      }
+    }
+  },
+  {
+    "schema": "describe",
+    "why": "another major version",
+    "value": {
+      "abi": {
+        "name": "bada-compatible",
+        "major": 1,
+        "minor": 3
+      },
+      "engine": {
+        "id": "com.teammirae.bada",
+        "version": "0.1.0",
+        "name": {
+          "en": "bada"
+        }
+      },
+      "events": [
+        "key",
+        "select",
+        "flush",
+        "reset",
+        "state"
+      ],
+      "features": [],
+      "keyboards": [
+        "jis"
+      ],
+      "data": [],
+      "layouts": [],
+      "actions": [],
+      "settings": {
+        "format": "bada-settings/2",
+        "schema": {},
+        "defaults": {}
+      }
+    }
+  },
+  {
+    "schema": "describe",
+    "why": "an engine without the required events",
+    "value": {
+      "abi": {
+        "name": "bada-compatible",
+        "major": 2,
+        "minor": 0
+      },
+      "engine": {
+        "id": "com.teammirae.bada",
+        "version": "0.1.0",
+        "name": {
+          "en": "bada"
+        }
+      },
+      "events": [
+        "key"
+      ],
+      "features": [],
+      "keyboards": [
+        "jis"
+      ],
+      "data": [],
+      "layouts": [],
+      "actions": [],
+      "settings": {
+        "format": "bada-settings/2",
+        "schema": {},
+        "defaults": {}
+      }
+    }
+  }
+]

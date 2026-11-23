@@ -1,0 +1,28 @@
+{
+  "format": "bada-layout/2",
+  "id": "en-qwerty-underscore",
+  "name": {
+    "en": "English - QWERTY, with _ on ⇧0"
+  },
+  "lang": "en",
+  "kind": "muhenkan",
+  "read": "direct",
+  "note": "A user's layout: QWERTY with the one free slot filled.",
+  "keys": {
+    "Digit0": {
+      "shift": {
+        "t": "_",
+        "r": "x"
+      }
+    }
+  },
+  "words": [
+    "en-words"
+  ],
+  "rank": {
+    "known": 90,
+    "rare": 85,
+    "letters": 30,
+    "other": 20
+  }
+}

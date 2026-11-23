@@ -1,0 +1,1811 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bada-layout/2",
+  "description": "A layout file (the standard, §7.5): everything a layout is.",
+  "type": "object",
+  "required": [
+    "format",
+    "id",
+    "name",
+    "lang",
+    "kind",
+    "read",
+    "keys"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "bada-layout/2"
+    },
+    "id": {
+      "$ref": "#/$defs/layout_id"
+    },
+    "name": {
+      "$ref": "#/$defs/texts"
+    },
+    "lang": {
+      "description": "BCP 47; und for a layout of no language.",
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+    },
+    "kind": {
+      "description": "muhenkan: types directly. henkan: composes.",
+      "enum": [
+        "muhenkan",
+        "henkan"
+      ]
+    },
+    "read": {
+      "description": "Which general way of reading the keys.",
+      "enum": [
+        "direct",
+        "hangul",
+        "table",
+        "kana",
+        "search"
+      ]
+    },
+    "note": {
+      "description": "Where the layout comes from. The engine doesn't read it.",
+      "type": "string"
+    },
+    "keys": {
+      "description": "Each key's layers. A base or shift slot left out is the JIS table's; null types nothing. alt and alt_shift are the layout's only where listed.",
+      "$ref": "#/$defs/keys_any"
+    },
+    "text_ends_word": {
+      "description": "A text slot commits what shows and then types, instead of being staged. Default false.",
+      "type": "boolean"
+    },
+    "convert": {
+      "description": "What turns the reading into more rows.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "description": "Kanji conversion of a kana reading.",
+            "type": "object",
+            "properties": {
+              "with": {
+                "const": "kanji"
+              },
+              "data": {
+                "$ref": "#/$defs/data"
+              },
+              "rows": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "user_rows": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "common": {
+                "type": "object",
+                "properties": {
+                  "data": {
+                    "$ref": "#/$defs/data"
+                  },
+                  "rows": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "data",
+                  "rows"
+                ]
+              },
+              "native": {
+                "$ref": "#/$defs/data"
+              },
+              "notes": {
+                "type": "object",
+                "properties": {
+                  "kana": {
+                    "enum": [
+                      "romaji"
+                    ]
+                  },
+                  "converted": {
+                    "enum": [
+                      "reading"
+                    ]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "with",
+              "data"
+            ]
+          },
+          {
+            "description": "A dictionary lookup of the letters typed.",
+            "type": "object",
+            "properties": {
+              "with": {
+                "const": "dictionary"
+              },
+              "data": {
+                "$ref": "#/$defs/data"
+              },
+              "rows": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "first": {
+                "description": "false: never the top row.",
+                "type": "boolean"
+              },
+              "below_top": {
+                "type": "number"
+              },
+              "case": {
+                "type": "object",
+                "properties": {
+                  "lower": {
+                    "enum": [
+                      "word",
+                      "name",
+                      "name-then-word",
+                      "name-else-word"
+                    ]
+                  },
+                  "mixed": {
+                    "enum": [
+                      "word",
+                      "name",
+                      "name-then-word",
+                      "name-else-word"
+                    ]
+                  },
+                  "upper": {
+                    "enum": [
+                      "word",
+                      "name",
+                      "name-then-word",
+                      "name-else-word"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "lower",
+                  "mixed",
+                  "upper"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "with",
+              "data"
+            ]
+          },
+          {
+            "description": "The reading in another script, as negative entries when script forms are on.",
+            "type": "object",
+            "properties": {
+              "with": {
+                "const": "script"
+              },
+              "forms": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "entry": {
+                      "type": "integer",
+                      "maximum": -1
+                    },
+                    "to": {
+                      "enum": [
+                        "hiragana",
+                        "katakana",
+                        "halfwidth-katakana"
+                      ]
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "entry",
+                    "to"
+                  ]
+                },
+                "minItems": 1
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "with",
+              "forms"
+            ]
+          },
+          {
+            "description": "The reading in the other width, as a row.",
+            "type": "object",
+            "properties": {
+              "with": {
+                "const": "width"
+              },
+              "to": {
+                "enum": [
+                  "half",
+                  "full"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "with",
+              "to"
+            ]
+          }
+        ]
+      }
+    },
+    "actions": {
+      "description": "The layout's named actions, for F keys and action events.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "description": "The reading in a script, until the commit.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/data"
+              },
+              "label": {
+                "$ref": "#/$defs/texts"
+              },
+              "do": {
+                "const": "script"
+              },
+              "to": {
+                "enum": [
+                  "hiragana",
+                  "katakana",
+                  "halfwidth-katakana"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "do",
+              "to"
+            ]
+          },
+          {
+            "description": "The staged keys as their JIS characters, in a width, until the commit.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/data"
+              },
+              "label": {
+                "$ref": "#/$defs/texts"
+              },
+              "do": {
+                "const": "keys"
+              },
+              "width": {
+                "enum": [
+                  "full",
+                  "half"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "do",
+              "width"
+            ]
+          },
+          {
+            "description": "One jamo of each syllable of the staged text, else of the selection.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/data"
+              },
+              "label": {
+                "$ref": "#/$defs/texts"
+              },
+              "do": {
+                "const": "jamo"
+              },
+              "keep": {
+                "enum": [
+                  "initials",
+                  "vowels",
+                  "finals"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "do",
+              "keep"
+            ]
+          },
+          {
+            "description": "A list from a data buffer for the staged text, else for the selection.",
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/$defs/data"
+              },
+              "label": {
+                "$ref": "#/$defs/texts"
+              },
+              "do": {
+                "const": "lookup"
+              },
+              "data": {
+                "$ref": "#/$defs/data"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "label",
+              "do",
+              "data"
+            ]
+          }
+        ]
+      }
+    },
+    "particles": {
+      "description": "Particles and endings of this layout that may follow a word typed on a direct layout, in one staged run.",
+      "type": "object",
+      "properties": {
+        "after": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "word",
+              "name"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "words": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1
+        },
+        "stack": {
+          "type": "object",
+          "properties": {
+            "first": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 2
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "first",
+            "max"
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "after",
+        "words"
+      ]
+    },
+    "words": {
+      "description": "The word lists that say which of its readings are known words, by buffer name.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/data"
+      },
+      "uniqueItems": true
+    },
+    "rank": {
+      "description": "The scores of its readings, before weights and key models.",
+      "type": "object",
+      "properties": {
+        "known": {
+          "type": "number"
+        },
+        "by_count": {
+          "type": "boolean"
+        },
+        "rare": {
+          "type": "number"
+        },
+        "letters": {
+          "type": "number"
+        },
+        "other": {
+          "type": "number"
+        },
+        "whole": {
+          "type": "number"
+        },
+        "loose": {
+          "type": "number"
+        },
+        "unknown": {
+          "type": "number"
+        },
+        "broken": {
+          "type": "number"
+        },
+        "after_text": {
+          "type": "number"
+        },
+        "query": {
+          "type": "number"
+        },
+        "found": {
+          "type": "number"
+        },
+        "readings": {
+          "type": "object",
+          "properties": {
+            "cost": {
+              "type": "number"
+            },
+            "max_cost": {
+              "type": "number"
+            },
+            "floor": {
+              "type": "number"
+            },
+            "rows": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "cost",
+            "max_cost",
+            "floor",
+            "rows"
+          ]
+        },
+        "model": {
+          "type": "object",
+          "properties": {
+            "data": {
+              "$ref": "#/$defs/data"
+            },
+            "cost": {
+              "type": "number"
+            },
+            "margin": {
+              "type": "number"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "data",
+            "cost",
+            "margin"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "options": {
+      "description": "The options this layout has in the settings.",
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/option"
+      },
+      "additionalProperties": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "boolean"
+              },
+              "default": {
+                "type": "boolean"
+              },
+              "title": {
+                "$ref": "#/$defs/texts"
+              },
+              "hint": {
+                "$ref": "#/$defs/texts"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "default",
+              "title"
+            ]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": {
+                "const": "order"
+              },
+              "of": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "default": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "uniqueItems": true
+              },
+              "title": {
+                "$ref": "#/$defs/texts"
+              },
+              "hint": {
+                "$ref": "#/$defs/texts"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "type",
+              "of",
+              "default",
+              "title"
+            ]
+          }
+        ]
+      }
+    },
+    "direct": {
+      "description": "read direct: every key types its slot.",
+      "type": "object",
+      "properties": {
+        "variants": {
+          "description": "A character's variants, offered in a strip when its key is pressed with ⌥ in muhenkan.",
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^.$"
+          },
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "hangul": {
+      "description": "read hangul: jamo compose into syllables.",
+      "type": "object",
+      "properties": {
+        "vowels": {
+          "description": "Two vowels that join into one.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "finals": {
+          "description": "Two finals that cluster into one.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "double_tense": {
+          "description": "The same initial twice, or the same final twice, is its tense form.",
+          "type": "boolean"
+        },
+        "final_moves_on": {
+          "description": "A vowel after a final takes it as the next syllable's initial, when its key has an initial.",
+          "type": "boolean"
+        },
+        "implied_ieung": {
+          "description": "A vowel with no initial before it starts a syllable on ㅇ. Default false.",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "vowels",
+        "finals",
+        "double_tense",
+        "final_moves_on"
+      ]
+    },
+    "table": {
+      "description": "read table: letters spell text, by one of two tables.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "spellings": {
+              "description": "Letters → what they type.",
+              "type": "object",
+              "minProperties": 1,
+              "propertyNames": {
+                "type": "string",
+                "minLength": 1
+              },
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "rules": {
+              "description": "Spellings that keep letters or look ahead.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "in": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "out": {
+                    "type": "string"
+                  },
+                  "before": {
+                    "description": "Applies only when the next letter is one of these; that letter isn't used up.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "keep": {
+                    "description": "How many of its last letters stay pending.",
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "in",
+                  "out"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "spellings"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "syllable": {
+              "type": "object",
+              "properties": {
+                "onsets": {
+                  "$ref": "#/$defs/jamo_lists"
+                },
+                "vowels": {
+                  "$ref": "#/$defs/jamo_lists"
+                },
+                "codas": {
+                  "$ref": "#/$defs/jamo_lists"
+                },
+                "empty_onset": {
+                  "description": "The initial of a syllable that starts with a vowel.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                },
+                "vowels_before_coda": {
+                  "description": "What a vowel spelling reads when a final follows.",
+                  "$ref": "#/$defs/jamo_lists"
+                },
+                "codas_before": {
+                  "description": "What a coda spelling also reads before a given letter.",
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "coda": {
+                        "type": "string"
+                      },
+                      "next": {
+                        "type": "string"
+                      },
+                      "jamo": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "minItems": 1
+                      }
+                    },
+                    "additionalProperties": false,
+                    "required": [
+                      "coda",
+                      "next",
+                      "jamo"
+                    ]
+                  }
+                },
+                "letter_after": {
+                  "description": "A text slot that is a letter when the letter before it is one of these.",
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "minItems": 1
+                  }
+                },
+                "shortcuts": {
+                  "description": "Other spellings of whole syllables, from a data buffer.",
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "$ref": "#/$defs/data"
+                    },
+                    "option": {
+                      "$ref": "#/$defs/option"
+                    }
+                  },
+                  "additionalProperties": false,
+                  "required": [
+                    "data"
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "onsets",
+                "vowels",
+                "codas"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "syllable"
+          ]
+        }
+      ]
+    },
+    "kana": {
+      "description": "read kana: one kana per key.",
+      "type": "object",
+      "properties": {
+        "marks": {
+          "description": "Each mark, and what it makes of the kana before it.",
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "marks"
+      ]
+    },
+    "search": {
+      "description": "read search: the keys spell a search, and the menu lists what it finds.",
+      "type": "object",
+      "properties": {
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "data": {
+                "$ref": "#/$defs/data"
+              },
+              "match": {
+                "description": "The buffer's columns that are searched.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "minItems": 1
+              },
+              "tiers": {
+                "description": "How its matches rank, best first.",
+                "type": "array",
+                "items": {
+                  "enum": [
+                    "exact",
+                    "whole",
+                    "first",
+                    "any"
+                  ]
+                },
+                "minItems": 1,
+                "uniqueItems": true
+              },
+              "order": {
+                "description": "Within a tier: the buffer's order, or shorter first.",
+                "enum": [
+                  "data",
+                  "shortest"
+                ]
+              },
+              "note": {
+                "description": "The row's note: the entry's name, or U+XXXX and its name.",
+                "enum": [
+                  "name",
+                  "code"
+                ]
+              },
+              "single": {
+                "description": "A column of characters: a search of one character lists the entries that have it there, and nothing else.",
+                "type": "string"
+              },
+              "tones": {
+                "description": "The option that orders an emoji's skin tones.",
+                "$ref": "#/$defs/option"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "data",
+              "match",
+              "tiers"
+            ]
+          },
+          "minItems": 1
+        },
+        "code": {
+          "description": "A character by its code.",
+          "type": "object",
+          "properties": {
+            "max_digits": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 6
+            },
+            "after": {
+              "description": "Prefixes after which any hex digits are a code.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "digit_first_after": {
+              "description": "Prefixes after which hex digits are a code only when the first is 0–9.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "max_digits"
+          ]
+        },
+        "min_length": {
+          "description": "The shortest search that looks names up. Default 1.",
+          "type": "integer",
+          "minimum": 1
+        },
+        "limit": {
+          "description": "Results listed, at most.",
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "sources",
+        "limit"
+      ]
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "read": {
+            "const": "direct"
+          }
+        },
+        "required": [
+          "read"
+        ]
+      },
+      "then": {
+        "properties": {
+          "keys": {
+            "$ref": "#/$defs/keys_direct"
+          },
+          "kind": {
+            "const": "muhenkan"
+          },
+          "hangul": false,
+          "table": false,
+          "kana": false,
+          "search": false
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "read": {
+            "const": "hangul"
+          }
+        },
+        "required": [
+          "read"
+        ]
+      },
+      "then": {
+        "properties": {
+          "keys": {
+            "$ref": "#/$defs/keys_hangul"
+          },
+          "kind": {
+            "const": "henkan"
+          },
+          "direct": false,
+          "table": false,
+          "kana": false,
+          "search": false
+        },
+        "required": [
+          "hangul"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "read": {
+            "const": "table"
+          }
+        },
+        "required": [
+          "read"
+        ]
+      },
+      "then": {
+        "properties": {
+          "keys": {
+            "$ref": "#/$defs/keys_table"
+          },
+          "kind": {
+            "const": "henkan"
+          },
+          "direct": false,
+          "hangul": false,
+          "kana": false,
+          "search": false
+        },
+        "required": [
+          "table"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "read": {
+            "const": "kana"
+          }
+        },
+        "required": [
+          "read"
+        ]
+      },
+      "then": {
+        "properties": {
+          "keys": {
+            "$ref": "#/$defs/keys_kana"
+          },
+          "kind": {
+            "const": "henkan"
+          },
+          "direct": false,
+          "hangul": false,
+          "table": false,
+          "search": false
+        },
+        "required": [
+          "kana"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "read": {
+            "const": "search"
+          }
+        },
+        "required": [
+          "read"
+        ]
+      },
+      "then": {
+        "properties": {
+          "keys": {
+            "$ref": "#/$defs/keys_direct"
+          },
+          "kind": {
+            "const": "henkan"
+          },
+          "direct": false,
+          "hangul": false,
+          "table": false,
+          "kana": false
+        },
+        "required": [
+          "search"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "texts": {
+      "description": "Text by language (BCP 47 tags). en is required.",
+      "type": "object",
+      "required": [
+        "en"
+      ],
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "code": {
+      "enum": [
+        "Digit1",
+        "Digit2",
+        "Digit3",
+        "Digit4",
+        "Digit5",
+        "Digit6",
+        "Digit7",
+        "Digit8",
+        "Digit9",
+        "Digit0",
+        "Minus",
+        "Equal",
+        "IntlYen",
+        "KeyQ",
+        "KeyW",
+        "KeyE",
+        "KeyR",
+        "KeyT",
+        "KeyY",
+        "KeyU",
+        "KeyI",
+        "KeyO",
+        "KeyP",
+        "BracketLeft",
+        "BracketRight",
+        "KeyA",
+        "KeyS",
+        "KeyD",
+        "KeyF",
+        "KeyG",
+        "KeyH",
+        "KeyJ",
+        "KeyK",
+        "KeyL",
+        "Semicolon",
+        "Quote",
+        "Backslash",
+        "KeyZ",
+        "KeyX",
+        "KeyC",
+        "KeyV",
+        "KeyB",
+        "KeyN",
+        "KeyM",
+        "Comma",
+        "Period",
+        "Slash",
+        "IntlRo",
+        "Space"
+      ]
+    },
+    "layout_id": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+      "maxLength": 48
+    },
+    "data": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+    },
+    "option": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    "jamo_lists": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string",
+          "minLength": 1
+        },
+        "minItems": 1
+      }
+    },
+    "slot_direct": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "What the key types, or its letter, jamo or kana.",
+              "type": "string",
+              "minLength": 1
+            },
+            "r": {
+              "enum": [
+                "l",
+                "x"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "r"
+          ]
+        }
+      ]
+    },
+    "keys_direct": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "Digit1",
+          "Digit2",
+          "Digit3",
+          "Digit4",
+          "Digit5",
+          "Digit6",
+          "Digit7",
+          "Digit8",
+          "Digit9",
+          "Digit0",
+          "Minus",
+          "Equal",
+          "IntlYen",
+          "KeyQ",
+          "KeyW",
+          "KeyE",
+          "KeyR",
+          "KeyT",
+          "KeyY",
+          "KeyU",
+          "KeyI",
+          "KeyO",
+          "KeyP",
+          "BracketLeft",
+          "BracketRight",
+          "KeyA",
+          "KeyS",
+          "KeyD",
+          "KeyF",
+          "KeyG",
+          "KeyH",
+          "KeyJ",
+          "KeyK",
+          "KeyL",
+          "Semicolon",
+          "Quote",
+          "Backslash",
+          "KeyZ",
+          "KeyX",
+          "KeyC",
+          "KeyV",
+          "KeyB",
+          "KeyN",
+          "KeyM",
+          "Comma",
+          "Period",
+          "Slash",
+          "IntlRo",
+          "Space"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          },
+          "shift": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          },
+          "alt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          },
+          "alt_shift": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      }
+    },
+    "slot_hangul": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "What the key types, or its letter, jamo or kana.",
+              "type": "string",
+              "minLength": 1
+            },
+            "r": {
+              "enum": [
+                "c",
+                "i",
+                "f",
+                "v",
+                "x"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "r"
+          ]
+        }
+      ]
+    },
+    "keys_hangul": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/code"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "$ref": "#/$defs/slot_hangul"
+          },
+          "shift": {
+            "$ref": "#/$defs/slot_hangul"
+          },
+          "alt": {
+            "$ref": "#/$defs/slot_hangul"
+          },
+          "alt_shift": {
+            "$ref": "#/$defs/slot_hangul"
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      }
+    },
+    "slot_table": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "What the key types, or its letter, jamo or kana.",
+              "type": "string",
+              "minLength": 1
+            },
+            "r": {
+              "enum": [
+                "l",
+                "b",
+                "x"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "r"
+          ]
+        }
+      ]
+    },
+    "keys_table": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/code"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "$ref": "#/$defs/slot_table"
+          },
+          "shift": {
+            "$ref": "#/$defs/slot_table"
+          },
+          "alt": {
+            "$ref": "#/$defs/slot_table"
+          },
+          "alt_shift": {
+            "$ref": "#/$defs/slot_table"
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      }
+    },
+    "slot_kana": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "What the key types, or its letter, jamo or kana.",
+              "type": "string",
+              "minLength": 1
+            },
+            "r": {
+              "enum": [
+                "k",
+                "m",
+                "x"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "r"
+          ]
+        }
+      ]
+    },
+    "keys_kana": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/code"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "$ref": "#/$defs/slot_kana"
+          },
+          "shift": {
+            "$ref": "#/$defs/slot_kana"
+          },
+          "alt": {
+            "$ref": "#/$defs/slot_kana"
+          },
+          "alt_shift": {
+            "$ref": "#/$defs/slot_kana"
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      }
+    },
+    "slot_search": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "What the key types, or its letter, jamo or kana.",
+              "type": "string",
+              "minLength": 1
+            },
+            "r": {
+              "enum": [
+                "l",
+                "x"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "r"
+          ]
+        }
+      ]
+    },
+    "keys_search": {
+      "type": "object",
+      "propertyNames": {
+        "enum": [
+          "Digit1",
+          "Digit2",
+          "Digit3",
+          "Digit4",
+          "Digit5",
+          "Digit6",
+          "Digit7",
+          "Digit8",
+          "Digit9",
+          "Digit0",
+          "Minus",
+          "Equal",
+          "IntlYen",
+          "KeyQ",
+          "KeyW",
+          "KeyE",
+          "KeyR",
+          "KeyT",
+          "KeyY",
+          "KeyU",
+          "KeyI",
+          "KeyO",
+          "KeyP",
+          "BracketLeft",
+          "BracketRight",
+          "KeyA",
+          "KeyS",
+          "KeyD",
+          "KeyF",
+          "KeyG",
+          "KeyH",
+          "KeyJ",
+          "KeyK",
+          "KeyL",
+          "Semicolon",
+          "Quote",
+          "Backslash",
+          "KeyZ",
+          "KeyX",
+          "KeyC",
+          "KeyV",
+          "KeyB",
+          "KeyN",
+          "KeyM",
+          "Comma",
+          "Period",
+          "Slash",
+          "IntlRo",
+          "Space"
+        ]
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          },
+          "shift": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          },
+          "alt": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          },
+          "alt_shift": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "t": {
+                    "description": "What the key types, or its letter, jamo or kana.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "r": {
+                    "enum": [
+                      "l",
+                      "x"
+                    ]
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "t",
+                  "r"
+                ]
+              }
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      }
+    },
+    "slot_any": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "t": {
+              "description": "What the key types, or its letter, jamo or kana.",
+              "type": "string",
+              "minLength": 1
+            },
+            "r": {
+              "enum": [
+                "l",
+                "x",
+                "c",
+                "i",
+                "f",
+                "v",
+                "b",
+                "k",
+                "m"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "t",
+            "r"
+          ]
+        }
+      ]
+    },
+    "keys_any": {
+      "type": "object",
+      "propertyNames": {
+        "$ref": "#/$defs/code"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "$ref": "#/$defs/slot_any"
+          },
+          "shift": {
+            "$ref": "#/$defs/slot_any"
+          },
+          "alt": {
+            "$ref": "#/$defs/slot_any"
+          },
+          "alt_shift": {
+            "$ref": "#/$defs/slot_any"
+          }
+        },
+        "additionalProperties": false,
+        "minProperties": 1
+      }
+    }
+  }
+}

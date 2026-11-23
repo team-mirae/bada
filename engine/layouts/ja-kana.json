@@ -1,0 +1,123 @@
+{
+  "format": "bada-layout/2",
+  "id": "ja-kana",
+  "name": {"en": "Japanese - Kana", "ko": "일본어 - 가나", "ja": "日本語 - かな"},
+  "lang": "ja",
+  "kind": "henkan",
+  "read": "kana",
+  "note": "The JIS kana layout (JIS X 6002): bada ime 0.3.1's layout 20, with its ⌥⇧ layer.",
+  "keys": {
+    "Digit1": {"base": {"t": "ぬ", "r": "k"}, "shift": {"t": "ぬ", "r": "k"}, "alt_shift": {"t": "！", "r": "x"}},
+    "Digit2": {"base": {"t": "ふ", "r": "k"}, "shift": {"t": "ふ", "r": "k"}, "alt_shift": {"t": "＂", "r": "x"}},
+    "Digit3": {"base": {"t": "あ", "r": "k"}, "shift": {"t": "ぁ", "r": "k"}, "alt_shift": {"t": "＃", "r": "x"}},
+    "Digit4": {"base": {"t": "う", "r": "k"}, "shift": {"t": "ぅ", "r": "k"}, "alt_shift": {"t": "＄", "r": "x"}},
+    "Digit5": {"base": {"t": "え", "r": "k"}, "shift": {"t": "ぇ", "r": "k"}, "alt_shift": {"t": "％", "r": "x"}},
+    "Digit6": {"base": {"t": "お", "r": "k"}, "shift": {"t": "ぉ", "r": "k"}, "alt_shift": {"t": "＆", "r": "x"}},
+    "Digit7": {"base": {"t": "や", "r": "k"}, "shift": {"t": "ゃ", "r": "k"}, "alt_shift": {"t": "＇", "r": "x"}},
+    "Digit8": {"base": {"t": "ゆ", "r": "k"}, "shift": {"t": "ゅ", "r": "k"}, "alt_shift": {"t": "（", "r": "x"}},
+    "Digit9": {"base": {"t": "よ", "r": "k"}, "shift": {"t": "ょ", "r": "k"}, "alt_shift": {"t": "）", "r": "x"}},
+    "Digit0": {"base": {"t": "わ", "r": "k"}, "shift": {"t": "を", "r": "k"}, "alt_shift": {"t": "０", "r": "x"}},
+    "Minus": {"base": {"t": "ほ", "r": "k"}, "shift": {"t": "ほ", "r": "k"}, "alt_shift": {"t": "＝", "r": "x"}},
+    "Equal": {"base": {"t": "へ", "r": "k"}, "shift": {"t": "へ", "r": "k"}, "alt_shift": {"t": "～", "r": "x"}},
+    "IntlYen": {"base": {"t": "ー", "r": "k"}, "shift": {"t": "ー", "r": "k"}, "alt_shift": {"t": "｜", "r": "x"}},
+    "KeyQ": {"base": {"t": "た", "r": "k"}, "shift": {"t": "た", "r": "k"}},
+    "KeyW": {"base": {"t": "て", "r": "k"}, "shift": {"t": "て", "r": "k"}},
+    "KeyE": {"base": {"t": "い", "r": "k"}, "shift": {"t": "ぃ", "r": "k"}},
+    "KeyR": {"base": {"t": "す", "r": "k"}, "shift": {"t": "す", "r": "k"}},
+    "KeyT": {"base": {"t": "か", "r": "k"}, "shift": {"t": "か", "r": "k"}},
+    "KeyY": {"base": {"t": "ん", "r": "k"}, "shift": {"t": "ん", "r": "k"}},
+    "KeyU": {"base": {"t": "な", "r": "k"}, "shift": {"t": "な", "r": "k"}},
+    "KeyI": {"base": {"t": "に", "r": "k"}, "shift": {"t": "に", "r": "k"}},
+    "KeyO": {"base": {"t": "ら", "r": "k"}, "shift": {"t": "ら", "r": "k"}},
+    "KeyP": {"base": {"t": "せ", "r": "k"}, "shift": {"t": "せ", "r": "k"}},
+    "BracketLeft": {"base": {"t": "゛", "r": "m"}, "shift": {"t": "゛", "r": "m"}, "alt_shift": {"t": "｀", "r": "x"}},
+    "BracketRight": {"base": {"t": "゜", "r": "m"}, "shift": {"t": "「", "r": "x"}, "alt_shift": {"t": "｛", "r": "x"}},
+    "KeyA": {"base": {"t": "ち", "r": "k"}, "shift": {"t": "ち", "r": "k"}},
+    "KeyS": {"base": {"t": "と", "r": "k"}, "shift": {"t": "と", "r": "k"}},
+    "KeyD": {"base": {"t": "し", "r": "k"}, "shift": {"t": "し", "r": "k"}},
+    "KeyF": {"base": {"t": "は", "r": "k"}, "shift": {"t": "は", "r": "k"}},
+    "KeyG": {"base": {"t": "き", "r": "k"}, "shift": {"t": "き", "r": "k"}},
+    "KeyH": {"base": {"t": "く", "r": "k"}, "shift": {"t": "く", "r": "k"}},
+    "KeyJ": {"base": {"t": "ま", "r": "k"}, "shift": {"t": "ま", "r": "k"}},
+    "KeyK": {"base": {"t": "の", "r": "k"}, "shift": {"t": "の", "r": "k"}},
+    "KeyL": {"base": {"t": "り", "r": "k"}, "shift": {"t": "り", "r": "k"}},
+    "Semicolon": {"base": {"t": "れ", "r": "k"}, "shift": {"t": "れ", "r": "k"}, "alt_shift": {"t": "＋", "r": "x"}},
+    "Quote": {"base": {"t": "け", "r": "k"}, "shift": {"t": "け", "r": "k"}, "alt_shift": {"t": "＊", "r": "x"}},
+    "Backslash": {"base": {"t": "む", "r": "k"}, "shift": {"t": "」", "r": "x"}, "alt_shift": {"t": "｝", "r": "x"}},
+    "KeyZ": {"base": {"t": "つ", "r": "k"}, "shift": {"t": "っ", "r": "k"}},
+    "KeyX": {"base": {"t": "さ", "r": "k"}, "shift": {"t": "さ", "r": "k"}},
+    "KeyC": {"base": {"t": "そ", "r": "k"}, "shift": {"t": "そ", "r": "k"}},
+    "KeyV": {"base": {"t": "ひ", "r": "k"}, "shift": {"t": "ひ", "r": "k"}},
+    "KeyB": {"base": {"t": "こ", "r": "k"}, "shift": {"t": "こ", "r": "k"}},
+    "KeyN": {"base": {"t": "み", "r": "k"}, "shift": {"t": "み", "r": "k"}},
+    "KeyM": {"base": {"t": "も", "r": "k"}, "shift": {"t": "も", "r": "k"}},
+    "Comma": {"base": {"t": "ね", "r": "k"}, "shift": {"t": "、", "r": "x"}, "alt_shift": {"t": "＜", "r": "x"}},
+    "Period": {"base": {"t": "る", "r": "k"}, "shift": {"t": "。", "r": "x"}, "alt_shift": {"t": "＞", "r": "x"}},
+    "Slash": {"base": {"t": "め", "r": "k"}, "shift": {"t": "・", "r": "x"}, "alt_shift": {"t": "？", "r": "x"}},
+    "IntlRo": {"base": {"t": "ろ", "r": "k"}, "shift": {"t": "ろ", "r": "k"}, "alt_shift": {"t": "＿", "r": "x"}}
+  },
+  "kana": {
+    "marks": {
+      "゛": {
+        "か": "が", "き": "ぎ", "く": "ぐ", "け": "げ", "こ": "ご", "さ": "ざ", "し": "じ", "す": "ず", "せ": "ぜ", "そ": "ぞ",
+        "た": "だ", "ち": "ぢ", "つ": "づ", "て": "で", "と": "ど", "は": "ば", "ひ": "び", "ふ": "ぶ", "へ": "べ", "ほ": "ぼ",
+        "う": "ゔ"
+      },
+      "゜": {"は": "ぱ", "ひ": "ぴ", "ふ": "ぷ", "へ": "ぺ", "ほ": "ぽ"}
+    }
+  },
+  "convert": [
+    {
+      "with": "kanji",
+      "data": "kanji",
+      "rows": 6,
+      "user_rows": 32,
+      "common": {"data": "ja-common-words", "rows": 3},
+      "native": "ja-kana-native",
+      "notes": {"kana": "romaji", "converted": "reading"}
+    },
+    {"with": "script", "forms": [{"entry": -1, "to": "hiragana"}, {"entry": -2, "to": "katakana"}]}
+  ],
+  "actions": [
+    {
+      "id": "hiragana",
+      "label": {"en": "Hiragana", "ko": "히라가나", "ja": "ひらがな"},
+      "do": "script",
+      "to": "hiragana"
+    },
+    {
+      "id": "katakana",
+      "label": {"en": "Katakana", "ko": "가타카나", "ja": "カタカナ"},
+      "do": "script",
+      "to": "katakana"
+    },
+    {
+      "id": "halfwidth-katakana",
+      "label": {"en": "Half-width katakana", "ko": "반각 가타카나", "ja": "半角カタカナ"},
+      "do": "script",
+      "to": "halfwidth-katakana"
+    },
+    {
+      "id": "fullwidth-latin",
+      "label": {"en": "Full-width Latin", "ko": "전각 영문", "ja": "全角英数"},
+      "do": "keys",
+      "width": "full"
+    },
+    {
+      "id": "halfwidth-latin",
+      "label": {"en": "Half-width Latin", "ko": "반각 영문", "ja": "半角英数"},
+      "do": "keys",
+      "width": "half"
+    }
+  ],
+  "particles": {
+    "after": ["name"],
+    "words": [
+      "は", "が", "を", "に", "で", "と", "も", "へ", "の", "や", "か", "ね", "よ", "から", "まで", "より", "には", "では", "とは",
+      "にも", "でも", "への", "との", "での", "からの", "までの", "って", "けど", "だ", "です", "でした", "という", "など", "さん", "くん",
+      "ちゃん", "さま"
+    ]
+  },
+  "words": ["ja-words", "ja-kana-native"],
+  "rank": {"known": 92, "unknown": 70, "broken": 30}
+}

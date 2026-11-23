@@ -1,0 +1,32 @@
+{
+  "format": "bada-layout/2",
+  "id": "uni-unicode",
+  "name": {"en": "Unicode - All Unicode", "ko": "유니코드 - 전체", "ja": "ユニコード - すべて"},
+  "lang": "und",
+  "kind": "henkan",
+  "read": "search",
+  "note": "A search over every named Unicode character: bada ime 0.3.1's layout 151.",
+  "keys": {"Space": {"base": {"t": " ", "r": "l"}}},
+  "search": {
+    "sources": [
+      {
+        "data": "unicode-names",
+        "match": ["alias", "tags"],
+        "tiers": ["exact", "whole", "any"],
+        "order": "data",
+        "note": "code"
+      },
+      {
+        "data": "unicode-names",
+        "match": ["name"],
+        "tiers": ["exact", "any"],
+        "order": "shortest",
+        "note": "code"
+      }
+    ],
+    "code": {"max_digits": 6, "after": ["u+"], "digit_first_after": ["u", ""]},
+    "min_length": 2,
+    "limit": 40
+  },
+  "rank": {"query": 60, "found": 59}
+}

@@ -1,0 +1,377 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bada-key-cases/1",
+  "description": "Test cases for the harness's key table (the standard, §9.6): a key press, the harness's state and the table, with what must happen.",
+  "type": "object",
+  "required": [
+    "format",
+    "profiles",
+    "tables",
+    "cases"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "bada-key-cases/1"
+    },
+    "note": {
+      "type": "string"
+    },
+    "profiles": {
+      "description": "Named lists of henkan profiles, as engine.henkan.profiles has them: id and layouts.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{1,32}$"
+            },
+            "layouts": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                "maxLength": 48
+              },
+              "minItems": 1
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "id",
+            "layouts"
+          ]
+        }
+      }
+    },
+    "tables": {
+      "description": "Named key tables: the keys part of a settings file.",
+      "type": "object",
+      "additionalProperties": {
+        "type": "object"
+      }
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "table": {
+            "type": "string"
+          },
+          "profiles": {
+            "type": "string"
+          },
+          "state": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "enum": [
+                  "muhenkan",
+                  "henkan"
+                ]
+              },
+              "profile": {
+                "description": "The profile last selected; null before the first.",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]{1,32}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "previous": {
+                "description": "The profile in use before that one.",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]{1,32}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "menu_rows": {
+                "description": "Rows in the last reply's menu.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "staged": {
+                "description": "The last reply's staged.",
+                "type": "string"
+              },
+              "caps_lock": {
+                "description": "Whether the lock is on.",
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "mode",
+              "profile",
+              "menu_rows",
+              "caps_lock"
+            ]
+          },
+          "press": {
+            "description": "One key, with or without modifiers, as recorded from a real press: modifiers in the order ctrl, alt, shift, meta, then a W3C code. Or a pair: two language keys held together, joined by +, in either order.",
+            "type": "string",
+            "pattern": "^((ctrl\\+)?(alt\\+)?(shift\\+)?(meta\\+)?[A-Z][A-Za-z0-9]*|(Backquote|NonConvert|Convert|KanaMode|Lang2|Lang1)\\+(Backquote|NonConvert|Convert|KanaMode|Lang2|Lang1))$"
+          },
+          "expect": {
+            "type": "object",
+            "properties": {
+              "then": {
+                "description": "select: the harness sends select. action: it sends action. key: the key isn't the table's and is fed to the engine. type: the harness flushes and types text itself. pass: the app or the OS has the key. swallow: nothing. onboarding: the settings window opens on its onboarding.",
+                "enum": [
+                  "select",
+                  "action",
+                  "key",
+                  "type",
+                  "pass",
+                  "swallow",
+                  "onboarding"
+                ]
+              },
+              "binding": {
+                "description": "The index of the binding that was chosen, in the table's bindings; null when none matched.",
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              },
+              "ran": {
+                "description": "The action of its do list that ran; null when none applied.",
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "mode": {
+                "enum": [
+                  "muhenkan",
+                  "henkan"
+                ]
+              },
+              "profile": {
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]{1,32}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "name": {
+                "description": "For action: the name sent.",
+                "type": "string"
+              },
+              "text": {
+                "description": "For type: what is typed.",
+                "type": "string"
+              },
+              "caps_lock": {
+                "description": "The lock afterwards, when the press changes or could change it.",
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "then",
+              "binding",
+              "ran"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "table",
+          "profiles",
+          "state",
+          "press",
+          "expect"
+        ]
+      }
+    },
+    "sequences": {
+      "description": "Presses and releases in order, for what depends on timing: pairs, and a key of a bound pair pressed alone.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "table": {
+            "type": "string"
+          },
+          "profiles": {
+            "type": "string"
+          },
+          "state": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "enum": [
+                  "muhenkan",
+                  "henkan"
+                ]
+              },
+              "profile": {
+                "description": "The profile last selected; null before the first.",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]{1,32}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "previous": {
+                "description": "The profile in use before that one.",
+                "oneOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]{1,32}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "menu_rows": {
+                "description": "Rows in the last reply's menu.",
+                "type": "integer",
+                "minimum": 0
+              },
+              "staged": {
+                "description": "The last reply's staged.",
+                "type": "string"
+              },
+              "caps_lock": {
+                "description": "Whether the lock is on.",
+                "type": "boolean"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "mode",
+              "profile",
+              "menu_rows",
+              "caps_lock"
+            ]
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^(down|up):[A-Z][A-Za-z0-9]*$"
+            },
+            "minItems": 1
+          },
+          "expect": {
+            "description": "Everything that happens, in order. at: the index in keys of the press or release that causes it.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "then": {
+                  "description": "select: the harness sends select. action: it sends action. key: the key isn't the table's and is fed to the engine. type: the harness flushes and types text itself. pass: the app or the OS has the key. swallow: nothing. onboarding: the settings window opens on its onboarding.",
+                  "enum": [
+                    "select",
+                    "action",
+                    "key",
+                    "type",
+                    "pass",
+                    "swallow",
+                    "onboarding"
+                  ]
+                },
+                "binding": {
+                  "description": "The index of the binding that was chosen, in the table's bindings; null when none matched.",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "minimum": 0
+                },
+                "ran": {
+                  "description": "The action of its do list that ran; null when none applied.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "mode": {
+                  "enum": [
+                    "muhenkan",
+                    "henkan"
+                  ]
+                },
+                "profile": {
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z0-9-]{1,32}$"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "name": {
+                  "description": "For action: the name sent.",
+                  "type": "string"
+                },
+                "text": {
+                  "description": "For type: what is typed.",
+                  "type": "string"
+                },
+                "caps_lock": {
+                  "description": "The lock afterwards, when the press changes or could change it.",
+                  "type": "boolean"
+                },
+                "at": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "at",
+                "then",
+                "binding",
+                "ran"
+              ]
+            }
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "table",
+          "profiles",
+          "state",
+          "keys",
+          "expect"
+        ]
+      }
+    }
+  }
+}

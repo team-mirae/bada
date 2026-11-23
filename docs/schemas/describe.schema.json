@@ -1,0 +1,291 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bada-compatible v2: P_describe's answer",
+  "description": "What an engine says about itself before anything is loaded (the standard, §3.2).",
+  "type": "object",
+  "required": [
+    "abi",
+    "engine",
+    "events",
+    "features",
+    "keyboards",
+    "data",
+    "layouts",
+    "actions",
+    "settings"
+  ],
+  "properties": {
+    "abi": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "const": "bada-compatible"
+        },
+        "major": {
+          "const": 2
+        },
+        "minor": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "major",
+        "minor"
+      ]
+    },
+    "engine": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "description": "Reverse-DNS: com.teammirae.bada.",
+          "type": "string",
+          "pattern": "^[a-z0-9]+(\\.[a-z0-9-]+)+$"
+        },
+        "version": {
+          "description": "The engine's own version, not the standard's.",
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+([-+].+)?$"
+        },
+        "name": {
+          "description": "Text by language (BCP 47 tags). en is required.",
+          "type": "object",
+          "required": [
+            "en"
+          ],
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "id",
+        "version",
+        "name"
+      ]
+    },
+    "events": {
+      "description": "The event types the engine takes. key, select, flush, reset and state are required.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true,
+      "allOf": [
+        {
+          "contains": {
+            "const": "key"
+          }
+        },
+        {
+          "contains": {
+            "const": "select"
+          }
+        },
+        {
+          "contains": {
+            "const": "flush"
+          }
+        },
+        {
+          "contains": {
+            "const": "reset"
+          }
+        },
+        {
+          "contains": {
+            "const": "state"
+          }
+        }
+      ]
+    },
+    "features": {
+      "description": "segments, around, custom-layouts, rtl.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "keyboards": {
+      "description": "The keyboards its layouts are for.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "data": {
+      "description": "The named buffers the engine knows.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+          },
+          "required": {
+            "description": "false: without it, its feature is off.",
+            "type": "boolean"
+          },
+          "borrow": {
+            "description": "The engine can use the buffer in place when it is passed with P_BORROWED.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "name",
+          "required"
+        ]
+      }
+    },
+    "layouts": {
+      "description": "The layouts shipped with the engine.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+            "maxLength": 48
+          },
+          "name": {
+            "description": "Text by language (BCP 47 tags). en is required.",
+            "type": "object",
+            "required": [
+              "en"
+            ],
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "enum": [
+              "muhenkan",
+              "henkan"
+            ]
+          },
+          "lang": {
+            "type": "string",
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+          },
+          "read": {
+            "enum": [
+              "direct",
+              "hangul",
+              "table",
+              "kana",
+              "search"
+            ]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "label": {
+                  "description": "Text by language (BCP 47 tags). en is required.",
+                  "type": "object",
+                  "required": [
+                    "en"
+                  ],
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": true,
+              "required": [
+                "id",
+                "label"
+              ]
+            }
+          },
+          "options": {
+            "description": "The layout's options, as its file declares them.",
+            "type": "object"
+          },
+          "stock": {
+            "description": "One of the layouts shipped with the engine.",
+            "type": "boolean"
+          },
+          "modified": {
+            "description": "A stock layout that a custom layout of the same id replaces.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ]
+      }
+    },
+    "actions": {
+      "description": "The engine's own actions, apart from its layouts'.",
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)?$"
+      },
+      "uniqueItems": true
+    },
+    "settings": {
+      "type": "object",
+      "properties": {
+        "format": {
+          "const": "bada-settings/2"
+        },
+        "schema": {
+          "description": "A JSON Schema for the engine part of the settings file, with titles in en, ko and ja.",
+          "type": "object"
+        },
+        "defaults": {
+          "description": "The engine part of a new install.",
+          "type": "object"
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "format",
+        "schema",
+        "defaults"
+      ]
+    },
+    "limits": {
+      "type": "object",
+      "properties": {
+        "profiles": {
+          "description": "How many henkan profiles the engine takes: at least 32.",
+          "type": "integer",
+          "minimum": 32
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}
