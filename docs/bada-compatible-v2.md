@@ -708,7 +708,7 @@ conversions with its arguments.
 |---|---|---|
 | `kanji` | Kanji conversion of a kana reading | `data`: the dictionary; `rows`: conversions listed; `user_rows`: how far down the user's own words are looked for; `common`: a list of common words by reading, and its rows; `native`: the list of words written in kana; `notes`: `kana` rows carry their `romaji`, converted rows their `reading` |
 | `script` | The reading in another script, as negative entries when the profile has script forms on (§8) | `forms`: `[{"entry": -1, "to": "hiragana"}, {"entry": -2, "to": "katakana"}]` |
-| `width` | The reading in the other width, as a row, where it differs | `to`: `half` or `full` |
+| `width` | The reading with its letters, digits and symbols in the other width, as a row, where it differs; kana stay as they are | `to`: `half` or `full` |
 | `dictionary` | A dictionary lookup of the letters typed, when every staged key is a letter | `data`; `rows`; `first: false`: never the top row; `below_top`: how far under the top reading its rows start; `case`: which of the dictionary's lists by how the word was typed (`lower`, `mixed`, `upper`: `word`, `name`, `name-then-word`, `name-else-word`). Each row's note is the word as typed |
 
 #### 7.5.8 `actions`
@@ -1175,6 +1175,9 @@ On a Mac, the code-signing identifier must equal the bundle id, or macOS refuses
 connection and nothing types.
 
 ## 13. Conformance
+
+The checklist is also a program: `tools/conformance` loads any engine and replays transcripts on it,
+and `crates/compat/tests/conformance.rs` runs the engine's part through the C ABI.
 
 **An engine**
 

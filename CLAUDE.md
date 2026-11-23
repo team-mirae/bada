@@ -2,8 +2,9 @@
 
 A new input method by Mirae Research: one engine (Rust), a harness per platform (macOS, Windows,
 Linux, web) and a command line, in one repository, `team-mirae/bada`. The *engine* turns keys into
-text; a *harness* is the platform program around it. Nothing is built yet: the repository holds the
-standard, its schemas, the stock layout files and the key-table cases.
+text; a *harness* is the platform program around it. So far the repository holds the standard, its
+schemas, the stock layout files, the key-table cases and the contract layer (`crates/compat`); the
+engine and the harnesses are not written yet (`docs/design.md` §13 has the order of work).
 
 ## Read first
 
@@ -50,7 +51,14 @@ uv run tools/validate/validate.py
 ```
 
 Run it after any change to `docs/schemas/`, `engine/layouts/` or `docs/cases/`. It checks shapes and
-references; it runs no engine. When the key table's rules change (the standard's §9), the cases in
+references; it runs no engine. For the code:
+
+```sh
+cargo test --workspace
+cargo clippy --workspace --all-targets
+```
+
+`tools/conformance` replays transcripts on a built engine (its README has the command). When the key table's rules change (the standard's §9), the cases in
 `docs/cases/key-table.json` change with them.
 
 ## Writing

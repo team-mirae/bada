@@ -1,0 +1,27 @@
+{"transcript": "bada-transcript/1", "name": "what every engine answers, whatever it types"}
+{"describe": {"abi": {"name": "bada-compatible", "major": 2}}}
+{"init": {"harness": {"id": "com.teammirae.bada.conformance", "version": "0.1.0", "features": []}}}
+{"new": "a"}
+{"note": "before its first select an engine is in muhenkan with no profile"}
+{"to": "a", "send": {"type": "state"}, "expect": {"ok": true, "mode": null, "profile": null, "commit": "", "staged": "", "preedit": {"text": ""}}}
+{"to": "a", "send": {"type": "select", "mode": "muhenkan", "profile": null}, "expect": {"ok": true, "mode": "muhenkan", "commit": ""}}
+{"to": "a", "send": {"type": "flush"}, "expect": {"ok": true, "commit": "", "staged": "", "preedit": {"text": ""}}}
+{"to": "a", "send": {"type": "reset"}, "expect": {"ok": true, "commit": "", "staged": ""}}
+{"note": "what is wrong is refused, with its code"}
+{"to": "a", "send_raw": "{", "expect": {"ok": false, "error": {"code": "bad-json"}}}
+{"to": "a", "send_raw": "null", "expect": {"ok": false, "error": {"code": "bad-json"}}}
+{"to": "a", "send": {"shift": true}, "expect": {"ok": false, "error": {"code": "bad-event"}}}
+{"to": "a", "send": {"type": "key"}, "expect": {"ok": false, "error": {"code": "bad-event"}}}
+{"to": "a", "send": {"type": "select", "mode": "henkan"}, "expect": {"ok": false, "error": {"code": "bad-event"}}}
+{"to": "a", "send": {"type": "focus"}, "expect": {"ok": false, "error": {"code": "unknown-event"}}}
+{"send": {"type": "key", "key": "KeyA"}, "expect": {"ok": false, "error": {"code": "needs-engine"}}}
+{"send": {"type": "state"}, "expect": {"ok": false, "error": {"code": "needs-engine"}}}
+{"note": "and changed nothing"}
+{"to": "a", "send": {"type": "state"}, "expect": {"ok": true, "mode": "muhenkan", "staged": "", "preedit": {"text": ""}}}
+{"note": "a key the engine has never heard of is passed on"}
+{"to": "a", "send": {"type": "key", "key": "NoSuchKey"}, "expect": {"ok": true, "consumed": false, "commit": ""}}
+{"note": "two fields of one session don't share what is staged"}
+{"new": "b"}
+{"to": "b", "send": {"type": "state"}, "expect": {"ok": true, "mode": null, "staged": ""}}
+{"free": "b"}
+{"free": "a"}

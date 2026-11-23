@@ -1,0 +1,45 @@
+{"transcript": "bada-transcript/1", "name": "shout, the contract layer's example engine"}
+{"describe": {"engine": {"id": "com.teammirae.shout"}, "features": ["segments"], "actions": ["menu.next", "menu.prev", "fix", "shout"]}}
+{"init": {"harness": {"id": "com.teammirae.bada.conformance", "version": "0.1.0", "features": ["segments", "pick"]}, "settings": {"henkan": {"profiles": [{"id": "main", "name": "Main"}, {"id": "other", "name": "Other"}]}}}}
+{"new": "a"}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "nobody"}, "expect": {"ok": false, "error": {"code": "unknown-profile"}}}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "main"}, "expect": {"ok": true, "mode": "henkan", "profile": "main"}}
+{"note": "letters compose as capitals, with a menu of their forms"}
+{"to": "a", "send": {"type": "key", "key": "KeyA"}, "expect": {"consumed": true, "preedit": {"text": "A", "caret": 1, "segments": [{"len": 1, "kind": "live"}]}, "staged": "A"}}
+{"to": "a", "send": {"type": "key", "key": "KeyB"}, "expect": {"consumed": true, "preedit": {"text": "AB"}, "menu": {"rows": [{"text": "AB", "entry": 0}, {"text": "ab", "entry": 1}], "selected": 0, "strip": false}}}
+{"to": "a", "send": {"type": "action", "name": "menu.next"}, "expect": {"preedit": {"text": "ab", "segments": [{"len": 2, "kind": "picked"}]}, "menu": {"selected": 1}, "staged": "ab"}}
+{"to": "a", "send": {"type": "action", "name": "menu.next"}, "expect": {"menu": {"selected": 1}, "staged": "ab"}}
+{"to": "a", "send": {"type": "action", "name": "menu.prev"}, "expect": {"menu": {"selected": 0}, "staged": "AB"}}
+{"to": "a", "send": {"type": "pick", "row": 1}, "expect": {"menu": {"selected": 1}, "staged": "ab", "commit": ""}}
+{"to": "a", "send": {"type": "pick", "row": 5}, "expect": {"ok": false, "error": {"code": "bad-row"}}}
+{"to": "a", "send": {"type": "action", "name": "fix"}, "expect": {"ok": true, "consumed": true, "staged": "ab"}}
+{"to": "a", "send": {"type": "action", "name": "shout.whisper"}, "expect": {"ok": false, "error": {"code": "unknown-action"}}}
+{"note": "commit, then act: Space commits what shows and goes to the app"}
+{"to": "a", "send": {"type": "key", "key": "Space"}, "expect": {"commit": "ab", "consumed": false, "preedit": {"text": ""}, "menu": {"rows": []}, "staged": ""}}
+{"note": "Backspace takes a letter back; shift+Enter commits and does nothing else"}
+{"to": "a", "send": {"type": "key", "key": "KeyH"}}
+{"to": "a", "send": {"type": "key", "key": "KeyI"}}
+{"to": "a", "send": {"type": "key", "key": "KeyX"}, "expect": {"preedit": {"text": "HIX"}}}
+{"to": "a", "send": {"type": "key", "key": "Backspace"}, "expect": {"consumed": true, "preedit": {"text": "HI"}}}
+{"to": "a", "send": {"type": "key", "key": "Enter", "shift": true}, "expect": {"commit": "HI", "consumed": true, "preedit": {"text": ""}}}
+{"note": "a shortcut commits and passes on"}
+{"to": "a", "send": {"type": "key", "key": "KeyQ"}}
+{"to": "a", "send": {"type": "key", "key": "KeyC", "meta": true}, "expect": {"commit": "Q", "consumed": false}}
+{"note": "another profile commits what is staged; the same one changes nothing"}
+{"to": "a", "send": {"type": "key", "key": "KeyW"}}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "main"}, "expect": {"commit": "", "preedit": {"text": "W"}}}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "other"}, "expect": {"commit": "W", "preedit": {"text": ""}, "profile": "other"}}
+{"note": "the settings are the session's: every field sees a change"}
+{"send": {"type": "settings", "patch": {"forms": ["title", "upper"]}}, "expect": {"ok": true, "settings": {"forms": ["title", "upper"]}, "problems": []}}
+{"to": "a", "send": {"type": "key", "key": "KeyO"}}
+{"to": "a", "send": {"type": "key", "key": "KeyK"}, "expect": {"preedit": {"text": "Ok"}, "menu": {"rows": [{"text": "Ok"}, {"text": "OK"}]}}}
+{"to": "a", "send": {"type": "reset"}, "expect": {"commit": "", "preedit": {"text": ""}, "staged": ""}}
+{"send": {"type": "settings", "set": {"forms": []}}, "expect": {"ok": false, "error": {"code": "invalid"}, "problems": [{"path": "forms", "code": "bad-value", "level": "error"}], "settings": {"forms": ["title", "upper"]}}}
+{"send": {"type": "settings"}, "expect": {"ok": true, "settings": {"forms": ["title", "upper"]}, "problems": [{"code": "bad-value"}]}}
+{"send": {"type": "layout"}, "expect": {"ok": false, "error": {"code": "unknown-event"}}}
+{"note": "muhenkan passes keys on; the shout action asks for the selection"}
+{"to": "a", "send": {"type": "select", "mode": "muhenkan", "profile": "other"}, "expect": {"mode": "muhenkan", "profile": "other"}}
+{"to": "a", "send": {"type": "key", "key": "KeyA"}, "expect": {"consumed": false, "types": null, "preedit": {"text": ""}}}
+{"to": "a", "send": {"type": "action", "name": "shout"}, "expect": {"consumed": true, "ask": {"selection": "shout"}}}
+{"to": "a", "send": {"type": "text", "selection": "quiet"}, "expect": {"commit": "QUIET", "replace": "selection", "ask": null}}
+{"free": "a"}

@@ -6,7 +6,8 @@ bada (바다, バダ) is an input method by Mirae Research for Korean, Japanese 
 keyboards: one engine, a harness for each platform, and a command line. It is the next generation of
 [bada ime](https://github.com/team-mirae/bada-ime), which stays as it is.
 
-**Nothing is built yet.** Version 0.1.0 is the standard and the files the code will be written from.
+**It is being built.** Version 0.1.0 so far is the standard, the contract layer and an engine that
+types every layout from its file; the harnesses are in progress, and no release exists.
 
 ## What is here
 
@@ -19,8 +20,10 @@ keyboards: one engine, a harness for each platform, and a command line. It is th
 | [docs/layouts.html](docs/layouts.html) | The typing layouts, drawn on a JIS keyboard |
 | [docs/reference/](docs/reference/) | bada-compatible v1, bada ime's spec and layout pages, and the user dictionary's contract |
 | [engine/layouts/](engine/layouts/) | The eleven stock layouts, each a `bada-layout/2` file |
-| `engine/`, `crates/compat/`, `cli/`, `harness/`, `settings/` | Where the engine, the contract layer, the command line, the four harnesses and the settings page will live |
-| [tools/](tools/) | The validator, and the script that draws the layouts page |
+| [crates/compat/](crates/compat/) | The contract layer (Rust): the standard's types, the C ABI, the session and the panic guard, with an example engine |
+| [engine/](engine/) | The engine (Rust), with its data |
+| `cli/`, `harness/`, `settings/` | Where the command line, the four harnesses and the settings page will live |
+| [tools/](tools/) | The validator, the conformance runner, and the script that draws the layouts page |
 
 ## Checking
 
@@ -28,7 +31,14 @@ keyboards: one engine, a harness for each platform, and a command line. It is th
 uv run tools/validate/validate.py
 ```
 
-checks every schema, example, stock layout and case. To redraw the layouts page:
+checks every schema, example, stock layout and case, and
+
+```sh
+cargo test --workspace
+```
+
+runs the contract layer's tests. [tools/conformance](tools/conformance/) replays transcripts on a built
+engine. To redraw the layouts page:
 
 ```sh
 python3 -I tools/layouts-page/make_layouts_page.py docs/reference/layouts docs/layouts.html tools/layouts-page/layouts_template.html

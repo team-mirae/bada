@@ -1,0 +1,74 @@
+{"transcript": "bada-transcript/1", "name": "bada: every layout types, with no data loaded"}
+{"describe": {"engine": {"id": "com.teammirae.bada"}, "keyboards": ["jis"], "actions": ["menu.next", "menu.prev", "fix", "width.full", "width.half"]}}
+{"init": {"harness": {"id": "com.teammirae.bada.conformance", "version": "0.1.0", "features": ["segments", "pick"]}, "settings": {"muhenkan": {"layout": "en-qwerty"}, "henkan": {"profiles": [{"id": "ko", "name": "한국어", "layouts": ["ko-2-set"]}, {"id": "roman", "name": "roman", "layouts": ["ko-bada-roman"]}, {"id": "ja", "name": "日本語", "layouts": ["ja-romaji"], "script_forms": true}, {"id": "kana", "name": "かな", "layouts": ["ja-kana"], "fkeys": {"keys": {"F7": "ja-kana.katakana"}}}, {"id": "work", "name": "work", "layouts": ["ko-2-set", "en-qwerty"]}, {"id": "sym", "name": "symbols", "layouts": ["uni-symbols", "uni-emojis"]}]}}}}
+{"send": {"type": "settings"}, "expect": {"ok": true, "problems": []}}
+{"new": "a"}
+{"note": "muhenkan: the engine says what each key types, by the JIS table"}
+{"to": "a", "send": {"type": "select", "mode": "muhenkan", "profile": null}, "expect": {"ok": true, "mode": "muhenkan"}}
+{"to": "a", "send": {"type": "key", "key": "KeyA"}, "expect": {"consumed": false, "types": "a"}}
+{"to": "a", "send": {"type": "key", "key": "IntlRo"}, "expect": {"consumed": false, "types": "\\"}}
+{"to": "a", "send": {"type": "key", "key": "IntlRo", "shift": true}, "expect": {"consumed": false, "types": "_"}}
+{"to": "a", "send": {"type": "key", "key": "Digit0", "shift": true}, "expect": {"consumed": true, "types": null}}
+{"to": "a", "send": {"type": "key", "key": "KeyC", "meta": true}, "expect": {"consumed": false, "types": null}}
+{"to": "a", "send": {"type": "key", "key": "KeyE", "alt": true}, "expect": {"consumed": true, "preedit": {"text": "e"}, "menu": {"strip": true, "selected": null}, "staged": "e"}}
+{"to": "a", "send": {"type": "key", "key": "Digit2"}, "expect": {"commit": "é", "consumed": true, "menu": {"rows": []}}}
+{"note": "Korean 2-set: 한국어, then Space commits and goes to the app"}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "ko"}, "expect": {"ok": true, "mode": "henkan", "profile": "ko"}}
+{"to": "a", "send": {"type": "key", "key": "KeyG"}, "expect": {"consumed": true, "preedit": {"text": "ㅎ"}}}
+{"to": "a", "send": {"type": "key", "key": "KeyK"}, "expect": {"preedit": {"text": "하"}}}
+{"to": "a", "send": {"type": "key", "key": "KeyS"}, "expect": {"preedit": {"text": "한", "caret": 1, "segments": [{"len": 1, "kind": "live"}]}, "staged": "한"}}
+{"to": "a", "send": {"type": "key", "key": "KeyR"}}
+{"to": "a", "send": {"type": "key", "key": "KeyN"}}
+{"to": "a", "send": {"type": "key", "key": "KeyR"}, "expect": {"preedit": {"text": "한국"}}}
+{"to": "a", "send": {"type": "key", "key": "Space"}, "expect": {"commit": "한국", "consumed": false, "preedit": {"text": ""}, "staged": ""}}
+{"to": "a", "send": {"type": "key", "key": "IntlYen"}, "expect": {"preedit": {"text": "₩"}}}
+{"to": "a", "send": {"type": "flush", "cause": "blur"}, "expect": {"commit": "₩", "staged": ""}}
+{"note": "bada roman: text ends the word"}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "roman"}, "expect": {"profile": "roman"}}
+{"to": "a", "send": {"type": "key", "key": "KeyH"}}
+{"to": "a", "send": {"type": "key", "key": "KeyA"}}
+{"to": "a", "send": {"type": "key", "key": "KeyN"}, "expect": {"preedit": {"text": "한"}}}
+{"to": "a", "send": {"type": "key", "key": "Period"}, "expect": {"commit": "한.", "consumed": true, "preedit": {"text": ""}}}
+{"note": "romaji, with script forms: -1 hiragana, -2 katakana; fix keeps what shows"}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "ja"}}
+{"to": "a", "send": {"type": "key", "key": "KeyK"}, "expect": {"preedit": {"text": "k"}}}
+{"to": "a", "send": {"type": "key", "key": "KeyA"}, "expect": {"preedit": {"text": "か"}, "menu": {"rows": [{"text": "カ", "entry": -2}, {"text": "か", "entry": -1}, {"text": "か", "entry": 0, "lang": "ja", "layout": "ja-romaji"}], "selected": 2}}}
+{"to": "a", "send": {"type": "action", "name": "menu.prev"}, "expect": {"menu": {"selected": 1}}}
+{"to": "a", "send": {"type": "action", "name": "menu.prev"}, "expect": {"preedit": {"text": "カ", "segments": [{"len": 1, "kind": "picked"}]}, "menu": {"selected": 0}, "staged": "カ"}}
+{"to": "a", "send": {"type": "action", "name": "menu.next"}}
+{"to": "a", "send": {"type": "action", "name": "menu.next"}, "expect": {"menu": {"selected": 2}, "staged": "か"}}
+{"to": "a", "send": {"type": "action", "name": "fix"}, "expect": {"consumed": true, "commit": "", "preedit": {"text": "か", "segments": [{"len": 1, "kind": "fixed"}]}, "staged": "か"}}
+{"to": "a", "send": {"type": "key", "key": "KeyN"}, "expect": {"preedit": {"text": "かん", "segments": [{"len": 1, "kind": "fixed"}, {"len": 1, "kind": "live"}]}}}
+{"to": "a", "send": {"type": "action", "name": "width.full"}, "expect": {"preedit": {"text": "かん"}, "ask": null}}
+{"to": "a", "send": {"type": "reset"}, "expect": {"commit": "", "preedit": {"text": ""}, "staged": ""}}
+{"to": "a", "send": {"type": "action", "name": "width.full"}, "expect": {"consumed": true, "ask": {"selection": "full"}}}
+{"to": "a", "send": {"type": "text", "selection": "abc"}, "expect": {"commit": "ａｂｃ", "replace": "selection"}}
+{"note": "JIS kana: a mark attaches; F7 is this profile's katakana"}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "kana"}}
+{"to": "a", "send": {"type": "key", "key": "KeyT"}, "expect": {"preedit": {"text": "か"}}}
+{"to": "a", "send": {"type": "key", "key": "BracketLeft"}, "expect": {"preedit": {"text": "が"}}}
+{"to": "a", "send": {"type": "key", "key": "F7"}, "expect": {"consumed": true, "preedit": {"text": "ガ"}}}
+{"to": "a", "send": {"type": "action", "name": "ja-romaji.katakana"}, "expect": {"ok": false, "error": {"code": "unknown-action"}}}
+{"to": "a", "send": {"type": "key", "key": "Enter"}, "expect": {"commit": "ガ", "consumed": false}}
+{"note": "two layouts in a profile: a menu of both readings; a picked row is fixed by typing on"}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "work"}}
+{"to": "a", "send": {"type": "key", "key": "KeyG"}}
+{"to": "a", "send": {"type": "key", "key": "KeyK"}, "expect": {"preedit": {"text": "하"}, "menu": {"rows": [{"text": "하", "layout": "ko-2-set", "lang": "ko"}, {"text": "gk", "layout": "en-qwerty", "lang": "en"}], "selected": 0}}}
+{"to": "a", "send": {"type": "pick", "row": 1}, "expect": {"preedit": {"text": "gk"}, "menu": {"selected": 1}, "commit": ""}}
+{"to": "a", "send": {"type": "key", "key": "KeyS"}, "expect": {"preedit": {"text": "gks", "segments": [{"len": 2, "kind": "fixed"}, {"len": 1, "kind": "picked"}]}}}
+{"to": "a", "send": {"type": "pick", "row": 7}, "expect": {"ok": false, "error": {"code": "bad-row"}}}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "sym"}, "expect": {"commit": "gks", "profile": "sym"}}
+{"note": "search layouts: Space is part of the search"}
+{"to": "a", "send": {"type": "key", "key": "KeyA"}}
+{"to": "a", "send": {"type": "key", "key": "Space"}, "expect": {"consumed": true, "preedit": {"text": "a "}}}
+{"to": "a", "send": {"type": "key", "key": "Space", "shift": true}, "expect": {"commit": "a ", "consumed": false}}
+{"note": "a custom layout replaces a stock one for the session, and is listed as modified"}
+{"send": {"type": "layout"}, "expect": {"ok": true, "problems": []}}
+{"send": {"type": "layout", "id": "ko-nothing", "value": null}, "expect": {"ok": false, "error": {"code": "invalid"}}}
+{"send": {"type": "settings", "set": {"muhenkan": {"layout": "ko-2-set"}}}, "expect": {"ok": false, "problems": [{"path": "muhenkan.layout", "code": "not-muhenkan", "level": "error"}]}}
+{"send": {"type": "settings", "patch": {"henkan": {"profiles": []}}}, "expect": {"ok": true, "settings": {"henkan": {"profiles": []}}}}
+{"note": "the field's profile is gone: no-profile until a select"}
+{"to": "a", "send": {"type": "key", "key": "KeyA"}, "expect": {"ok": false, "error": {"code": "no-profile"}}}
+{"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "ko"}, "expect": {"ok": false, "error": {"code": "no-profile"}}}
+{"to": "a", "send": {"type": "select", "mode": "muhenkan", "profile": null}, "expect": {"ok": true, "mode": "muhenkan", "profile": null}}
+{"free": "a"}

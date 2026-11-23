@@ -1,0 +1,20 @@
+[package]
+name = "bada-compat"
+description = "The contract layer of bada-compatible v2: its types, the C ABI, the session and the panic guard."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
+serde_json.workspace = true
+
+# shout: a small engine written on this layer, for its tests and as the conformance runner's first
+# engine (`cargo build -p bada-compat --example shout` builds the library).
+[[example]]
+name = "shout"
+crate-type = ["cdylib"]
