@@ -210,6 +210,7 @@ keyboard is **JIS** (日本語配列).
   engine the result: a `select`, an `action`, or nothing.
 - An engine **must** accept any string as a key's code; a code it doesn't know is a key it doesn't
   handle: it commits what's staged if that's its rule, with `consumed: false` (as v1).
+- The keypad's Enter is sent as `Enter`.
 
 ## 5. Events
 
@@ -262,7 +263,7 @@ An engine ignores fields it doesn't know in an event whose type it knows. An unk
   selected: around that text). A `text` event nobody asked for changes nothing.
 - **`flush`**: commits what's staged, as when the field loses focus; afterwards nothing is staged.
   `cause` says why: `blur`, `click` (a click in the text), `edit` (the app changed the text) or
-  `harness` (the default).
+  `harness` (the default, and what a harness sends when its platform doesn't say which).
 - **`reset`**: drops what's staged. Nothing is committed.
 - **`state`**: changes nothing; the reply is the last one again, with `commit` empty.
 - **`settings`**, **`layout`**, **`dictionary`**: the session's events (§6.6, §7.6, §8, §11).
@@ -331,7 +332,8 @@ With these fields the last reply **is** the engine's state: v1's second call per
 | `invalid` | A `settings`, `layout` or `dictionary` event had an error-level problem (§6.6) |
 | `panic` | The engine caught a panic. **It has reset itself**: nothing is staged. The harness deletes the marked text and closes the menu |
 
-A harness that gets a code it doesn't know treats it as `bad-event`.
+A harness that gets a code it doesn't know treats it as `bad-event`. **A refused `key` event is
+swallowed**: nothing changed, and the app doesn't get the key either.
 
 ### 6.3 Applying a reply
 
@@ -359,7 +361,7 @@ apply(r):
 press(event):
   if the key table takes the press (§9): done
   r = P_send(the key event); apply(r)
-  if not r.consumed: the app gets the key (§6.4)
+  if r.ok and not r.consumed: the app gets the key (§6.4)
 ```
 
 So **commit, then act** (Space, Enter, Esc with a preedit) is one reply with `commit` set and
@@ -401,7 +403,7 @@ fields but `ok` and `error`. They have their own:
 | `settings` | `settings` | The `engine` part in effect |
 | `layouts` | `layout` | The session's layouts, stock and custom, in the shape of `P_describe.layouts`, with `stock` and `modified` as they are now |
 | `dictionary` | `dictionary` | The summary of what is loaded: `{"positive": n, "negative": n}` |
-| `problems` | all three | `[{path, code, message, level}]`: what was wrong, and where |
+| `problems` | all three | `[{path, code, message, level}]`: what was wrong, and where: `path` is into what the event carried (for `settings`, the `engine` part: `henkan.profiles[1].layouts[0]`) |
 
 - A problem's `level` is `error` or `warning`. **An error-level problem changes nothing**: the reply
   is `ok: false` with `invalid`, and what was in effect stays in effect. A warning is taken, and
@@ -442,7 +444,10 @@ Under v1's rules (§12.1), which stand:
 - The harness publishes after every reply to a text field's event, and when mode, profile, focus or
   Caps Lock change; only when the JSON changed.
 - `harness.keys` says what the harness can detect now (§9.3), and `harness.problems` what was wrong
-  with the settings, layouts and dictionary it last read (§6.6), for the settings page to show.
+  with the settings, layouts and dictionary it last read, for the settings page to show: the
+  engine's problems (§6.6) and the harness's own for `keys`, each with its file and with `path` into
+  that file (`{file, path, code, message, level}`; `file` is `settings.json`, `layouts/<name>.json`
+  or `dictionary.json`).
 - The channel is the harness's, one the platform's scripting tools can read without a plugin; bada's
   are named in §12.
 
@@ -699,6 +704,7 @@ results, each with a note. The search is the text of the staged slots, letters i
 | `sources[].order` | Within a tier: `data` (the buffer's order) or `shortest` (the shorter first column first) |
 | `sources[].note` | The row's note: `name`, or `code` (`U+XXXX` and the name) |
 | `sources[].single` | A column of characters: a search of one character lists the entries that have it there, and nothing else |
+| `sources[].forms` | With `single`: a letter or digit that no entry lists offers its other forms: full-width and circled, and a digit's superscript, subscript and roman numeral |
 | `sources[].tones` | The option that orders an emoji's skin tones; a tone left out isn't offered |
 | `code` | A character by its code: up to `max_digits` hex digits, after one of `after`, or after one of `digit_first_after` when the first digit is 0–9 |
 | `min_length` | The shortest search that looks names up |
@@ -786,6 +792,7 @@ its `default`, and a `title` and optional `hint` by language. The engine reports
   | `unknown-key` | error | A key code that isn't one of the 48 or `Space` |
   | `bad-role` | error | A role its way of reading doesn't have |
   | `contradiction` | error | A table that contradicts itself: `kind` and `read` that disagree, a part for another way of reading, a spelling that can never be typed, an option used but not declared |
+  | `in-use` | warning | The settings in effect name the layout, and it is gone, or replaced by one they can't use there. The layout goes all the same; the settings stay in effect without it, and now have a problem of their own (§6.6) |
   | `unknown-data` | warning | It names a buffer the engine wasn't given: that feature is off |
   | `stock-modified` | warning | It replaces a stock layout (§7.7) |
   | `no-model` | warning | Its id has no key model (§7.7) |
@@ -861,7 +868,8 @@ below is bada's; another engine publishes its own in `P_describe.settings.schema
 - **No links.** A profile the user doesn't want doesn't exist.
 - **An unknown id is an error** (`unknown-profile`, `unknown-layout`), in `select` and in the
   settings alike: nothing falls back to another profile.
-- **Where the user sees it.** The OS still gets exactly two input sources, one for each mode.
+- **Where the user sees it.** The OS gets exactly two input sources, one for each mode, where it
+  has an input source per mode (macOS); elsewhere one input method holds both modes.
   Profiles are inside henkan: the harness's input menu lists `henkan.profiles` by `name`, and
   replies echo `profile`, for an indicator. A harness that keeps the mode across processes stores
   the id string, never an index.
@@ -932,7 +940,8 @@ keys as W3C codes so a file moves between platforms:
   binding holds only then. **The most specific binding that holds wins** (a profile's, then a
   mode's, then one with no `when`); among equals, the later one in the list.
 - **`do`**: a list, and **the first action that applies runs** (§9.2). If none applies the key is swallowed. A binding
-  runs once for each press: the repeats of a held key that has a binding are swallowed.
+  runs once for each press: the repeats of a held key that has a binding are swallowed, but for a key that was passed on
+  (`pass`), whose repeats pass too.
 - **`cycle`**: the profiles `profile.next` and `profile.prev` go through, in order. One it names
   that the settings don't have is skipped.
 - **`henkan_enters`**: the profile that `mode:henkan` and the toggle enter: `"last"`, the one last
@@ -1018,7 +1027,8 @@ other key was pressed in between.
 
 ### 9.4 Caps Lock
 
-Bound to anything, Caps Lock stops being Caps Lock: its binding runs and the lock doesn't change.
+Bound to anything, Caps Lock stops being Caps Lock: its binding runs and the lock doesn't change
+(but `pass`, which gives the key back: it is the lock again).
 ⇧, ⌃, ⌥ or ⌘ with Caps Lock are other chords, with bindings of their own or none. Unbound, the key
 is the lock, and two settings say what the lock does, as v1 (§7.7):
 
@@ -1036,8 +1046,8 @@ is the lock, and two settings say what the lock does, as v1 (§7.7):
 
 Defaults come with the keyboard, so nothing in the standard is "home". A settings file with no
 `keys.bindings` gets its keyboard's preset; one that has them, an empty list included, is used as
-it is. A harness that can't tell which keyboard it has lets the user choose, and keeps the choice in
-its own part of the settings. The other fields
+it is. A harness that can't tell which keyboard it has lets the user choose, and keeps the choice in its
+own part of the settings as `keyboard`: `auto`, `jis-mac`, `jis-pc` or `none` (no language keys). The other fields
 default to `"cycle": []`, `"henkan_enters": "last"`, `"caps_lock": "respect"`, `"caps_rule": "allcaps"`.
 
 **JIS on a Mac**: v1's behaviour, key for key.
@@ -1104,8 +1114,12 @@ Every platform has the same folder (`~/Library/Application Support/bada`, `%APPD
 - **The running input method watches the folder and reloads.** The settings page and the command
   line write files (a temporary file, then a rename) and never talk to it directly. So an input
   method that isn't running can still be set up, and nothing needs a socket.
-- A file that can't be used changes nothing (§8.2): the harness keeps what it had, and publishes the
-  problems (§6.7).
+- A file that can't be used changes nothing (§8.2): the harness keeps what it had, and publishes
+  the problems (§6.7). `settings.json` is one unit: an error in any of its three parts, and none of
+  it is taken. The harness checks `keys` itself, with the engine's codes (`bad-value`, `unknown-field`,
+  `unknown-action`: errors). A binding, `cycle` or `henkan_enters` that names a profile the settings
+  don't have is only a warning (`unknown-profile`): that action doesn't apply (§9.2), and the file
+  is still taken. A file that isn't JSON is `bad-json`.
 - **One settings page** serves every harness, driven by two schemas: `P_describe`'s
   `settings.schema` for the `engine` part, and this standard's for `keys`.
 
@@ -1172,8 +1186,8 @@ other's files.
 | macOS bundle | `com.teammirae.inputmethod.Bada` (`inputmethod` must be in the id) |
 | macOS modes | `com.teammirae.inputmethod.Bada.Muhenkan`, `.Henkan` |
 | macOS connection, keylayouts, login agent | `com.teammirae.inputmethod.Bada_Connection`, `.keylayout.*`, `.login` |
-| macOS state notification | `com.teammirae.inputmethod.Bada.state` |
-| Linux D-Bus | `com.teammirae.Bada.State` at `/com/teammirae/Bada` |
+| macOS state | The file `~/Library/Application Support/bada/state.json`, and the distributed notification `com.teammirae.inputmethod.Bada.state` |
+| Linux state | The file `$XDG_RUNTIME_DIR/bada/state.json`, and the D-Bus signal `Changed(s)` of the interface `com.teammirae.Bada.State` at `/com/teammirae/Bada`, with the JSON |
 | IBus component | `com.teammirae.Bada` |
 | Windows CLSID and profile GUID | New ones |
 | Windows registry | Registration only (TSF needs it); settings are files (§10.1) |

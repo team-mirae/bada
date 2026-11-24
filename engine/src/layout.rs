@@ -266,6 +266,8 @@ pub struct Source {
     pub note: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub single: Option<String>,
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub forms: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tones: Option<String>,
 }

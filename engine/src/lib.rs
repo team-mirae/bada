@@ -4,9 +4,8 @@
 //! It is exported with `bada-compat`, like any engine: the C functions are `bada_describe`,
 //! `bada_data_new`, `bada_session_new`, `bada_new`, `bada_send` and their `_free`s.
 //!
-//! **What this build does not do yet**: it reads the word lists and the user dictionary, but no
-//! other data. So no kanji is converted, a search finds nothing, and layouts in one profile are
-//! ranked by their `rank` scores alone, with no key models. What the keys type, in every layout,
+//! **What this build does not do yet**: bada roman's ranking, shortcuts and English-Korean
+//! dictionary, hanja lookup, and a word with its particle. What the keys type, in every layout,
 //! is all here.
 
 pub mod data;
@@ -18,6 +17,7 @@ pub mod layout;
 pub mod read;
 pub mod romaji;
 pub mod script;
+pub mod search;
 pub mod session;
 pub mod width;
 

@@ -199,7 +199,7 @@ await test("Caps Lock is the page's: capitals of what the engine types, and UPPE
   assert.equal(h.caps, false, "and in henkan the key does nothing");
   assert.deepEqual(h.published().harness.caps_lock, { on: false, setting: "transient", rule: "upper_snake" });
   // Bound, Caps Lock is no lock: the preset of a keyboard with no language keys.
-  const none = await page(new Memory({ [S.STORE.settings]: S.print(S.withOwn(JSON.parse(two()), "preset", "none")) }));
+  const none = await page(new Memory({ [S.STORE.settings]: S.print(S.withOwn(JSON.parse(two()), "keyboard", "none")) }));
   tap(none.h, "CapsLock");
   assert.deepEqual([none.h.mode, none.h.profile, none.h.caps, none.h.table.preset], ["henkan", "main", false, "none"]);
 });
@@ -215,10 +215,10 @@ await test("the preset follows the platform, then the language keys the page see
   assert.deepEqual([pc.h.table.preset, pc.h.mode, pc.storage.getItem(S.STORE.seen)], ["jis-mac", "henkan", "jis-mac"]);
   assert.ok(pc.h.published().harness.keys.available.includes("Lang1"));
   // The user's own choice stands, whatever is seen.
-  assert.equal(pc.h.setOwn("preset", "jis-pc").ok, true);
+  assert.equal(pc.h.setOwn("keyboard", "jis-pc").ok, true);
   tap(pc.h, "Lang2");
   assert.deepEqual([pc.h.table.preset, pc.h.mode], ["jis-pc", "henkan"], "英数 has no binding in that preset");
-  assert.equal(JSON.parse(pc.storage.getItem(S.STORE.settings)).harness[S.WEB].preset, "jis-pc");
+  assert.equal(JSON.parse(pc.storage.getItem(S.STORE.settings)).harness[S.WEB].keyboard, "jis-pc");
 });
 
 await test("settings: nothing wrong is taken silently, and what is wrong changes nothing", async () => {
@@ -238,7 +238,7 @@ await test("settings: nothing wrong is taken silently, and what is wrong changes
     [false, "error keys.caps_lock bad-value", "error engine.muhenkan.layout not-muhenkan"], "every part's problems show at once");
   assert.equal(storage.getItem(S.STORE.settings), kept, "what is kept is the last good file");
   assert.deepEqual(h.profiles.map(p => p.id), ["main", "ja", "work"]);
-  assert.equal(h.published().harness.problems[0].in, "settings", "the problems are in the published state");
+  assert.equal(h.published().harness.problems[0].file, "settings.json", "the problems are in the published state");
   // A dry check changes nothing either, right or wrong.
   const dry = h.loadSettings(file(f => { f.engine.henkan.profiles = []; }), false, true);
   assert.deepEqual([dry.ok, h.profiles.length, storage.getItem(S.STORE.settings) === kept], [true, 3, true]);

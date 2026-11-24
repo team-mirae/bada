@@ -245,7 +245,7 @@
         "type": "object",
         "properties": {
           "path": {
-            "description": "Where, as a path into what was sent (engine.henkan.profiles[1].layouts[0]).",
+            "description": "Where, as a path into what the event carried (henkan.profiles[1].layouts[0]).",
             "type": "string"
           },
           "code": {

@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The Makefile writes build/Info.plist from this: the version is the repository's VERSION file,
+     and the KLINFO line becomes the keylayouts' entries (tools/make-keylayout.swift). -->
+<plist version="1.0">
+<dict>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>en</string>
+	<key>CFBundleDisplayName</key>
+	<string>bada</string>
+	<key>CFBundleExecutable</key>
+	<string>Bada</string>
+	<key>CFBundleIdentifier</key>
+	<string>com.teammirae.inputmethod.Bada</string>
+	<key>CFBundleName</key>
+	<string>bada</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>@VERSION@</string>
+	<key>CFBundleVersion</key>
+	<string>@VERSION@</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Mirae Research</string>
+	<key>InputMethodConnectionName</key>
+	<string>com.teammirae.inputmethod.Bada_Connection</string>
+	<key>InputMethodServerControllerClass</key>
+	<string>BadaInputController</string>
+	<key>InputMethodServerDelegateClass</key>
+	<string>BadaInputController</string>
+	<key>ComponentInputModeDict</key>
+	<dict>
+		<!-- The two input modes bada ever registers (the standard, §8.1, §12). Muhenkan reports as
+		     English (Roman script), so 英数 selects it; Henkan as Japanese, so かな selects it. Never
+		     rename an id: tools select modes by it. -->
+		<key>tsInputModeListKey</key>
+		<dict>
+			<key>com.teammirae.inputmethod.Bada.Muhenkan</key>
+			<dict>
+				<key>TISInputSourceID</key>
+				<string>com.teammirae.inputmethod.Bada.Muhenkan</string>
+				<key>TISIntendedLanguage</key>
+				<string>en</string>
+				<key>tsInputModeIsVisibleKey</key>
+				<true/>
+				<key>tsInputModeMenuIconFileKey</key>
+				<string>muhenkan.tiff</string>
+				<key>tsInputModePaletteIconFileKey</key>
+				<string>muhenkan.tiff</string>
+				<key>tsInputModePrimaryInScriptKey</key>
+				<true/>
+				<key>tsInputModeScriptKey</key>
+				<string>smRoman</string>
+			</dict>
+			<key>com.teammirae.inputmethod.Bada.Henkan</key>
+			<dict>
+				<key>TISInputSourceID</key>
+				<string>com.teammirae.inputmethod.Bada.Henkan</string>
+				<key>TISIntendedLanguage</key>
+				<string>ja</string>
+				<key>tsInputModeIsVisibleKey</key>
+				<true/>
+				<key>tsInputModeMenuIconFileKey</key>
+				<string>henkan.tiff</string>
+				<key>tsInputModePaletteIconFileKey</key>
+				<string>henkan.tiff</string>
+				<key>tsInputModePrimaryInScriptKey</key>
+				<true/>
+				<key>tsInputModeScriptKey</key>
+				<string>smJapanese</string>
+			</dict>
+		</dict>
+		<key>tsVisibleInputModeOrderedArrayKey</key>
+		<array>
+			<string>com.teammirae.inputmethod.Bada.Muhenkan</string>
+			<string>com.teammirae.inputmethod.Bada.Henkan</string>
+		</array>
+	</dict>
+	<!-- The keylayouts (Resources): the Keyboard Viewer's legends, one for each stock layout that
+	     types, hidden from the list of input sources. -->
+@KLINFO@
+	<key>LSBackgroundOnly</key>
+	<true/>
+	<key>LSMinimumSystemVersion</key>
+	<string>13.0</string>
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+	<key>TISIconIsTemplate</key>
+	<true/>
+	<key>TISInputSourceID</key>
+	<string>com.teammirae.inputmethod.Bada</string>
+	<key>TISIntendedLanguage</key>
+	<string>ja</string>
+	<key>tsInputMethodIconFileKey</key>
+	<string>bada.tiff</string>
+	<key>tsInputMethodCharacterRepertoireKey</key>
+	<array>
+		<string>Hang</string>
+		<string>Hira</string>
+		<string>Kana</string>
+		<string>Latn</string>
+	</array>
+</dict>
+</plist>

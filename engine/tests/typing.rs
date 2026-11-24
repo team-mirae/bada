@@ -601,6 +601,29 @@ fn a_custom_layout_is_a_file_like_any_other() {
     );
     assert_eq!(session.event(json!({"type": "layout"})).problems[0].code, "bad-role", "and can be read back");
     assert!(!session.event(json!({"type": "layout", "id": "ko-nothing", "value": null})).ok);
+    // A layout the settings in effect name can still be removed: the folder is the truth. The
+    // settings stay in effect without it, and say what is wrong with them now.
+    field.flush();
+    let named = session.event(json!({"type": "layout", "id": "ko-my-2-set", "value": null}));
+    assert!(named.ok);
+    assert_eq!((named.problems[0].code.as_str(), named.problems[0].level), ("in-use", bada_compat::Level::Warning));
+    assert_eq!(named.layouts.unwrap().len(), 11);
+    let settings = session.event(json!({"type": "settings"}));
+    assert_eq!(settings.problems[0].code, "unknown-layout");
+    assert_eq!(
+        settings.settings.unwrap()["henkan"]["profiles"][0]["layouts"],
+        json!(["ko-my-2-set"]),
+        "still in effect"
+    );
+    let out = field.typed("1");
+    assert_eq!(
+        (out.commit.as_str(), out.consumed, out.preedit.text.as_str()),
+        ("", true, ""),
+        "its profile has no layout left: nothing is typed"
+    );
+    // Settings that stand again clear the problem.
+    assert!(session.event(json!({"type": "settings", "patch": {"henkan": {"profiles": [{"id": "main", "name": "m", "layouts": ["ko-2-set"]}]}}})).ok);
+    assert!(session.event(json!({"type": "settings"})).problems.is_empty());
 }
 
 #[test]
@@ -836,4 +859,59 @@ fn key_models_say_which_layout_was_meant() {
     assert_eq!(top("roman", "kareha"), "彼は");
     // A layout alone is ranked as it always was.
     assert_eq!(top("alone", "the"), "솓");
+}
+
+#[test]
+fn searches_find_symbols_emoji_and_characters() {
+    let (symbols, emoji, names) = (file("symbols.tsv"), file("emoji.tsv"), file("unicode-names.tsv"));
+    let settings = json!({"henkan": {"profiles": [
+        {"id": "sym", "name": "x", "layouts": ["uni-symbols"]},
+        {"id": "emoji", "name": "x", "layouts": ["uni-emojis"]},
+        {"id": "toned", "name": "x", "layouts": ["uni-emojis"],
+         "options": {"uni-emojis": {"skin_tones": ["medium", "none"]}}},
+        {"id": "code", "name": "x", "layouts": ["uni-unicode"]},
+        {"id": "all", "name": "x", "layouts": ["uni-symbols", "uni-emojis", "uni-unicode"]}]}});
+    let session = Session::with_data(settings, &[("symbols", &symbols), ("emoji", &emoji), ("unicode-names", &names)]);
+    let find = |profile: &str, keys: &str| {
+        let out = session.field(Some(profile)).typed(keys);
+        let found: Vec<(String, String)> =
+            out.menu.rows.iter().map(|r| (r.text.clone(), r.note.clone().unwrap_or_default())).collect();
+        (out.preedit.text, found)
+    };
+    // The search as typed shows and is the first row; what it finds is under it, each with its name.
+    let (shown, found) = find("sym", "usd");
+    assert_eq!(shown, "usd");
+    assert_eq!(found[..2], [("usd".to_string(), String::new()), ("$".to_string(), "usd".to_string())]);
+    // A symbol typed alone lists the entries that name its key.
+    let (_, found) = find("sym", ".");
+    assert_eq!(found[0].0, ".");
+    assert!(found.iter().any(|f| f.0 == "…") && found.iter().any(|f| f.0 == "。"), "{found:?}");
+    // A digit no entry lists: its other forms.
+    let (_, found) = find("sym", "1");
+    assert_eq!(found[1], ("１".to_string(), "fullwidth".to_string()));
+    assert!(found.iter().any(|f| f.0 == "①"));
+    // Emoji, by a word of the name or a keyword; the tones in the order the profile sets.
+    let (_, found) = find("emoji", "happy face");
+    assert_eq!(found[1].0, "😀", "{found:?}");
+    assert!(find("emoji", "w").1.is_empty(), "one row is no menu: a search of one character looks nothing up");
+    let wave: Vec<String> = find("emoji", "waving hand").1.into_iter().map(|f| f.0).collect();
+    assert_eq!(wave[1..7], ["👋", "👋🏻", "👋🏼", "👋🏽", "👋🏾", "👋🏿"]);
+    let wave = find("toned", "waving hand").1;
+    assert_eq!(wave[1], ("👋🏽".to_string(), "waving hand: medium skin tone".to_string()));
+    assert_eq!(wave[2].0, "👋");
+    // A character by its code, or by a name.
+    assert_eq!(find("code", "1f600").1[1], ("😀".to_string(), "U+1F600 grinning face".to_string()));
+    assert_eq!(find("code", "u+41").1[1].0, "A");
+    assert_eq!(find("code", "middle dot").1[1].0, "·");
+    assert_eq!(find("code", "joo").1[1].0, "㈜");
+    // Picking a result commits it.
+    let field = session.field(Some("sym"));
+    field.typed("usd");
+    assert_eq!(field.action("menu.next").preedit.text, "$");
+    assert_eq!(field.key("Enter").commit, "$");
+    // Three search layouts in one profile: each search once, what each finds under it.
+    let (shown, found) = find("all", "euro");
+    assert_eq!(shown, "euro");
+    assert_eq!(found.iter().filter(|f| f.0 == "euro").count(), 1);
+    assert!(found.iter().any(|f| f.0 == "€"), "{found:?}");
 }

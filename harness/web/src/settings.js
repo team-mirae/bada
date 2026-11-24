@@ -20,8 +20,8 @@ export const STORE = {
 
 /** This page's own settings, and what each may be. The first is the default. */
 export const OWN = {
-  preset: ["auto", "jis-mac", "jis-pc", "none"],   // the key preset when the file has no keys.bindings (§9.5)
-  keyboard: ["auto", "hhkb", "apple", "pc"],       // the keyboard drawn on the page
+  keyboard: ["auto", "jis-mac", "jis-pc", "none"],   // the keyboard the key preset is for, when the file has no keys.bindings (§9.5)
+  board: ["auto", "hhkb", "apple", "pc"],            // the keyboard drawn on the page
 };
 
 const isObject = v => v !== null && typeof v === "object" && !Array.isArray(v);

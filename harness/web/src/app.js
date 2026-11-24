@@ -339,7 +339,7 @@ function drawState() {
 
 /** The keyboard drawn when the choice is automatic: the one the key preset is for. */
 function boardName() {
-  const chosen = S.own(h.file).keyboard;
+  const chosen = S.own(h.file).board;
   if (chosen !== "auto") return chosen;
   const preset = h.table.preset ?? (h.table.bindings.some(b => /Convert|KanaMode/.test(b.on ?? "")) ? "jis-pc" : "jis-mac");
   return preset === "jis-pc" ? "pc" : preset === "none" ? "apple" : "hhkb";
@@ -350,8 +350,8 @@ function drawOwn() {
   const own = S.own(h.file);
   const theirs = Array.isArray(h.file.keys?.bindings);
   const presets = theirs ? [["", "the settings' own bindings"]]
-    : S.OWN.preset.map(v => [v, v === "auto" ? `automatic (${PRESET_NAMES[h.preset]})` : PRESET_NAMES[v]]);
-  const boards = S.OWN.keyboard.map(v => [v, v === "auto" ? `automatic (${KEYBOARDS[boardName()].name})` : KEYBOARDS[v].name]);
+    : S.OWN.keyboard.map(v => [v, v === "auto" ? `automatic (${PRESET_NAMES[h.preset]})` : PRESET_NAMES[v]]);
+  const boards = S.OWN.board.map(v => [v, v === "auto" ? `automatic (${KEYBOARDS[boardName()].name})` : KEYBOARDS[v].name]);
   // Filled again only when a choice changed: a list that is open stays open.
   const from = JSON.stringify([own, theirs, presets, boards]);
   if (from === ownOf) return;
@@ -360,15 +360,16 @@ function drawOwn() {
     select.replaceChildren(...options.map(([v, label]) => { const o = document.createElement("option"); o.value = v; o.textContent = label; return o; }));
     select.value = value;
   };
-  fill($("preset"), theirs ? "" : own.preset, presets);
+  fill($("preset"), theirs ? "" : own.keyboard, presets);
   $("preset").disabled = theirs;
-  fill($("keyboard"), own.keyboard, boards);
+  fill($("keyboard"), own.board, boards);
 }
 
 for (const name of ["preset", "keyboard"]) {
   $(name).onchange = e => {
     pull();
-    const result = h.setOwn(name, e.target.value);
+    // The two lists on the page, and the settings they are kept under.
+    const result = h.setOwn(name === "preset" ? "keyboard" : "board", e.target.value);
     if (!result.ok) warn(`Not changed: ${result.problems.map(p => p.message).join("; ")}`);
     refresh();
     ta.focus();

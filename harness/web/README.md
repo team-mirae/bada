@@ -70,7 +70,7 @@ turns the page's lock on and off (§9.4).
 
 **Settings.** One `bada-settings/2` object in local storage. Its `engine` part goes to the engine
 with a `settings` event, `keys` is the key table, and `harness["com.teammirae.bada.web"]` holds the
-page's own two choices (`preset`, `keyboard`). The dialog's editor checks all three parts, lists
+page's own two choices (`keyboard`, the key preset's keyboard, and `board`, the one drawn). The dialog's editor checks all three parts, lists
 every problem, and takes the file only when none is an error. Import and Export move it as a file.
 A new install has no layout and no profile, and gets the onboarding (§8.3).
 

@@ -1,0 +1,7 @@
+[InputMethod]
+Name=bada
+Icon=input-keyboard
+Label=A
+LangCode=*
+Addon=bada
+Configurable=False

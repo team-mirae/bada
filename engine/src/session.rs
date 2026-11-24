@@ -398,8 +398,28 @@ impl Session {
         }
         let refused = problems.iter().any(|p| p.level == bada_compat::Level::Error);
         let layouts = if refused { state.view.layouts.clone() } else { all_layouts(&custom) };
+        // The folder is the truth: a layout that is gone is gone, even if the settings in effect
+        // name it. They stay in effect without it (a profile skips a layout that isn't there), and
+        // they now have a problem of their own, which a `settings` event with nothing to change
+        // answers.
+        let mut broken = None;
+        if !refused {
+            let settings = serde_json::to_value(&state.view.settings).unwrap_or_default();
+            if let Err(found) = check(&settings, &layouts) {
+                let why = found.first().map(|p| format!("{} ({})", p.message, p.path)).unwrap_or_default();
+                problems.push(Problem::warning(
+                    "",
+                    "in-use",
+                    format!("the settings in effect name this layout: {why}"),
+                ));
+                broken = Some(found);
+            }
+        }
         if !dry {
             state.layout_problems = problems.clone();
+            if let Some(found) = broken {
+                state.settings_problems = found;
+            }
             if !refused {
                 let old = &state.view;
                 state.view = Arc::new(Snapshot {

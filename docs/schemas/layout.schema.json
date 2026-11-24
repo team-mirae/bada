@@ -875,6 +875,10 @@
                 "description": "A column of characters: a search of one character lists the entries that have it there, and nothing else.",
                 "type": "string"
               },
+              "forms": {
+                "description": "With single: a letter or digit that no entry lists offers its other forms.",
+                "type": "boolean"
+              },
               "tones": {
                 "description": "The option that orders an emoji's skin tones.",
                 "$ref": "#/$defs/option"

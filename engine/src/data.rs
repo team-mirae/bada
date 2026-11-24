@@ -10,6 +10,7 @@ use serde_json::Value;
 
 use crate::kanji::Kanji;
 use crate::keymodel::KeyModels;
+use crate::search::Table;
 
 /// A word list, packed: the words sorted in one string, with offsets and counts. Under 30 bytes a
 /// word, so a million words fit in some 30 MB.
@@ -129,6 +130,8 @@ pub struct Data {
     pub key_models: Option<KeyModels>,
     /// Reading → the common words read so, most common first, by buffer name.
     common: BTreeMap<String, HashMap<String, Vec<String>>>,
+    /// The tables a `search` layout looks things up in, by buffer name.
+    pub tables: BTreeMap<String, Table>,
     /// The buffers no reader uses yet, kept as they came.
     pub raw: BTreeMap<String, Vec<u8>>,
 }
@@ -159,9 +162,14 @@ impl Data {
                     }
                     data.common.insert(buffer.name.to_string(), by_reading);
                 }
-                name => {
-                    data.raw.insert(name.to_string(), buffer.bytes.to_vec());
-                }
+                name => match Table::parse(name, &text()) {
+                    Some(table) => {
+                        data.tables.insert(name.to_string(), table);
+                    }
+                    None => {
+                        data.raw.insert(name.to_string(), buffer.bytes.to_vec());
+                    }
+                },
             }
         }
         // Words usually written in kana convert to kana (この, あなた).
@@ -185,6 +193,7 @@ impl Data {
     pub fn has(&self, name: &str) -> bool {
         self.words.contains_key(name)
             || self.raw.contains_key(name)
+            || self.tables.contains_key(name)
             || self.kanji.contains_key(name)
             || self.common.contains_key(name)
     }

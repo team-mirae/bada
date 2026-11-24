@@ -104,7 +104,7 @@ export class Harness {
 
   /** The key preset in use when the settings have no bindings of their own (§9.5). */
   get preset() {
-    const chosen = S.own(this.file).preset;
+    const chosen = S.own(this.file).keyboard;
     return chosen === "auto" ? this.seen ?? (this.platform === "mac" ? "jis-mac" : "jis-pc") : chosen;
   }
 
@@ -222,7 +222,7 @@ export class Harness {
     if (!preset || preset === this.seen) return;
     this.seen = preset;
     this.store.write(S.STORE.seen, preset);
-    if (S.own(this.file).preset === "auto" && !Array.isArray(this.file.keys?.bindings)) this.retable();
+    if (S.own(this.file).keyboard === "auto" && !Array.isArray(this.file.keys?.bindings)) this.retable();
   }
 
   /** Carries out what the key table decided (§9.2). Returns whether the press was dealt with. */
@@ -443,9 +443,9 @@ export class Harness {
     const available = this.platform === "mac" ? ["Backquote", "Lang2", "Lang1", "CapsLock"] : ["Backquote", "NonConvert", "Convert", "KanaMode", "CapsLock"];
     for (const code of this.sawKeys) if (!available.includes(code)) available.push(code);
     const problems = [
-      ...this.problems.settings.map(p => ({ ...p, in: "settings" })),
-      ...Object.entries(this.problems.layouts).flatMap(([id, list]) => list.map(p => ({ ...p, in: `layouts/${id}` }))),
-      ...this.problems.dictionary.map(p => ({ ...p, in: "dictionary" })),
+      ...this.problems.settings.map(p => ({ ...p, file: "settings.json" })),
+      ...Object.entries(this.problems.layouts).flatMap(([id, list]) => list.map(p => ({ ...p, file: `layouts/${id}.json` }))),
+      ...this.problems.dictionary.map(p => ({ ...p, file: "dictionary.json" })),
     ];
     return {
       format: "bada-compatible-state/2",

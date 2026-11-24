@@ -14,6 +14,7 @@ use crate::keymodel::symbol;
 use crate::layout::{Convert, Do, Keep, Layer, Layout, Press, Read, Role, Script, Table, WidthName, jis, key_index};
 use crate::read::{Reading, Shape, is_text, read};
 use crate::script::katakana;
+use crate::search::search;
 use crate::session::{Profile, Session, Snapshot};
 use crate::width::{Width, convert, full_width, half_width};
 
@@ -458,7 +459,22 @@ impl Field {
                         }
                     }
                     .unwrap_or(50.0);
-                    entries.push(row(text.clone(), score, None));
+                    // A search: what it finds, under the search as typed (§7.5.6).
+                    let found = layout.file.search.as_ref().map_or(Vec::new(), |part| {
+                        let tones = part.sources.iter().find_map(|s| s.tones.as_deref()).and_then(|name| {
+                            let set = self.view.settings.option(&profile, layout.id(), name);
+                            set.or_else(|| layout.file.options.get(name)?.get("default"))?.as_array()
+                        });
+                        let tones: Vec<String> =
+                            tones.into_iter().flatten().filter_map(|t| Some(t.as_str()?.to_string())).collect();
+                        search(part, &data.tables, &text, &tones)
+                    });
+                    let note = |n: &str| (!n.is_empty()).then(|| n.to_string());
+                    entries.push(row(text.clone(), score, found.iter().find(|f| f.0 == text).and_then(|f| note(&f.1))));
+                    let under = rank.found.unwrap_or(score - 1.0);
+                    for (i, (result, name)) in found.iter().filter(|f| f.0 != text).enumerate() {
+                        entries.push(row(result.clone(), under - 0.01 * i as f64, note(name)));
+                    }
                     score
                 }
             };
