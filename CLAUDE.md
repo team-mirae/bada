@@ -51,7 +51,10 @@ what each folder holds.
   skips numbers; that is expected, not a mistake to correct.
 - A release is one GitHub release, tagged `v<version>`, with every platform's build attached:
   the Windows installer (`harness/windows/tools/package.ps1`), the Mac app (`make dist` in
-  `harness/mac`) and the Linux build (`harness/linux/tools/package.sh`).
+  `harness/mac`, or the zip CI builds) and the Linux build (`harness/linux/tools/package.sh`).
+- **A published release can't be changed**: the repository's releases are immutable. So the order
+  is: create the release as a draft, push the tag (CI attaches the Mac zip to the draft), attach
+  the other builds, and publish last.
 - The standard's version (bada-compatible 2.0) and the file formats' (`bada-settings/2`,
   `bada-layout/2`) are separate, and change only when the standard does.
 

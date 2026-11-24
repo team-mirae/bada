@@ -1,6 +1,7 @@
 # Builds bada for macOS on GitHub: the workspace's tests, then the input method from harness/mac,
-# uploaded as the artifact "bada-mac" (a zip). A v* tag also attaches the zip to its release (a
-# draft is created if there is none yet).
+# uploaded as the artifact "bada-mac" (a zip). A v* tag also attaches the zip to its release while
+# that is a draft (one is created if there is none yet). A published release can't be changed, so
+# the tag is pushed before the release is published: CLAUDE.md has the order.
 #
 # It is signed with the certificate in the secrets APPLE_CERTIFICATE_P12 (base64 of a .p12) and
 # APPLE_CERTIFICATE_PASSWORD, so macOS keeps the app's Input Monitoring and Accessibility
@@ -83,15 +84,20 @@ jobs:
           rm "$RUNNER_TEMP/cert.p12"
           security set-key-partition-list -S apple-tool:,apple: -s -k "$kpass" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
-          security find-identity -v -p codesigning "$keychain"
+          # The identity's name holds its owner's name or email, and this log is public: it is
+          # never printed here, and it is masked wherever a later step would print it.
           identity=$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(.*\)".*/\1/p' | head -1)
           [ -n "$identity" ] || { echo "::error::The .p12 holds no valid code-signing identity"; exit 1; }
+          echo "::add-mask::$identity"
+          owner=$(printf '%s' "$identity" | sed -n 's/^[^:]*: \(.*\) ([A-Z0-9]*)$/\1/p')
+          [ -z "$owner" ] || echo "::add-mask::$owner"
           echo "SIGN_IDENTITY=$identity" >> "$GITHUB_ENV"
+          echo "Signing with the certificate from the secrets"
       - name: Build
         working-directory: harness/mac
         run: |
           make dist SIGN_IDENTITY="${SIGN_IDENTITY:--}"
-          for app in build/*.app; do codesign -dvv "$app" 2>&1 | grep -E "Identifier|Authority|Signature" || true; done
+          for app in build/*.app; do codesign -dvv "$app" 2>&1 | grep -E "^(Identifier|TeamIdentifier|Signature)" || true; done
       - name: Remove the signing keychain
         if: always()
         run: security delete-keychain "$RUNNER_TEMP/signing.keychain-db" 2>/dev/null || true
@@ -105,9 +111,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # The repository's releases are immutable: once one is published its files can't be
+          # replaced. So the zip goes onto a draft, and a published release is left as it is.
           tag="${GITHUB_REF#refs/tags/}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" harness/mac/build/*.zip --clobber
-          else
-            gh release create "$tag" harness/mac/build/*.zip --draft --title "bada $(cat VERSION)" --generate-notes
-          fi
+          draft=$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null || echo none)
+          case "$draft" in
+            true) gh release upload "$tag" harness/mac/build/*.zip --clobber ;;
+            false) echo "::notice::Release $tag is published already, so its files can't be replaced. This run's zip is its artifact only." ;;
+            *) gh release create "$tag" harness/mac/build/*.zip --draft --title "bada $(cat VERSION)" --generate-notes ;;
+          esac
