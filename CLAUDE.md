@@ -1,23 +1,33 @@
 # bada
 
-A new input method by Mirae Research: one engine (Rust), a harness per platform (macOS, Windows,
-Linux, web) and a command line, in one repository, `team-mirae/bada`. The *engine* turns keys into
-text; a *harness* is the platform program around it. So far the repository holds the standard, its
-schemas, the stock layout files, the key-table cases and the contract layer (`crates/compat`); the
-engine and the harnesses are not written yet (`docs/design.md` §13 has the order of work).
+A new input method by Mirae Research, the next generation of bada ime: one engine (Rust), a harness
+per platform (macOS, Windows, Linux, web) and a command line, in one repository, `team-mirae/bada`.
+The *engine* turns keys into text; a *harness* is the platform program around it. The repository
+holds the standard, its schemas, the stock layout files, the key-table cases, the contract layer
+(`crates/compat`), the engine, and the web, macOS and Linux harnesses. Not here yet: the Windows
+harness, the command line (`cli/`) and the settings page (`settings/`). `docs/design.md` §13 has
+the order of work, and `README.md` says what each folder holds.
 
 ## Read first
 
 - `docs/design.md`: the design. Every decision is settled and listed in its §14.
 - `docs/bada-compatible-v2.md`: the standard, written from the design. **The standard leads**:
   a change goes to `docs/` first, then to the code.
+- `docs/layouts.html`: the eight typing layouts drawn on a JIS keyboard (the three `uni-*` search
+  layouts have no key map of their own).
+- `docs/reference/`: what bada grows from, kept as it was. bada-compatible v1, bada ime 0.3.1's spec
+  (the design cites it by section) and its layout pages, and the user dictionary's contract, which
+  bada keeps as v1.
 
 ## Rules
 
 - **Nothing that already exists is touched.** The repositories under `~/Projects/` (`bada-ime`,
   `bada-compatible`, `bada-windows`, `bada-linux`, `pado-ime`, `ara-ime`, `jis-korean`,
   `jis-moonshot`, `superkeyboard`) are read-only references: read them in place, copy what is
-  needed here, change nothing there.
+  needed here, change nothing there. bada ime's engine and data are in `bada-ime/engine`; the
+  harnesses to port from are `bada-ime/mac`, `bada-windows`, `bada-linux` and `bada-ime/web`.
+- **Where the design and bada-compatible v1 disagree, the design wins.** Where the design is silent,
+  v1's rule holds, and the standard says so.
 - **Commit and push only when asked.** The repository is public.
 - **The harness decides what language keys and Caps Lock do**; the engine only sees what its harness
   feeds it. Each harness reads the key table with its own code: no shared crate for it.
@@ -58,8 +68,15 @@ cargo test --workspace
 cargo clippy --workspace --all-targets
 ```
 
-`tools/conformance` replays transcripts on a built engine (its README has the command). When the key table's rules change (the standard's §9), the cases in
-`docs/cases/key-table.json` change with them.
+`tools/conformance` replays transcripts on a built engine (its README has the command). Each
+harness's README has its own build and test commands. When the key table's rules change (the
+standard's §9), the cases in `docs/cases/key-table.json` change with them.
+
+To redraw `docs/layouts.html`:
+
+```sh
+python3 -I tools/layouts-page/make_layouts_page.py docs/reference/layouts docs/layouts.html tools/layouts-page/layouts_template.html
+```
 
 ## Writing
 
