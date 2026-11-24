@@ -18,12 +18,16 @@ enum HIDKeys {
     /// Whether macOS lets bada read keys at the HID level.
     static var isAllowed: Bool { IOHIDCheckAccess(kIOHIDRequestTypeListenEvent) == kIOHIDAccessTypeGranted }
 
+    /// Asks macOS for Input Monitoring: its prompt, the first time; nothing once it was answered.
+    @discardableResult
+    static func ask() -> Bool { IOHIDRequestAccess(kIOHIDRequestTypeListenEvent) }
+
     /// Starts listening, asking for Input Monitoring if `ask` (once; macOS remembers the answer).
     static func start(ask: Bool) {
         guard manager == nil else { return }
         if !isAllowed {
             guard ask else { return }
-            IOHIDRequestAccess(kIOHIDRequestTypeListenEvent)
+            self.ask()
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) { start(ask: false) }
             return
         }

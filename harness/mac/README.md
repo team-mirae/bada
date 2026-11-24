@@ -58,7 +58,12 @@ A new install has no muhenkan layout and no henkan profile. The first key that w
 
 ## Permissions
 
-bada asks for nothing by itself. The input menu's **Allow Language Keys Everywhere…** asks for both:
+bada asks for nothing by itself. The input menu's **Allow Language Keys Everywhere…** asks for both,
+and so does starting the app with `--allow-keys`:
+
+```sh
+open -n ~/Library/Input\ Methods/Bada.app --args --allow-keys
+```
 
 | Permission | What it is for | Without it |
 |---|---|---|
