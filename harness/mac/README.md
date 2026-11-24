@@ -44,6 +44,16 @@ make dist         # build/Bada-<version>.zip
 make install-prebuilt PREBUILT=path/Bada.app
 ```
 
+From a release, with no checkout: `Bada-<version>.zip` is the app. It is signed, but not notarized
+by Apple, so macOS won't open it until the download's quarantine mark is taken off:
+
+```sh
+ditto -x -k Bada-<version>.zip ~/Library/Input\ Methods/
+xattr -dr com.apple.quarantine ~/Library/Input\ Methods/Bada.app
+```
+
+Then log out and in, so that macOS finds it.
+
 Then, in System Settings → Keyboard → Input Sources, add **bada (muhenkan)** under English and
 **bada (henkan)** under Japanese, if `make install` didn't. They may not be listed until you log
 out and in. For 英数 and かな to land in bada, remove the other Japanese input methods, and keep one

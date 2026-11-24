@@ -1,0 +1,33 @@
+// bada-tsf.dll's resources (UTF-8). CMake fills in the version.
+#pragma code_page(65001)
+#include <winres.h>
+
+#include "@CMAKE_CURRENT_SOURCE_DIR@/src/tip/resource.h"
+
+IDI_LOGO ICON "@CMAKE_CURRENT_SOURCE_DIR@/src/tip/bada.ico"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION @BADA_VERSION_NUMBERS@
+PRODUCTVERSION @BADA_VERSION_NUMBERS@
+FILEOS VOS_NT_WINDOWS32
+FILETYPE VFT_DLL
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"
+        BEGIN
+            VALUE "CompanyName", "Mirae Research"
+            VALUE "FileDescription", "bada text input processor"
+            VALUE "FileVersion", "@BADA_VERSION@"
+            VALUE "InternalName", "com.teammirae.bada.windows"
+            VALUE "OriginalFilename", "bada-tsf.dll"
+            VALUE "ProductName", "bada"
+            VALUE "ProductVersion", "@BADA_VERSION@"
+            VALUE "LegalCopyright", "Copyright (c) 2026 Mirae Research. MIT License."
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1200
+    END
+END

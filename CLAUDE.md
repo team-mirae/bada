@@ -4,9 +4,9 @@ A new input method by Mirae Research, the next generation of bada ime: one engin
 per platform (macOS, Windows, Linux, web) and a command line, in one repository, `team-mirae/bada`.
 The *engine* turns keys into text; a *harness* is the platform program around it. The repository
 holds the standard, its schemas, the stock layout files, the key-table cases, the contract layer
-(`crates/compat`), the engine, and the web, macOS and Linux harnesses. Not here yet: the Windows
-harness, the command line (`cli/`) and the settings page (`settings/`). `docs/design.md` §13 has
-the order of work, and `README.md` says what each folder holds.
+(`crates/compat`), the engine, and the four harnesses. Not here yet: the command line (`cli/`) and
+the settings page (`settings/`). `docs/design.md` §13 has the order of work, and `README.md` says
+what each folder holds.
 
 ## Read first
 
@@ -41,9 +41,7 @@ the order of work, and `README.md` says what each folder holds.
 
 - `dev-latest` is the default branch. It can't be force-pushed, and pull requests into it are
   squash-merged only.
-- Work happens on a `dev-*` branch (the first is `dev-init`) and reaches `dev-latest` by pull request.
-- **`dev-init` goes to `dev-latest` only once all four harnesses work** (macOS, Windows, Linux, web):
-  no pull request before that.
+- Work happens on a `dev-*` branch and reaches `dev-latest` by pull request.
 
 ## Versions
 
@@ -51,6 +49,9 @@ the order of work, and `README.md` says what each folder holds.
   every harness share it. It starts at 0.1.0.
 - A release carries that number on every platform it ships for. A platform released less often
   skips numbers; that is expected, not a mistake to correct.
+- A release is one GitHub release, tagged `v<version>`, with every platform's build attached:
+  the Windows installer (`harness/windows/tools/package.ps1`), the Mac app (`make dist` in
+  `harness/mac`) and the Linux build (`harness/linux/tools/package.sh`).
 - The standard's version (bada-compatible 2.0) and the file formats' (`bada-settings/2`,
   `bada-layout/2`) are separate, and change only when the standard does.
 

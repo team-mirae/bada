@@ -79,6 +79,10 @@ user's is read or written, and a Fcitx5 that is running is left alone.
 sudo cmake --install build/linux
 ```
 
+`tools/package.sh` builds what a release carries: `build/dist/bada-<version>-linux-<arch>.tar.gz`,
+the Fcitx5 addon as it installs under `/usr`, with an `INSTALL.txt`. The IBus engine is left out of
+it, since it has not been run.
+
 | File | |
 |---|---|
 | `<prefix>/lib/fcitx5/libbada-fcitx5.so` | The addon. Loaded when the input method is first used |

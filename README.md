@@ -6,8 +6,21 @@ bada (바다, バダ) is an input method by Mirae Research for Korean, Japanese 
 keyboards: one engine, a harness for each platform, and a command line. It is the next generation of
 [bada ime](https://github.com/team-mirae/bada-ime), which stays as it is.
 
-**It is being built.** Version 0.1.0 so far is the standard, the contract layer and an engine that
-types every layout from its file; the harnesses are in progress, and no release exists.
+**It is early.** Version 0.1.0 is the standard, the contract layer, an engine that types every
+layout from its file, and the four harnesses. The command line and the settings page are not
+written yet, so settings are a file written by hand.
+
+## Install
+
+A [release](https://github.com/team-mirae/bada/releases) carries a build for each platform:
+
+| Platform | File | How |
+|---|---|---|
+| Windows 10 and 11 (x64) | `bada-<version>-setup.exe` | Run it. [harness/windows](harness/windows/README.md) |
+| macOS | `Bada-<version>.zip` | [harness/mac](harness/mac/README.md#install) |
+| Linux, Fcitx5 (x86_64) | `bada-<version>-linux-x86_64.tar.gz` | `INSTALL.txt` inside. [harness/linux](harness/linux/README.md) |
+
+The web harness is a page: `node harness/web/build.mjs` builds it ([harness/web](harness/web/README.md)).
 
 ## What is here
 
@@ -22,7 +35,8 @@ types every layout from its file; the harnesses are in progress, and no release 
 | [engine/layouts/](engine/layouts/) | The eleven stock layouts, each a `bada-layout/2` file |
 | [crates/compat/](crates/compat/) | The contract layer (Rust): the standard's types, the C ABI, the session and the panic guard, with an example engine |
 | [engine/](engine/) | The engine (Rust), with its data |
-| `cli/`, `harness/`, `settings/` | Where the command line, the four harnesses and the settings page will live |
+| [harness/](harness/) | The four harnesses: [mac](harness/mac/), [windows](harness/windows/), [linux](harness/linux/), [web](harness/web/) |
+| `cli/`, `settings/` | Where the command line and the settings page will live |
 | [tools/](tools/) | The validator, the conformance runner, and the script that draws the layouts page |
 
 ## Checking
