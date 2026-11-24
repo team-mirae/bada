@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>bada · web</title>
+<meta name="description" content="bada in the browser: the input method's engine as WebAssembly behind a text field, for trying it out.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><img src="icon.svg" alt="" width="28" height="28"><b>bada</b> <span class="muted">web</span></div>
+  <div class="mode" id="mode" role="group" aria-label="Mode and profile"></div>
+  <div class="spacer"></div>
+  <a class="link" href="https://github.com/team-mirae/bada" target="_blank" rel="noopener">GitHub</a>
+  <button id="settingsBtn" class="primary" disabled>Settings</button>
+</header>
+
+<main>
+  <div id="warning" class="warning" role="status" hidden></div>
+  <div class="editor" id="editor">
+    <div class="backdrop" id="backdrop" aria-hidden="true"></div>
+    <textarea id="text" spellcheck="false" autocomplete="off" autocapitalize="off" autocorrect="off"
+      placeholder="Loading the engine…" disabled aria-label="Text"></textarea>
+    <div class="menu" id="menu" hidden></div>
+  </div>
+
+  <section class="state" aria-label="State">
+    <dl id="state"></dl>
+    <div class="own">
+      <label>Keys <select id="preset" title="The key table's bindings when the settings have none of their own"></select></label>
+      <label>Keyboard <select id="keyboard" title="The keyboard drawn below"></select></label>
+    </div>
+    <details>
+      <summary>Published state (<code>bada-compatible-state/2</code>)</summary>
+      <pre id="stateJson"></pre>
+    </details>
+  </section>
+
+  <div class="board-wrap"><div class="board" id="board"></div></div>
+  <div class="help" id="help"></div>
+</main>
+
+<div class="loading" id="loading">
+  <div class="loading-box">
+    <b>Loading bada</b>
+    <div class="bar"><div id="progress"></div></div>
+    <div class="muted" id="progressText">The engine</div>
+  </div>
+</div>
+
+<dialog id="settings" aria-label="bada settings">
+  <form method="dialog" class="dialog-head">
+    <b>Settings</b>
+    <button class="close" aria-label="Close">×</button>
+  </form>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+  <div class="pages" id="pages"></div>
+</dialog>
+
+<dialog id="onboarding" aria-label="Start with bada">
+  <form method="dialog" class="dialog-head">
+    <b>Start with bada</b>
+    <button class="close" aria-label="Close">×</button>
+  </form>
+  <div class="pages">
+    <div class="page">
+      <p>bada has two modes. <b>Muhenkan</b> types directly. <b>Henkan</b> composes text, and has as many profiles as you make. A new install has no layout for either: pick one for each.</p>
+      <label>Muhenkan types <select id="easyMuhenkan"></select></label>
+      <label>Henkan composes <select id="easyHenkan"></select></label>
+      <div id="easyProblems"></div>
+      <div class="row">
+        <button id="easyStart" class="primary">Start</button>
+        <button id="easySkip">Skip: the full settings</button>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<!-- The published state (the standard, §6.7): read it here, or listen for "bada-state" on window. -->
+<script type="application/json" id="bada-state"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

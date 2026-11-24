@@ -1,0 +1,25 @@
+[package]
+name = "bada-web"
+description = "bada's engine as WebAssembly for the web harness: the eight C functions, and a way to pass bytes in."
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+license = "MIT"
+authors = ["Mirae Research"]
+publish = false
+
+# Its own workspace: the repository's doesn't list it, and its target directory is its own.
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+bada-engine = { path = "../../../engine" }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true

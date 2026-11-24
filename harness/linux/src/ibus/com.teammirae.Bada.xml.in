@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<component>
+  <name>com.teammirae.Bada</name>
+  <description>bada</description>
+  <exec>@BADA_IBUS_EXEC@ --ibus</exec>
+  <version>@PROJECT_VERSION@</version>
+  <author>Mirae Research</author>
+  <license>MIT</license>
+  <homepage>https://github.com/team-mirae/bada</homepage>
+  <textdomain></textdomain>
+  <engines>
+    <engine>
+      <name>bada</name>
+      <language>ja</language>
+      <license>MIT</license>
+      <author>Mirae Research</author>
+      <icon>input-keyboard</icon>
+      <layout>default</layout>
+      <longname>bada</longname>
+      <description>bada: one engine, every layout</description>
+      <symbol>A</symbol>
+      <rank>0</rank>
+    </engine>
+  </engines>
+</component>

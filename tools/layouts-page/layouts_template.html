@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bada JIS layouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=Red+Hat+Display:wght@600;800&display=swap" rel="stylesheet">
+<style>
+/* Layout idea: a reference sheet. One summary table, then one JIS keyboard per layout, each key
+   showing shift over plain, coloured by whether the layout or the JIS legend owns the slot. */
+:root {
+  --bg: #f7fffc; --surface: #e9fff9; --border: #c9e6dc; --text: #1d3354; --muted: #4c6280;
+  --accent: #467599; --secondary: #9ed8b8; --alert: #d64045;
+  --key: #ffffff; --key-edge: #b9d6cc;
+  --own: #dcebf5; --own-v: #d8f1e3; --own-f: #e6e9f1; --alert-soft: #fbe3e4; --ok-text: #1f5a3c;
+  --display: "Red Hat Display", "IBM Plex Sans", system-ui, sans-serif;
+  --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --legend: "IBM Plex Mono", "Apple SD Gothic Neo", "Hiragino Sans", "Malgun Gothic", "Yu Gothic", "Noto Sans CJK KR", ui-monospace, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0f1b2e; --surface: #1d3354; --border: #2c4a72; --text: #e9fff9; --muted: #a9c3d6;
+    --accent: #7fa9c9; --secondary: #9ed8b8; --alert: #e8686c;
+    --key: #16273f; --key-edge: #35527b;
+    --own: #244a70; --own-v: #1f4d48; --own-f: #2d3857; --alert-soft: #45202a; --ok-text: #9ed8b8;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0f1b2e; --surface: #1d3354; --border: #2c4a72; --text: #e9fff9; --muted: #a9c3d6;
+  --accent: #7fa9c9; --secondary: #9ed8b8; --alert: #e8686c;
+  --key: #16273f; --key-edge: #35527b;
+  --own: #244a70; --own-v: #1f4d48; --own-f: #2d3857; --alert-soft: #45202a; --ok-text: #9ed8b8;
+}
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--body); font-size: 16px; line-height: 1.55; }
+main { max-width: 1000px; margin: 0 auto; padding: 40px 16px 64px; display: flex; flex-direction: column; gap: 44px; }
+h1, h2 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(30px, 5vw, 44px); font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
+h2 { font-size: 22px; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code { font-family: var(--legend); font-size: 13px; color: var(--muted); }
+.intro { display: flex; flex-direction: column; gap: 14px; }
+.intro p { max-width: 66ch; color: var(--muted); }
+.intro p b { color: var(--text); font-weight: 600; }
+
+.guide { display: flex; flex-wrap: wrap; gap: 10px 22px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; font-size: 14px; }
+.guide span.item { display: inline-flex; align-items: center; gap: 8px; }
+.sw { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 5px; background: var(--key); border: 1px solid var(--key-edge); font-family: var(--legend); font-size: 13px; font-weight: 600; }
+.sw.own { background: var(--own); border-left: 3px solid var(--accent); }
+.sw.v { background: var(--own-v); border-left: 3px solid var(--secondary); }
+.sw.f { background: var(--own-f); border-left: 3px solid var(--text); }
+.sw.jis { color: var(--muted); font-weight: 400; }
+.sw.free { color: var(--muted); font-weight: 400; }
+.sw.dup { color: var(--muted); font-weight: 400; text-decoration: underline dotted; text-underline-offset: 3px; }
+.sw.prop { color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); border-color: transparent; }
+.sw.lang { background: var(--surface); border-style: dashed; }
+
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; min-width: 640px; font-size: 15px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: baseline; }
+th { font-weight: 600; font-size: 13px; color: var(--muted); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+td .sub { color: var(--muted); font-size: 13px; }
+.lost { font-family: var(--legend); color: var(--accent); font-weight: 600; letter-spacing: 0.08em; }
+.none { color: var(--muted); }
+
+section { display: flex; flex-direction: column; gap: 12px; scroll-margin-top: 16px; }
+section header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 12px; }
+section header code { margin-left: auto; }
+.tag { font-size: 13px; color: var(--muted); }
+.pill { font-size: 12px; font-weight: 600; padding: 2px 9px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { background: var(--own-v); color: var(--ok-text); }
+.pill.bad { background: var(--alert-soft); color: var(--alert); }
+.pill.mv { background: var(--own); color: var(--text); }
+.lede { max-width: 72ch; color: var(--muted); }
+.line { font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.line b { font-weight: 600; margin-right: 4px; }
+.line.note { color: var(--muted); max-width: 72ch; display: block; }
+.chip { display: inline-flex; align-items: center; justify-content: center; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 5px; font-family: var(--legend); font-size: 14px; font-weight: 600; }
+.chip.miss { background: var(--alert-soft); color: var(--alert); }
+.chip.miss.wide { font-family: var(--body); font-size: 13px; }
+.chip.prop { color: var(--accent); box-shadow: inset 0 0 0 2px var(--accent); }
+
+.kb-scroll { overflow-x: auto; padding-bottom: 2px; }
+.kb { container-type: inline-size; min-width: 640px; display: flex; flex-direction: column; gap: 4px; padding: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.row { display: flex; gap: 4px; }
+.key { flex: var(--w) 1 0; min-width: 0; height: calc((100cqw - 56px) / 15); position: relative; border-radius: 6px; background: var(--key); border: 1px solid var(--key-edge); font-family: var(--legend); overflow: hidden; }
+.key.own { background: var(--own); border-left: 3px solid var(--accent); }
+.key.own.rv { background: var(--own-v); border-left-color: var(--secondary); }
+.key.own.rf { background: var(--own-f); border-left-color: var(--text); }
+.key .sh, .key .pl { position: absolute; left: 12%; line-height: 1; white-space: nowrap; }
+.key .sh { top: 12%; font-size: clamp(9px, 1.55cqw, 14px); }
+.key .pl { bottom: 12%; font-size: clamp(11px, 2.05cqw, 19px); }
+.key .al { position: absolute; right: 10%; top: 12%; line-height: 1; font-size: clamp(9px, 1.5cqw, 14px); color: var(--accent); font-weight: 600; }
+.key .own { color: var(--text); font-weight: 600; }
+.key .jis { color: var(--muted); }
+.key .dup { color: var(--muted); text-decoration: underline dotted; text-underline-offset: 3px; }
+.key .free { color: var(--muted); opacity: 0.6; }
+.key .prop { color: var(--accent); font-weight: 600; box-shadow: 0 0 0 2px var(--accent); border-radius: 4px; padding: 1px 3px; margin: -1px -3px; background: var(--key); }
+.key.mod { background: transparent; border-color: var(--border); }
+.key.mod.lang { border-style: dashed; border-color: var(--key-edge); }
+.key .ml { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--body); font-size: clamp(8px, 1.15cqw, 11px); color: var(--muted); text-align: center; line-height: 1.15; padding: 0 2px; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--border); padding-top: 16px; max-width: 80ch; }
+</style>
+</head>
+<body>
+<main>
+  <div class="intro">
+    <h1>bada layouts on a JIS keyboard</h1>
+    <p><b>Every layout types the JIS legend on any key it doesn't define itself.</b> The boards below put each layout's established keys on the 48 JIS keys and fill the rest from the legends. Where that left a character without a key, it moved to a free slot: those are ringed.</p>
+    <div class="guide" aria-label="How to read a key">
+      <span class="item"><span class="sw own">ㄱ</span> the layout's own key</span>
+      <span class="item"><span class="sw v">ㅏ</span> vowel</span>
+      <span class="item"><span class="sw jis">@</span> JIS legend, unchanged</span>
+      <span class="item"><span class="sw free">○</span> free: ⇧ repeats the key</span>
+      <span class="item"><span class="sw dup">_</span> also on one of the layout's keys</span>
+      <span class="item"><span class="sw prop">:</span> moved here: the layout left it no JIS key</span>
+      <span class="item"><span class="sw lang"></span> the harness's keys, never a layout's</span>
+    </div>
+    <p>On each key, ⇧ is above and the plain press below.</p>
+  </div>
+
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Layout</th><th>Moved for JIS</th><th>Still can't type</th><th class="num">Free ⇧ slots</th></tr></thead>
+      <tbody>
+{{SUMMARY}}
+      </tbody>
+    </table>
+  </div>
+
+{{SECTIONS}}
+
+  <footer>Key maps: bada ime 0.3.1's layout files (QWERTY, 2-set, bada roman, romaji, kana); standard Dvorak and Colemak; a US keyboard's symbols. The check covers the digits and the 32 ASCII symbols.</footer>
+</main>
+</body>
+</html>

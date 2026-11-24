@@ -1,0 +1,33 @@
+{
+  "format": "bada-layout/2",
+  "id": "uni-emojis",
+  "name": {"en": "Unicode - Emojis", "ko": "유니코드 - 이모지", "ja": "ユニコード - 絵文字"},
+  "lang": "und",
+  "kind": "henkan",
+  "read": "search",
+  "note": "A search over emoji, by name and CLDR keyword: the emoji of bada ime 0.3.1's layout 150.",
+  "keys": {"Space": {"base": {"t": " ", "r": "l"}}},
+  "search": {
+    "sources": [
+      {
+        "data": "emoji",
+        "match": ["name", "keywords"],
+        "tiers": ["exact", "first", "any"],
+        "order": "data",
+        "note": "name",
+        "tones": "skin_tones"
+      }
+    ],
+    "min_length": 2,
+    "limit": 40
+  },
+  "rank": {"query": 60, "found": 59},
+  "options": {
+    "skin_tones": {
+      "type": "order",
+      "of": ["none", "light", "medium-light", "medium", "medium-dark", "dark"],
+      "default": ["none", "light", "medium-light", "medium", "medium-dark", "dark"],
+      "title": {"en": "Skin tones, in the order they are offered", "ko": "피부색, 표시 순서대로", "ja": "肌の色、表示する順"}
+    }
+  }
+}

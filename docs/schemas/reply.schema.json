@@ -1,0 +1,402 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bada-compatible v2: a reply",
+  "description": "What P_send returns (the standard, §6): what to do now, and everything that shows afterwards. A missing field is its default. Engines may add fields; harnesses ignore fields they don't know.",
+  "type": "object",
+  "required": [
+    "ok"
+  ],
+  "properties": {
+    "ok": {
+      "description": "false: nothing changed, and error says why.",
+      "type": "boolean"
+    },
+    "error": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "description": "bad-json, bad-event, unknown-event, needs-engine, unknown-action, unknown-profile, unknown-layout, no-profile, bad-row, invalid, panic.",
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "path": {
+          "description": "The field at fault, when there is one.",
+          "type": "string"
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "code",
+        "message"
+      ]
+    },
+    "commit": {
+      "description": "Text to insert now. Default \"\".",
+      "type": "string"
+    },
+    "replace": {
+      "description": "What commit replaces: the marked text (or the selection when nothing is marked), or the selection even when text is marked. Default marked.",
+      "enum": [
+        "marked",
+        "selection"
+      ]
+    },
+    "consumed": {
+      "description": "The engine took the key. false: the app gets the key too, after the commit. Default false.",
+      "type": "boolean"
+    },
+    "types": {
+      "description": "With consumed false on a typing key: the text the key should type, by the layout. null: the engine has no say. Default null.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "minLength": 1
+    },
+    "preedit": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "description": "The marked text after the commit. \"\": nothing is marked.",
+          "type": "string"
+        },
+        "caret": {
+          "description": "The caret's place in text, in Unicode scalar values.",
+          "type": "integer",
+          "minimum": 0
+        },
+        "segments": {
+          "description": "text cut into parts, in order; their lengths add up to its length.",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "len": {
+                "description": "In Unicode scalar values.",
+                "type": "integer",
+                "minimum": 1
+              },
+              "kind": {
+                "enum": [
+                  "live",
+                  "fixed",
+                  "picked"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "len",
+              "kind"
+            ]
+          }
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "text"
+      ]
+    },
+    "menu": {
+      "type": "object",
+      "properties": {
+        "rows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "entry": {
+                "description": "The signed index: 0 is the top reading, 1 and up the others, −1 and −2 script forms.",
+                "type": "integer"
+              },
+              "note": {
+                "description": "A note beside the row: romaji, a reading, a name.",
+                "type": "string"
+              },
+              "lang": {
+                "description": "BCP 47: the harness picks the font.",
+                "type": "string",
+                "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+              },
+              "layout": {
+                "description": "The layout whose reading this is.",
+                "type": "string",
+                "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                "maxLength": 48
+              }
+            },
+            "additionalProperties": true,
+            "required": [
+              "text",
+              "entry"
+            ]
+          }
+        },
+        "selected": {
+          "description": "The highlighted row, or null for none.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "strip": {
+          "description": "The menu is one row of single characters.",
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "rows"
+      ]
+    },
+    "mode": {
+      "description": "As the harness last selected it; null before the first select.",
+      "enum": [
+        "muhenkan",
+        "henkan",
+        null
+      ]
+    },
+    "profile": {
+      "description": "As the harness last selected it.",
+      "oneOf": [
+        {
+          "type": "string",
+          "pattern": "^[a-z0-9-]{1,32}$"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "staged": {
+      "description": "What a flush would commit now. Default \"\".",
+      "type": "string"
+    },
+    "ask": {
+      "description": "The engine needs text from the harness to finish, answered with one text event.",
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "selection": {
+              "description": "What for: hanja, full, half, or a layout action's name.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "selection"
+          ]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "around": {
+              "type": "object",
+              "properties": {
+                "before": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "after": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "before",
+                "after"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "around"
+          ]
+        }
+      ]
+    },
+    "dir": {
+      "description": "The writing direction of this reply's text. Default ltr.",
+      "enum": [
+        "ltr",
+        "rtl"
+      ]
+    },
+    "settings": {
+      "description": "In the reply to a settings event: the engine part in effect.",
+      "type": "object"
+    },
+    "problems": {
+      "description": "What was wrong with a settings object, a layout or a dictionary.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "description": "Where, as a path into what the event carried (henkan.profiles[1].layouts[0]).",
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "level": {
+            "description": "error: nothing was changed. warning: it was taken, with this noted.",
+            "enum": [
+              "error",
+              "warning"
+            ]
+          }
+        },
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "code",
+          "message",
+          "level"
+        ]
+      }
+    },
+    "layouts": {
+      "description": "In the reply to a layout event: the session's layouts, stock and custom.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+            "maxLength": 48
+          },
+          "name": {
+            "description": "Text by language (BCP 47 tags). en is required.",
+            "type": "object",
+            "required": [
+              "en"
+            ],
+            "propertyNames": {
+              "type": "string",
+              "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+            },
+            "additionalProperties": {
+              "type": "string"
+            }
+          },
+          "kind": {
+            "enum": [
+              "muhenkan",
+              "henkan"
+            ]
+          },
+          "lang": {
+            "type": "string",
+            "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+          },
+          "read": {
+            "enum": [
+              "direct",
+              "hangul",
+              "table",
+              "kana",
+              "search"
+            ]
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+                },
+                "label": {
+                  "description": "Text by language (BCP 47 tags). en is required.",
+                  "type": "object",
+                  "required": [
+                    "en"
+                  ],
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
+                  },
+                  "additionalProperties": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": true,
+              "required": [
+                "id",
+                "label"
+              ]
+            }
+          },
+          "options": {
+            "description": "The layout's options, as its file declares them.",
+            "type": "object"
+          },
+          "stock": {
+            "description": "One of the layouts shipped with the engine.",
+            "type": "boolean"
+          },
+          "modified": {
+            "description": "A stock layout that a custom layout of the same id replaces.",
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": true,
+        "required": [
+          "id",
+          "name",
+          "kind"
+        ]
+      }
+    },
+    "dictionary": {
+      "description": "In the reply to a dictionary event: the summary of what is loaded.",
+      "type": "object",
+      "properties": {
+        "positive": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "negative": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true,
+      "required": [
+        "positive",
+        "negative"
+      ]
+    }
+  },
+  "if": {
+    "properties": {
+      "ok": {
+        "const": false
+      }
+    }
+  },
+  "then": {
+    "required": [
+      "error"
+    ]
+  }
+}

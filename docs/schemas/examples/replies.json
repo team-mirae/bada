@@ -1,0 +1,309 @@
+[
+  {
+    "ok": true,
+    "commit": "",
+    "replace": "marked",
+    "consumed": true,
+    "types": null,
+    "preedit": {
+      "text": "あなたinter",
+      "caret": 8,
+      "segments": [
+        {
+          "len": 3,
+          "kind": "fixed"
+        },
+        {
+          "len": 5,
+          "kind": "live"
+        }
+      ]
+    },
+    "menu": {
+      "rows": [
+        {
+          "text": "inter",
+          "entry": 0,
+          "lang": "en",
+          "layout": "en-qwerty"
+        },
+        {
+          "text": "ㅑㅜㅅㄷㄱ",
+          "entry": 1,
+          "lang": "ko",
+          "layout": "ko-2-set"
+        }
+      ],
+      "selected": 0,
+      "strip": false
+    },
+    "mode": "henkan",
+    "profile": "work",
+    "staged": "あなたinter",
+    "ask": null,
+    "dir": "ltr"
+  },
+  {
+    "ok": true,
+    "commit": "",
+    "replace": "marked",
+    "consumed": false,
+    "types": "\\",
+    "preedit": {
+      "text": "",
+      "caret": 0,
+      "segments": []
+    },
+    "menu": {
+      "rows": [],
+      "selected": null,
+      "strip": false
+    },
+    "mode": "muhenkan",
+    "profile": "work",
+    "staged": "",
+    "ask": null,
+    "dir": "ltr"
+  },
+  {
+    "ok": true,
+    "commit": "한국",
+    "consumed": false,
+    "types": null,
+    "preedit": {
+      "text": "",
+      "caret": 0,
+      "segments": []
+    },
+    "menu": {
+      "rows": [],
+      "selected": null,
+      "strip": false
+    },
+    "mode": "henkan",
+    "profile": "main",
+    "staged": ""
+  },
+  {
+    "ok": true,
+    "consumed": true,
+    "preedit": {
+      "text": "e",
+      "caret": 1,
+      "segments": [
+        {
+          "len": 1,
+          "kind": "live"
+        }
+      ]
+    },
+    "menu": {
+      "rows": [
+        {
+          "text": "è",
+          "entry": 0
+        },
+        {
+          "text": "é",
+          "entry": 1
+        },
+        {
+          "text": "ê",
+          "entry": 2
+        },
+        {
+          "text": "ë",
+          "entry": 3
+        },
+        {
+          "text": "ē",
+          "entry": 4
+        },
+        {
+          "text": "ė",
+          "entry": 5
+        },
+        {
+          "text": "ę",
+          "entry": 6
+        }
+      ],
+      "selected": null,
+      "strip": true
+    },
+    "mode": "muhenkan",
+    "profile": null,
+    "staged": "e"
+  },
+  {
+    "ok": true,
+    "consumed": true,
+    "mode": "henkan",
+    "profile": "main",
+    "staged": "",
+    "ask": {
+      "selection": "hanja"
+    }
+  },
+  {
+    "ok": true,
+    "consumed": true,
+    "mode": "henkan",
+    "profile": "work",
+    "staged": "",
+    "ask": {
+      "around": {
+        "before": 20,
+        "after": 0
+      }
+    }
+  },
+  {
+    "ok": false,
+    "error": {
+      "code": "unknown-action",
+      "message": "no action named ja-kana.romaji"
+    }
+  },
+  {
+    "ok": false,
+    "error": {
+      "code": "panic",
+      "message": "the engine reset itself"
+    }
+  },
+  {
+    "ok": true,
+    "settings": {
+      "muhenkan": {
+        "layout": "en-qwerty"
+      },
+      "henkan": {
+        "defaults": {
+          "weights": {},
+          "script_forms": false,
+          "options": {
+            "uni-emojis": {
+              "skin_tones": [
+                "none",
+                "medium"
+              ]
+            }
+          }
+        },
+        "profiles": [
+          {
+            "id": "main",
+            "name": "한국어",
+            "layouts": [
+              "ko-2-set"
+            ]
+          },
+          {
+            "id": "work",
+            "name": "work",
+            "layouts": [
+              "en-qwerty",
+              "ko-2-set",
+              "ja-romaji"
+            ],
+            "weights": {
+              "en-qwerty": 0.8
+            }
+          },
+          {
+            "id": "ja",
+            "name": "日本語",
+            "layouts": [
+              "ja-kana"
+            ],
+            "script_forms": true,
+            "fkeys": {
+              "intercept": true,
+              "keys": {
+                "F7": "ja-kana.katakana"
+              }
+            }
+          },
+          {
+            "id": "sym",
+            "name": "symbols",
+            "layouts": [
+              "uni-symbols",
+              "uni-emojis"
+            ]
+          }
+        ]
+      }
+    },
+    "problems": []
+  },
+  {
+    "ok": false,
+    "error": {
+      "code": "invalid",
+      "message": "1 problem"
+    },
+    "problems": [
+      {
+        "path": "henkan.profiles[1].layouts[2]",
+        "code": "unknown-layout",
+        "message": "no layout named ja-romanji",
+        "level": "error"
+      }
+    ]
+  },
+  {
+    "ok": true,
+    "problems": [
+      {
+        "path": "",
+        "code": "stock-modified",
+        "level": "warning",
+        "message": "ko-2-set is a stock layout: its key model still expects the stock keys"
+      }
+    ],
+    "layouts": [
+      {
+        "id": "ko-2-set",
+        "name": {
+          "en": "Korean - 2-set"
+        },
+        "kind": "henkan",
+        "read": "hangul",
+        "lang": "ko",
+        "actions": [
+          {
+            "id": "hanja",
+            "label": {
+              "en": "Hanja"
+            }
+          }
+        ],
+        "options": {},
+        "stock": true,
+        "modified": true
+      },
+      {
+        "id": "en-qwerty-underscore",
+        "name": {
+          "en": "English - QWERTY, with _ on ⇧0"
+        },
+        "kind": "muhenkan",
+        "read": "direct",
+        "lang": "en",
+        "actions": [],
+        "options": {},
+        "stock": false,
+        "modified": false
+      }
+    ]
+  },
+  {
+    "ok": true,
+    "dictionary": {
+      "positive": 2,
+      "negative": 1
+    }
+  }
+]

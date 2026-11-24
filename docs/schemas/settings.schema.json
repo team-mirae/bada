@@ -1,0 +1,281 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bada-settings/2",
+  "description": "The settings file (the standard, §8, §9 and §10.1): the engine's settings, the harness's key table and each harness's own settings.",
+  "type": "object",
+  "required": [
+    "format"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "format": {
+      "const": "bada-settings/2"
+    },
+    "engine": {
+      "description": "The only part the harness sends to the engine.",
+      "type": "object",
+      "properties": {
+        "muhenkan": {
+          "type": "object",
+          "properties": {
+            "layout": {
+              "description": "A muhenkan layout. Unset or null: the engine passes every key on.",
+              "oneOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                  "maxLength": 48
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "henkan": {
+          "type": "object",
+          "properties": {
+            "defaults": {
+              "description": "What profiles share; a profile overrides it field by field.",
+              "type": "object",
+              "properties": {
+                "weights": {
+                  "description": "A multiplier on every reading a layout raises, by layout id. 0 to 10; missing: 1.",
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                    "maxLength": 48
+                  },
+                  "additionalProperties": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 10
+                  }
+                },
+                "script_forms": {
+                  "description": "Script forms as negative menu entries (−1 hiragana, −2 katakana). Default false.",
+                  "type": "boolean"
+                },
+                "script_forms_layout": {
+                  "description": "The layout that offers them; null: the first layout of the profile that has any.",
+                  "oneOf": [
+                    {
+                      "type": "string",
+                      "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                      "maxLength": 48
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "options": {
+                  "description": "Per-layout options, by layout id; each layout's file declares its own.",
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string",
+                    "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                    "maxLength": 48
+                  },
+                  "additionalProperties": {
+                    "type": "object"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "profiles": {
+              "description": "The henkan profiles, in display order. None is allowed.",
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "weights": {
+                    "description": "A multiplier on every reading a layout raises, by layout id. 0 to 10; missing: 1.",
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                      "maxLength": 48
+                    },
+                    "additionalProperties": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 10
+                    }
+                  },
+                  "script_forms": {
+                    "description": "Script forms as negative menu entries (−1 hiragana, −2 katakana). Default false.",
+                    "type": "boolean"
+                  },
+                  "script_forms_layout": {
+                    "description": "The layout that offers them; null: the first layout of the profile that has any.",
+                    "oneOf": [
+                      {
+                        "type": "string",
+                        "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                        "maxLength": 48
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "options": {
+                    "description": "Per-layout options, by layout id; each layout's file declares its own.",
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                      "maxLength": 48
+                    },
+                    "additionalProperties": {
+                      "type": "object"
+                    }
+                  },
+                  "id": {
+                    "description": "Chosen by the user, unique, never the name of a key.",
+                    "type": "string",
+                    "pattern": "^[a-z0-9-]{1,32}$"
+                  },
+                  "name": {
+                    "description": "What menus show.",
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "layouts": {
+                    "description": "The candidates, in order: earlier wins a tie.",
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+                      "maxLength": 48
+                    },
+                    "minItems": 1,
+                    "uniqueItems": true
+                  },
+                  "fkeys": {
+                    "description": "This profile's F6–F10. Missing: intercepted, none bound.",
+                    "type": "object",
+                    "properties": {
+                      "intercept": {
+                        "description": "false: every F key goes to the app.",
+                        "type": "boolean"
+                      },
+                      "keys": {
+                        "type": "object",
+                        "propertyNames": {
+                          "enum": [
+                            "F6",
+                            "F7",
+                            "F8",
+                            "F9",
+                            "F10"
+                          ]
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "pattern": "^(swallow|pass|[a-z]{2,3}(-[a-z0-9]+)+\\.[a-z0-9]+(-[a-z0-9]+)*)$"
+                        }
+                      }
+                    },
+                    "additionalProperties": false
+                  }
+                },
+                "additionalProperties": false,
+                "required": [
+                  "id",
+                  "name",
+                  "layouts"
+                ]
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
+    "keys": {
+      "description": "The harness's key table, in one format for every harness.",
+      "type": "object",
+      "properties": {
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "on": {
+                "description": "One key, with or without modifiers, as recorded from a real press: modifiers in the order ctrl, alt, shift, meta, then a W3C code. Or a pair: two language keys held together, joined by +, in either order.",
+                "type": "string",
+                "pattern": "^((ctrl\\+)?(alt\\+)?(shift\\+)?(meta\\+)?[A-Z][A-Za-z0-9]*|(Backquote|NonConvert|Convert|KanaMode|Lang2|Lang1)\\+(Backquote|NonConvert|Convert|KanaMode|Lang2|Lang1))$"
+              },
+              "do": {
+                "description": "The first action that applies runs.",
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^(mode\\.toggle|mode:(muhenkan|henkan)|profile:[a-z0-9-]{1,32}|profile\\.(next|prev|last|first)|menu\\.(next|prev)|fix|width\\.(full|half)|[a-z]{2,3}(-[a-z0-9]+)+\\.[a-z0-9]+(-[a-z0-9]+)*|pass|none)$"
+                },
+                "minItems": 1
+              },
+              "when": {
+                "description": "The binding holds only then. The most specific binding for a key wins.",
+                "type": "string",
+                "pattern": "^(muhenkan|henkan|profile:[a-z0-9-]{1,32})$"
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "on",
+              "do"
+            ]
+          }
+        },
+        "cycle": {
+          "description": "The profiles profile.next and profile.prev go through, in order.",
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$"
+          },
+          "uniqueItems": true
+        },
+        "henkan_enters": {
+          "description": "The profile that mode:henkan and the toggle enter: last (the one last used), or a profile's id. Default last.",
+          "type": "string",
+          "pattern": "^[a-z0-9-]{1,32}$"
+        },
+        "caps_lock": {
+          "description": "What the lock does when the key isn't bound. transient: on in muhenkan only. respect: everywhere. Default respect.",
+          "enum": [
+            "transient",
+            "respect"
+          ]
+        },
+        "caps_rule": {
+          "description": "What Caps Lock types in muhenkan. Default allcaps.",
+          "enum": [
+            "allcaps",
+            "upper_snake"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "harness": {
+      "description": "One harness's own settings, by its id.",
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(\\.[A-Za-z0-9-]+)+$"
+      },
+      "additionalProperties": {
+        "type": "object"
+      }
+    }
+  }
+}

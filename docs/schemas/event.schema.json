@@ -1,0 +1,309 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bada-compatible v2: an event",
+  "description": "What a harness passes to P_send (the standard, §5). An engine ignores fields it doesn't know in an event whose type it knows.",
+  "type": "object",
+  "required": [
+    "type"
+  ],
+  "oneOf": [
+    {
+      "title": "key",
+      "description": "One key press the harness wants read.",
+      "properties": {
+        "type": {
+          "const": "key"
+        },
+        "key": {
+          "description": "A W3C KeyboardEvent.code: the key's physical position. Any string is accepted; an unknown code is a key the engine doesn't handle.",
+          "type": "string"
+        },
+        "shift": {
+          "type": "boolean"
+        },
+        "ctrl": {
+          "type": "boolean"
+        },
+        "alt": {
+          "type": "boolean"
+        },
+        "meta": {
+          "type": "boolean"
+        },
+        "repeat": {
+          "description": "The press is a repeat of a held key. Missing: false.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type",
+        "key"
+      ]
+    },
+    {
+      "title": "action",
+      "description": "A request by name: one of the engine's actions (menu.next, menu.prev, fix, width.full, width.half) or a layout's (<layout id>.<action id>).",
+      "properties": {
+        "type": {
+          "const": "action"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)?$"
+        }
+      },
+      "required": [
+        "type",
+        "name"
+      ]
+    },
+    {
+      "title": "select",
+      "description": "The mode and the henkan profile of this text field. Commits what is staged if either changes.",
+      "properties": {
+        "type": {
+          "const": "select"
+        },
+        "mode": {
+          "enum": [
+            "muhenkan",
+            "henkan"
+          ]
+        },
+        "profile": {
+          "description": "A profile id of the settings; required in henkan. In muhenkan it is kept and echoed, and may be null.",
+          "oneOf": [
+            {
+              "type": "string",
+              "pattern": "^[a-z0-9-]{1,32}$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "required": [
+        "type",
+        "mode"
+      ],
+      "if": {
+        "properties": {
+          "mode": {
+            "const": "henkan"
+          }
+        },
+        "required": [
+          "mode"
+        ]
+      },
+      "then": {
+        "required": [
+          "profile"
+        ],
+        "properties": {
+          "profile": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]{1,32}$"
+          }
+        }
+      }
+    },
+    {
+      "title": "pick",
+      "description": "Picks a row of the menu, by pointer or touch.",
+      "properties": {
+        "type": {
+          "const": "pick"
+        },
+        "row": {
+          "description": "Index into the last reply's menu.rows.",
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "type",
+        "row"
+      ]
+    },
+    {
+      "title": "text",
+      "description": "The harness's answer to a reply's ask, once.",
+      "properties": {
+        "type": {
+          "const": "text"
+        },
+        "selection": {
+          "description": "The selected text; \"\" if nothing is selected or something is marked.",
+          "type": "string"
+        },
+        "before": {
+          "description": "The text before the caret, at most as many characters as asked.",
+          "type": "string"
+        },
+        "after": {
+          "description": "The text after the caret, at most as many characters as asked.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "selection"
+          ]
+        },
+        {
+          "required": [
+            "before"
+          ]
+        },
+        {
+          "required": [
+            "after"
+          ]
+        }
+      ]
+    },
+    {
+      "title": "flush",
+      "description": "Commits what is staged.",
+      "properties": {
+        "type": {
+          "const": "flush"
+        },
+        "cause": {
+          "description": "Why. Missing: harness.",
+          "enum": [
+            "blur",
+            "click",
+            "edit",
+            "harness"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    {
+      "title": "reset",
+      "description": "Drops what is staged; commits nothing.",
+      "properties": {
+        "type": {
+          "const": "reset"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    {
+      "title": "state",
+      "description": "Changes nothing: the reply is the last one again.",
+      "properties": {
+        "type": {
+          "const": "state"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    },
+    {
+      "title": "settings",
+      "description": "A session event: replaces (set) or merges (patch, a JSON merge patch) the engine's settings. With neither, re-reads them.",
+      "properties": {
+        "type": {
+          "const": "settings"
+        },
+        "set": {
+          "description": "The whole engine part of a settings file.",
+          "type": "object"
+        },
+        "patch": {
+          "description": "A JSON merge patch (RFC 7396) on the engine part.",
+          "type": "object"
+        },
+        "dry": {
+          "description": "Only check: change nothing.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "not": {
+        "required": [
+          "set",
+          "patch"
+        ]
+      }
+    },
+    {
+      "title": "layout",
+      "description": "A session event: adds or replaces a custom layout (value), removes one (id, with value null), or with neither lists the session's layouts.",
+      "properties": {
+        "type": {
+          "const": "layout"
+        },
+        "value": {
+          "description": "A bada-layout/2 object, or null.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
+          "maxLength": 48
+        },
+        "dry": {
+          "description": "Only check: change nothing.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "if": {
+        "properties": {
+          "value": {
+            "type": "null"
+          }
+        },
+        "required": [
+          "value"
+        ]
+      },
+      "then": {
+        "required": [
+          "id"
+        ]
+      }
+    },
+    {
+      "title": "dictionary",
+      "description": "A session event: sets the session's user dictionary (value), clears it (null), or with no value re-reads its summary.",
+      "properties": {
+        "type": {
+          "const": "dictionary"
+        },
+        "value": {
+          "description": "The dictionary object (the dictionary contract), or null.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ]
+    }
+  ]
+}

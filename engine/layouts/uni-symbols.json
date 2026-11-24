@@ -1,0 +1,25 @@
+{
+  "format": "bada-layout/2",
+  "id": "uni-symbols",
+  "name": {"en": "Unicode - Symbols", "ko": "유니코드 - 기호", "ja": "ユニコード - 記号"},
+  "lang": "und",
+  "kind": "henkan",
+  "read": "search",
+  "note": "A search over symbols, by name and tag; a typed symbol offers its richer forms: the symbols of bada ime 0.3.1's layout 150.",
+  "keys": {"Space": {"base": {"t": " ", "r": "l"}}},
+  "search": {
+    "sources": [
+      {
+        "data": "symbols",
+        "match": ["name", "tags"],
+        "tiers": ["exact", "first", "any"],
+        "order": "data",
+        "note": "name",
+        "single": "keys",
+        "forms": true
+      }
+    ],
+    "limit": 40
+  },
+  "rank": {"query": 60, "found": 59}
+}

@@ -1,0 +1,202 @@
+[
+  {
+    "type": "key",
+    "key": "KeyA",
+    "shift": false,
+    "ctrl": false,
+    "alt": false,
+    "meta": false
+  },
+  {
+    "type": "key",
+    "key": "Backspace",
+    "repeat": true
+  },
+  {
+    "type": "action",
+    "name": "menu.next"
+  },
+  {
+    "type": "action",
+    "name": "ja-kana.katakana"
+  },
+  {
+    "type": "select",
+    "mode": "henkan",
+    "profile": "work"
+  },
+  {
+    "type": "select",
+    "mode": "muhenkan",
+    "profile": null
+  },
+  {
+    "type": "pick",
+    "row": 1
+  },
+  {
+    "type": "text",
+    "selection": "한국"
+  },
+  {
+    "type": "text",
+    "selection": "",
+    "before": "the text before the caret",
+    "after": ""
+  },
+  {
+    "type": "flush",
+    "cause": "blur"
+  },
+  {
+    "type": "reset"
+  },
+  {
+    "type": "state"
+  },
+  {
+    "type": "settings",
+    "set": {
+      "muhenkan": {
+        "layout": "en-qwerty"
+      },
+      "henkan": {
+        "defaults": {
+          "weights": {},
+          "script_forms": false,
+          "options": {
+            "uni-emojis": {
+              "skin_tones": [
+                "none",
+                "medium"
+              ]
+            }
+          }
+        },
+        "profiles": [
+          {
+            "id": "main",
+            "name": "한국어",
+            "layouts": [
+              "ko-2-set"
+            ]
+          },
+          {
+            "id": "work",
+            "name": "work",
+            "layouts": [
+              "en-qwerty",
+              "ko-2-set",
+              "ja-romaji"
+            ],
+            "weights": {
+              "en-qwerty": 0.8
+            }
+          },
+          {
+            "id": "ja",
+            "name": "日本語",
+            "layouts": [
+              "ja-kana"
+            ],
+            "script_forms": true,
+            "fkeys": {
+              "intercept": true,
+              "keys": {
+                "F7": "ja-kana.katakana"
+              }
+            }
+          },
+          {
+            "id": "sym",
+            "name": "symbols",
+            "layouts": [
+              "uni-symbols",
+              "uni-emojis"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  {
+    "type": "settings",
+    "patch": {
+      "henkan": {
+        "defaults": {
+          "script_forms": true
+        }
+      }
+    },
+    "dry": true
+  },
+  {
+    "type": "settings"
+  },
+  {
+    "type": "layout",
+    "value": {
+      "format": "bada-layout/2",
+      "id": "en-qwerty-underscore",
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "muhenkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "Digit0": {
+          "shift": {
+            "t": "_",
+            "r": "x"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      }
+    }
+  },
+  {
+    "type": "layout",
+    "id": "en-qwerty-underscore",
+    "value": null
+  },
+  {
+    "type": "layout"
+  },
+  {
+    "type": "dictionary",
+    "value": {
+      "format": "bada-dictionary",
+      "version": 1,
+      "positive": [
+        {
+          "word": "데이터센터",
+          "count": 40
+        },
+        {
+          "word": "サーバー",
+          "language": "japanese"
+        }
+      ],
+      "negative": [
+        {
+          "word": "감소합니다",
+          "strength": "strong"
+        }
+      ]
+    }
+  },
+  {
+    "type": "dictionary",
+    "value": null
+  }
+]

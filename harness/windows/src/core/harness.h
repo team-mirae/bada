@@ -1,0 +1,226 @@
+// The harness, without TSF (docs/bada-compatible-v2.md): everything the text service decides.
+//
+// A Session is the process's: the engine's data and session, the settings folder, the key table,
+// and the mode and profile, which every text field follows. A Context is one text field: its
+// engine, the last reply, and the keys held down. The text service makes one Session per process
+// and one Context per TSF context, gives each call its Field, and moves keys in and text out.
+// Nothing else. No Windows types here, so the tests type into it with a plain text field.
+#pragma once
+
+#include <cstdint>
+#include <filesystem>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <set>
+#include <string>
+#include <vector>
+
+#include "engine.h"
+#include "keys.h"
+#include "keytable.h"
+#include "reply.h"
+#include "settings.h"
+
+namespace bada {
+
+// What changes in the state that a program waiting for the state message is told (README, "The
+// published state").
+struct StateSummary {
+    Mode mode = Mode::kMuhenkan;
+    bool active = false;     // a text field has focus
+    bool secure = false;     // a password field
+    bool composing = false;  // something is staged
+    bool caps_lock = false;  // the lock is on
+};
+
+// Where the published state goes (§6.7). The text service gives the shared memory and the window
+// message (src/tip/state_shared.h).
+class StateSink {
+public:
+    virtual ~StateSink() = default;
+    virtual void Publish(const std::string& json, const StateSummary& summary) = 0;
+    virtual void Clear() = 0;  // nothing is published (turned off)
+};
+
+// What the text service knows about the text field in focus.
+struct ContextInfo {
+    std::string app;      // the program's file name ("notepad.exe"); "" unknown
+    bool secure = false;  // a password field: nothing composes, nothing typed is published
+};
+
+// The text service's text field: reply.h's Field, and what only a real one does.
+class HostField : public Field {
+public:
+    // Hands the app a key the harness held back and then let go: a key of a bound pair whose own
+    // binding passes it on (§9.3).
+    virtual void ForwardKey(const RawKey& key) { (void)key; }
+    // Shows the user a short notice; "" takes it away.
+    virtual void Notice(const std::string& text) { (void)text; }
+};
+
+// The mode and profile every text field of the session follows, as they are kept across
+// processes (§8.1): the profiles by their ids, never by an index.
+struct Shared {
+    Mode mode = Mode::kMuhenkan;
+    std::string profile;   // the profile last selected; "" before the first
+    std::string previous;  // the profile in use before that one; "" when none
+    bool operator==(const Shared& o) const { return mode == o.mode && profile == o.profile && previous == o.previous; }
+};
+// One line of text for a TSF global compartment, and back. nullopt: not one of ours.
+std::string WriteShared(const Shared& shared);
+std::optional<Shared> ReadShared(const std::string& text);
+
+class Session {
+public:
+    struct Options {
+        std::filesystem::path config_dir;  // empty: SettingsFolder::DefaultDir()
+        std::string version;               // the harness's own
+        // The preset for `keyboard: "auto"`: what keyboard Windows reports.
+        Preset detected = Preset::kNoLanguageKeys;
+        StateSink* sink = nullptr;
+        // One line for the log. Never typed text.
+        std::function<void(const std::string&)> log;
+    };
+    // Builds the data and the session and reads the settings folder. nullptr and `error` when the
+    // engine can't be used: another major version, or it refuses to start.
+    static std::unique_ptr<Session> Create(Options options, std::string* error);
+
+    Mode mode() const { return state_.mode; }
+    // The profile last selected; "" before the first.
+    const std::string& profile() const { return state_.profile; }
+    const std::vector<Profile>& profiles() const { return folder_.loaded().profiles; }
+    const KeyTable& table() const { return folder_.loaded().table; }
+    const HarnessSettings& harness() const { return folder_.loaded().harness; }
+    const SettingsFolder& folder() const { return folder_; }
+    std::vector<Problem> problems() const { return folder_.problems(); }
+    // Set when a key asked for henkan and there is no profile (§8.3); "" otherwise.
+    const std::string& notice() const { return notice_; }
+    // Goes up with every change of mode or profile, and of the settings.
+    std::uint64_t generation() const { return generation_; }
+
+    // The indicator's text: "A" in muhenkan, the first character of the profile's name in henkan.
+    std::string Label() const;
+    // The profile's name in henkan, "muhenkan" otherwise.
+    std::string ModeText() const;
+
+    // Reads the settings folder again if a file changed. True: something was read.
+    bool Reload();
+    // The same, no more than a few times a second: for every key. `now_ms`: a steady clock.
+    bool Poll(std::uint64_t now_ms);
+
+    // Mode and profile, as the other processes of the session should follow them.
+    Shared shared() const { return {state_.mode, state_.profile, state_.previous}; }
+    // Goes up when this process switched mode or profile itself: then the text service tells the
+    // other processes. Following them (Adopt) doesn't count.
+    std::uint64_t switches() const { return switches_; }
+    // Another process switched: follow it. A profile this process doesn't have is not taken.
+    // True: the mode or the profile changed, and every field follows at its next event.
+    bool Adopt(const Shared& shared);
+
+    // The lock, as the harness has it (§9.4).
+    bool lock() const { return lock_; }
+    // What the lock must be now, when the harness decided it and Windows may have it otherwise:
+    // Caps Lock was bound to something, or `transient` keeps it off in henkan. The text service
+    // takes it once, and sets the lock if it differs.
+    std::optional<bool> TakeLockWanted();
+
+    // The published state (§6.7): the display fields of `last` (nullptr: nothing shows) and the
+    // harness's own. `info` nullptr: no text field has focus.
+    std::string State(const Reply* last, const ContextInfo* info) const;
+    StateSummary Summary(const Reply* last, const ContextInfo* info) const;
+    // Publishes the state with no text field in focus: at the start, and when focus leaves.
+    void PublishIdle();
+    void Log(const std::string& line) const;
+
+private:
+    friend class Context;
+    Session(Options options, std::filesystem::path dir)
+        : options_(std::move(options)), folder_(std::move(dir), options_.detected) {}
+    // Mode and profile changed by a key, the indicator or the menu.
+    void Select(Mode mode, const std::string& profile);
+    // After a reload: a profile that is gone can't stay selected.
+    void Validate();
+    void Onboard();
+    const Profile* Find(const std::string& id) const;
+
+    Options options_;
+    std::unique_ptr<EngineData> data_;
+    std::unique_ptr<EngineSession> engine_;
+    SettingsFolder folder_;
+    TableState state_;  // mode, profile and the one before; the rest is each field's
+    bool lock_ = false;
+    std::optional<bool> lock_wanted_;
+    bool lock_decided_ = false;  // the harness set the lock at the last Caps Lock press
+    std::string notice_;
+    std::uint64_t generation_ = 1;
+    std::uint64_t switches_ = 0;
+    std::uint64_t polled_ms_ = 0;
+    bool polled_ = false;
+};
+
+class Context {
+public:
+    explicit Context(Session& session);
+
+    bool ok() const { return engine_.ok(); }
+    // A key press. True: eaten, the app doesn't get it.
+    bool KeyDown(const RawKey& key, HostField& field, const ContextInfo& info);
+    // A key release. True: eaten, as its press was.
+    bool KeyUp(const RawKey& key, HostField& field, const ContextInfo& info);
+    // Focus came here: the settings and the session's mode are taken up, and the state published.
+    void FocusIn(HostField& field, const ContextInfo& info);
+    // What is staged is committed, before the field changes. `cause`: "blur" (focus left), "click"
+    // (a click in the text), "edit" (the app changed the text), or "harness".
+    void Flush(HostField& field, const char* cause);
+    // Focus left: flush, and say so in the state.
+    void FocusOut(HostField& field);
+    // A click on a row of the menu: move to it, then commit (§5, `pick`).
+    void Pick(size_t row, HostField& field, const ContextInfo& info);
+    // The input menu: muhenkan, or henkan with a profile.
+    void Select(Mode mode, const std::string& profile, HostField& field, const ContextInfo& info);
+    // The indicator was clicked: the other mode, as `mode.toggle` goes there.
+    void Toggle(HostField& field, const ContextInfo& info);
+    // The field's preedit and menu went away without the engine (the app ended the composition,
+    // or it never showed): drop what the engine has staged, and forget what showed.
+    void Forget();
+
+    // The last reply applied: what shows.
+    const Reply& last() const { return last_; }
+    // Something is staged or marked.
+    bool composing() const { return !last_.staged.empty() || !last_.preedit.text.empty(); }
+    // The published state (§6.7), as it would be now with this field in focus.
+    std::string State(const ContextInfo& info) const { return session_.State(&last_, &info); }
+    void Publish(const ContextInfo& info);
+
+private:
+    // Follows the session: `select` after bada_new, and when mode, profile or settings changed.
+    void Sync(HostField& field, const ContextInfo& info);
+    void SendSelect(HostField& field, const ContextInfo& info);
+    // Sends an event and applies its reply (§6.3). Returns the reply to the event itself.
+    Reply Send(const std::string& event_json, HostField& field);
+    // One press the tracker handed over. True: eaten.
+    bool Run(const KeyTracker::Step& step, const RawKey& key, const std::string& code, HostField& field,
+             const ContextInfo& info);
+    // Carries out what the table decided. True: eaten.
+    bool Do(const Decision& d, const KeyTracker::Step& step, const RawKey& key, const std::string& code,
+            HostField& field, const ContextInfo& info);
+    // A key the table doesn't take: the engine reads it (§6.4). True: eaten.
+    bool SendKey(const std::string& code, const RawKey& key, HostField& field, const ContextInfo& info);
+    bool LockOn() const;
+
+    Session& session_;
+    Engine engine_;
+    Reply last_;
+    KeyTracker tracker_;
+    RawKey waiting_;               // the press of the key that waits in the tracker
+    std::set<std::string> eaten_;  // keys down whose press was eaten: their release is too
+    std::set<std::string> bound_;  // keys down that had a binding: their repeats are swallowed
+    bool selected_ = false;        // the engine had its first select
+    Mode engine_mode_ = Mode::kMuhenkan;  // what this engine was last selected into
+    std::uint64_t generation_ = 0;  // the session's, when this field last followed it
+    bool notice_shown_ = false;
+    bool bound_now_ = false;  // the last press decided had a binding
+};
+
+}  // namespace bada

@@ -1,0 +1,128 @@
+{
+  "format": "bada-layout/2",
+  "id": "ko-bada-roman",
+  "name": {"en": "Korean - bada roman", "ko": "한국어 - 바다 로마자", "ja": "韓国語 - バダローマ字"},
+  "lang": "ko",
+  "kind": "henkan",
+  "read": "table",
+  "note": "bada ime 0.3.1's layout 15: Korean typed as it is romanized, on the QWERTY letters. Designed by Min Jun Sung (Mirae Research).",
+  "keys": {
+    "Digit1": {"alt_shift": {"t": "!", "r": "x"}},
+    "Digit2": {"alt_shift": {"t": "\"", "r": "x"}},
+    "Digit3": {"alt_shift": {"t": "#", "r": "x"}},
+    "Digit4": {"alt_shift": {"t": "$", "r": "x"}},
+    "Digit5": {"alt_shift": {"t": "%", "r": "x"}},
+    "Digit6": {"alt_shift": {"t": "&", "r": "x"}},
+    "Digit7": {"alt_shift": {"t": "'", "r": "x"}},
+    "Digit8": {"alt_shift": {"t": "(", "r": "x"}},
+    "Digit9": {"alt_shift": {"t": ")", "r": "x"}},
+    "Digit0": {"shift": {"t": "+", "r": "x"}, "alt_shift": {"t": "0", "r": "x"}},
+    "Minus": {"alt_shift": {"t": "=", "r": "x"}},
+    "Equal": {"alt_shift": {"t": "~", "r": "x"}},
+    "IntlYen": {"base": {"t": "₩", "r": "x"}, "alt_shift": {"t": "|", "r": "x"}},
+    "BracketLeft": {"alt_shift": {"t": "`", "r": "x"}},
+    "BracketRight": {"shift": {"t": "「", "r": "x"}, "alt_shift": {"t": "{", "r": "x"}},
+    "Semicolon": {"base": {"t": ";", "r": "b"}, "shift": {"t": ";", "r": "x"}, "alt": {"t": "·", "r": "x"}, "alt_shift": {"t": "+", "r": "x"}},
+    "Quote": {"alt_shift": {"t": "*", "r": "x"}},
+    "Backslash": {"shift": {"t": "」", "r": "x"}, "alt_shift": {"t": "}", "r": "x"}},
+    "Comma": {"alt_shift": {"t": "<", "r": "x"}},
+    "Period": {"alt_shift": {"t": ">", "r": "x"}},
+    "Slash": {"alt_shift": {"t": "?", "r": "x"}},
+    "IntlRo": {"alt_shift": {"t": "_", "r": "x"}}
+  },
+  "text_ends_word": true,
+  "table": {
+    "syllable": {
+      "onsets": {
+        "kk": ["ㄲ"], "gg": ["ㄲ"], "tt": ["ㄸ"], "dd": ["ㄸ"], "pp": ["ㅃ"], "bb": ["ㅃ"], "ss": ["ㅆ"],
+        "jj": ["ㅉ"], "zz": ["ㅉ"], "ch": ["ㅊ", "ㅈ"], "sh": ["ㅅ"], "k": ["ㅋ", "ㄱ"], "g": ["ㄱ"], "n": ["ㄴ"],
+        "t": ["ㅌ", "ㄷ"], "d": ["ㄷ"], "r": ["ㄹ"], "l": ["ㄹ"], "m": ["ㅁ"], "p": ["ㅍ", "ㅂ"], "b": ["ㅂ"],
+        "s": ["ㅅ", "ㅆ"], "j": ["ㅈ"], "c": ["ㅊ"], "h": ["ㅎ"], "f": ["ㅍ"], "v": ["ㅂ"], "z": ["ㅈ"],
+        "q": ["ㅊ", "ㅈ"], "x": ["ㅇ"]
+      },
+      "vowels": {
+        "yae": ["ㅒ", "ㅖ"], "wae": ["ㅙ", "ㅞ", "ㅚ"], "yeo": ["ㅕ"], "weo": ["ㅝ"], "woo": ["ㅜ"], "you": ["ㅠ"],
+        "eui": ["ㅢ"], "ye-": ["ㅒ"], "we-": ["ㅙ"], "ae": ["ㅐ", "ㅔ"], "ya": ["ㅑ"], "eo": ["ㅓ"],
+        "ye": ["ㅖ", "ㅒ"], "wa": ["ㅘ"], "oe": ["ㅚ", "ㅙ", "ㅞ"], "yo": ["ㅛ", "ㅕ"], "wo": ["ㅝ"],
+        "we": ["ㅞ", "ㅙ", "ㅚ"], "wi": ["ㅟ"], "yu": ["ㅠ"], "eu": ["ㅡ"], "ui": ["ㅢ"], "oo": ["ㅜ"],
+        "ee": ["ㅣ"], "e-": ["ㅐ"], "a": ["ㅏ"], "e": ["ㅔ", "ㅐ"], "o": ["ㅗ", "ㅓ"], "u": ["ㅜ", "ㅡ"], "i": ["ㅣ"]
+      },
+      "codas": {
+        "ng": ["ㅇ", "ㄱ"], "kk": ["ㄲ"], "ss": ["ㅆ"], "ts": ["ㅆ"], "lk": ["ㄺ"], "lg": ["ㄺ"], "lm": ["ㄻ"],
+        "lb": ["ㄼ"], "lp": ["ㄼ"], "lh": ["ㅀ"], "ps": ["ㅄ"], "bs": ["ㅄ"], "nh": ["ㄶ"], "nj": ["ㄵ"],
+        "ks": ["ㄳ"], "k": ["ㄱ", "ㅋ", "ㄲ"], "g": ["ㄱ"], "n": ["ㄴ"],
+        "t": ["ㅅ", "ㄷ", "ㅆ", "ㅈ", "ㅊ", "ㅌ", "ㅎ"], "d": ["ㄷ"], "l": ["ㄹ"], "r": ["ㄹ"], "m": ["ㅁ", "ㅂ"],
+        "p": ["ㅂ", "ㅍ"], "b": ["ㅂ"], "s": ["ㅅ"], "h": ["ㅎ"], "j": ["ㅈ"], "z": ["ㅈ"]
+      },
+      "empty_onset": ["ㅇ"],
+      "vowels_before_coda": {"yu": ["ㅕ", "ㅠ"], "you": ["ㅕ", "ㅠ"], "u": ["ㅜ", "ㅡ", "ㅓ"]},
+      "codas_before": [{"coda": "l", "next": "t", "jamo": ["ㅀ"]}],
+      "letter_after": {"-": ["e"]},
+      "shortcuts": {"data": "ja-shortcuts", "option": "ja_shortcuts"}
+    }
+  },
+  "convert": [
+    {
+      "with": "dictionary",
+      "data": "en-ko",
+      "rows": 8,
+      "first": false,
+      "below_top": 0.5,
+      "case": {"lower": "word", "mixed": "name-then-word", "upper": "name-else-word"}
+    }
+  ],
+  "actions": [
+    {
+      "id": "initials",
+      "label": {"en": "Initial consonants only", "ko": "초성만", "ja": "初声のみ"},
+      "do": "jamo",
+      "keep": "initials"
+    },
+    {
+      "id": "vowels",
+      "label": {"en": "Vowels only", "ko": "중성만", "ja": "中声のみ"},
+      "do": "jamo",
+      "keep": "vowels"
+    },
+    {
+      "id": "finals",
+      "label": {"en": "Final consonants only", "ko": "종성만", "ja": "終声のみ"},
+      "do": "jamo",
+      "keep": "finals"
+    },
+    {
+      "id": "fullwidth-latin",
+      "label": {"en": "Full-width Latin", "ko": "전각 영문", "ja": "全角英数"},
+      "do": "keys",
+      "width": "full"
+    },
+    {
+      "id": "halfwidth-latin",
+      "label": {"en": "Half-width Latin", "ko": "반각 영문", "ja": "半角英数"},
+      "do": "keys",
+      "width": "half"
+    }
+  ],
+  "words": ["ko-words"],
+  "rank": {
+    "known": 100,
+    "by_count": true,
+    "whole": 80,
+    "loose": 40,
+    "after_text": 30,
+    "readings": {"cost": 3.0, "max_cost": 10.0, "floor": 90, "rows": 8},
+    "model": {"data": "ko-jamo-4gram", "cost": 2.5, "margin": 2.0}
+  },
+  "options": {
+    "ja_shortcuts": {
+      "type": "boolean",
+      "default": true,
+      "title": {
+        "en": "Accept Japanese romaji readings as shortcuts when it saves keystrokes",
+        "ko": "키 입력이 줄어들 때 일본어 로마자 읽기를 단축 입력으로 받기",
+        "ja": "打鍵数が減るとき、日本語のローマ字読みを近道として受け付ける"
+      },
+      "hint": {"en": "i.e. mei as 명, or jou as 정", "ko": "예: mei는 명, jou는 정", "ja": "例: mei は 명、jou は 정"}
+    }
+  }
+}

@@ -1,0 +1,21 @@
+[package]
+name = "bada-engine"
+description = "bada's engine: keys in, text out. Every layout is read from its bada-layout/2 file."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+name = "bada"
+# rlib: tests, the command line and Rust harnesses. cdylib: harnesses that load it. staticlib: a
+# native harness that links it (the macOS input method).
+crate-type = ["rlib", "cdylib", "staticlib"]
+
+[dependencies]
+bada-compat = { path = "../crates/compat" }
+serde.workspace = true
+serde_json.workspace = true
