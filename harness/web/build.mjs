@@ -5,7 +5,8 @@
 //
 //   node harness/web/build.mjs      then serve harness/web/dist (node harness/web/serve.mjs)
 //
-// Needs Rust with the wasm32-unknown-unknown target. Nothing is installed and nothing is deployed.
+// Needs Rust with the wasm32-unknown-unknown target. Nothing is installed and nothing is deployed:
+// vercel.json says how Vercel runs this.
 import { execFileSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { copyFileSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
