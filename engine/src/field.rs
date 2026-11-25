@@ -11,7 +11,9 @@ use bada_compat::{
 use crate::data::Strength;
 use crate::hangul::decompose;
 use crate::keymodel::symbol;
-use crate::layout::{Convert, Do, Keep, Layer, Layout, Press, Read, Role, Script, Table, WidthName, jis, key_index};
+use crate::layout::{
+    Convert, Do, Form, Keep, Layer, Layout, Press, Read, Role, Script, Table, WidthName, jis, key_index,
+};
 use crate::read::{Reading, Shape, is_text, read};
 use crate::script::katakana;
 use crate::search::search;
@@ -135,7 +137,7 @@ pub struct Field {
     presses: Vec<Press>,
     over: Option<Override>,
     entries: Vec<Entry>,
-    /// Script forms: entry −1, −2.
+    /// The forms of one layout (§7.5.12): entry −1, −2, and so on.
     negatives: Vec<Entry>,
     /// The signed index of the entry that shows.
     index: i32,
@@ -320,10 +322,7 @@ impl Field {
         let candidates = self.candidates();
         if let Some(over) = &self.over {
             let text = match over {
-                Override::Keys(w) => {
-                    let keys: String = self.presses.iter().filter_map(|p| jis(p.key, p.layer.shifted())).collect();
-                    convert(&keys, width(*w))
-                }
+                Override::Keys(w) => self.keys_in(*w),
                 Override::Script { layout, to } => candidates
                     .iter()
                     .find(|l| l.id() == layout)
@@ -338,7 +337,8 @@ impl Field {
         let mut entries: Vec<Entry> = Vec::new();
         let data = self.session.data.clone();
         let dictionary = self.view.dictionary.clone();
-        let script_forms = self.view.settings.script_forms(&profile);
+        self.negatives = self.forms(&profile, &candidates);
+        let forms: Vec<String> = self.negatives.iter().map(|e| e.text.clone()).collect();
         let evidence = self.key_evidence(&candidates);
         for (place, layout) in candidates.iter().enumerate() {
             let Some(reading) = self.reading(layout) else { continue };
@@ -404,8 +404,8 @@ impl Field {
                                 kana_score = kana_score.max(at + 0.001);
                                 continue;
                             }
-                            // Its katakana is a row already when script forms are on (−2).
-                            if script_forms && *conv == kata {
+                            // What a form writes is a row already, under entry 0.
+                            if forms.contains(conv) {
                                 continue;
                             }
                             entries.push(row(conv.clone(), at, reading_note()));
@@ -413,7 +413,7 @@ impl Field {
                         }
                         // The most common words of the reading, under the first conversion.
                         let rows = k.common.as_ref().map_or(0, |c| c.1);
-                        let shown = common.iter().filter(|w| !(script_forms && **w == kata)).take(rows);
+                        let shown = common.iter().filter(|w| **w == text || !forms.contains(w)).take(rows);
                         for (i, word) in shown.enumerate() {
                             entries.push(row(word.clone(), score + 0.5 - 0.006 - 0.0001 * i as f64, reading_note()));
                         }
@@ -524,30 +524,6 @@ impl Field {
                 i += 1;
             }
         }
-        // Script forms, when the profile has them on: one layout's, as negative entries.
-        if self.view.settings.script_forms(&profile) {
-            let forms_of = |l: &Layout| {
-                l.file
-                    .convert
-                    .iter()
-                    .find_map(|c| if let Convert::Script { forms } = c { Some(forms.clone()) } else { None })
-            };
-            let wanted = self.view.settings.script_forms_layout(&profile);
-            let from = candidates.iter().find(|l| forms_of(l).is_some() && wanted.is_none_or(|w| w == l.id()));
-            if let Some((layout, reading)) = from.and_then(|l| Some((l, self.reading(l)?))) {
-                let mut forms = forms_of(layout).unwrap_or_default();
-                forms.sort_by_key(|f| std::cmp::Reverse(f.entry));
-                self.negatives = forms
-                    .iter()
-                    .map(|f| Entry {
-                        text: in_script(&reading.text, f.to),
-                        lang: Some(layout.file.lang.clone()),
-                        layout: Some(layout.id().to_string()),
-                        ..Entry::default()
-                    })
-                    .collect();
-            }
-        }
         // One row per text, at its best score.
         entries.sort_by(|a, b| b.score.total_cmp(&a.score));
         let mut seen = std::collections::HashSet::new();
@@ -559,6 +535,35 @@ impl Field {
         {
             self.index = i as i32;
         }
+    }
+
+    /// The staged keys as their JIS characters, in a width.
+    fn keys_in(&self, w: WidthName) -> String {
+        let keys: String = self.presses.iter().filter_map(|p| jis(p.key, p.layer.shifted())).collect();
+        convert(&keys, width(w))
+    }
+
+    /// The menu's negative entries (§7.5.12), when the profile has them on: the forms of one layout,
+    /// in its file's order, each made from the staged keys and the file alone. Every form is an
+    /// entry, whatever it says, so an entry never moves.
+    fn forms(&self, profile: &Profile, candidates: &[Arc<Layout>]) -> Vec<Entry> {
+        if !self.view.settings.script_forms(profile) {
+            return Vec::new();
+        }
+        let wanted = self.view.settings.script_forms_layout(profile);
+        let from = candidates.iter().find(|l| !l.file.forms.is_empty() && wanted.is_none_or(|w| w == l.id()));
+        let Some((layout, reading)) = from.and_then(|l| Some((l, self.reading(l)?))) else { return Vec::new() };
+        let entry = |form: &Form| Entry {
+            text: match *form {
+                Form::Script { to } => in_script(&reading.text, to),
+                Form::Keys { width } => self.keys_in(width),
+                Form::Jamo { keep } => keep_jamo(&reading.text, keep),
+            },
+            lang: Some(layout.file.lang.clone()),
+            layout: Some(layout.id().to_string()),
+            ..Entry::default()
+        };
+        layout.file.forms.iter().map(entry).collect()
     }
 
     /// The key models' evidence for each candidate (bada ime's spec §7.0): KEY_POINTS × ln of its

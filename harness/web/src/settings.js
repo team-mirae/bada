@@ -12,7 +12,7 @@ export const WEB = "com.teammirae.bada.web";
 /** Where things are kept in local storage. */
 export const STORE = {
   settings: "bada.settings",       // the settings file, as text
-  layouts: "bada.layouts",         // the user's layouts: {id: bada-layout/2 object}
+  layouts: "bada.layouts",         // the user's layouts: {id: bada-layout/3 object}
   dictionary: "bada.dictionary",   // the user dictionary: a bada-dictionary object, as text
   last: "bada.web.last",           // the mode and profile when the page was last used
   seen: "bada.web.seen",           // the preset of the language keys the page has seen

@@ -56,7 +56,7 @@
                   }
                 },
                 "script_forms": {
-                  "description": "Script forms as negative menu entries (−1 hiragana, −2 katakana). Default false.",
+                  "description": "A layout's forms as negative menu entries. Default false.",
                   "type": "boolean"
                 },
                 "script_forms_layout": {
@@ -108,7 +108,7 @@
                     }
                   },
                   "script_forms": {
-                    "description": "Script forms as negative menu entries (−1 hiragana, −2 katakana). Default false.",
+                    "description": "A layout's forms as negative menu entries. Default false.",
                     "type": "boolean"
                   },
                   "script_forms_layout": {

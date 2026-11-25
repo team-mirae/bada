@@ -111,7 +111,7 @@
                 "type": "string"
               },
               "entry": {
-                "description": "The signed index: 0 is the top reading, 1 and up the others, −1 and −2 script forms.",
+                "description": "The signed index: 0 is the top reading, 1 and up the others, −1 and down a layout's forms.",
                 "type": "integer"
               },
               "note": {

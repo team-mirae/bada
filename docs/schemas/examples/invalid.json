@@ -116,7 +116,7 @@
     "schema": "layout",
     "why": "a jamo role in a layout that types directly",
     "value": {
-      "format": "bada-layout/2",
+      "format": "bada-layout/3",
       "id": "en-qwerty-underscore",
       "name": {
         "en": "English - QWERTY, with _ on ⇧0"
@@ -148,7 +148,7 @@
     "schema": "layout",
     "why": "a field the format doesn't have",
     "value": {
-      "format": "bada-layout/2",
+      "format": "bada-layout/3",
       "id": "en-qwerty-underscore",
       "name": {
         "en": "English - QWERTY, with _ on ⇧0"
@@ -181,7 +181,7 @@
     "schema": "layout",
     "why": "an integer id",
     "value": {
-      "format": "bada-layout/2",
+      "format": "bada-layout/3",
       "id": 15,
       "name": {
         "en": "English - QWERTY, with _ on ⇧0"
@@ -213,7 +213,7 @@
     "schema": "layout",
     "why": "a henkan layout that types directly",
     "value": {
-      "format": "bada-layout/2",
+      "format": "bada-layout/3",
       "id": "en-qwerty-underscore",
       "name": {
         "en": "English - QWERTY, with _ on ⇧0"
@@ -245,7 +245,7 @@
     "schema": "layout",
     "why": "a key that isn't one of the 48 or Space",
     "value": {
-      "format": "bada-layout/2",
+      "format": "bada-layout/3",
       "id": "en-qwerty-underscore",
       "name": {
         "en": "English - QWERTY, with _ on ⇧0"
@@ -341,6 +341,87 @@
         "schema": {},
         "defaults": {}
       }
+    }
+  },
+  {
+    "schema": "layout",
+    "why": "a form that needs data: forms are made from the keys and the file alone",
+    "value": {
+      "format": "bada-layout/3",
+      "id": "en-qwerty-underscore",
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "muhenkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "Digit0": {
+          "shift": {
+            "t": "_",
+            "r": "x"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      },
+      "forms": [
+        {
+          "do": "lookup",
+          "data": "hanja"
+        }
+      ]
+    }
+  },
+  {
+    "schema": "layout",
+    "why": "forms in convert, with their entries written out: they are the forms part, in its order",
+    "value": {
+      "format": "bada-layout/3",
+      "id": "en-qwerty-underscore",
+      "name": {
+        "en": "English - QWERTY, with _ on ⇧0"
+      },
+      "lang": "en",
+      "kind": "muhenkan",
+      "read": "direct",
+      "note": "A user's layout: QWERTY with the one free slot filled.",
+      "keys": {
+        "Digit0": {
+          "shift": {
+            "t": "_",
+            "r": "x"
+          }
+        }
+      },
+      "words": [
+        "en-words"
+      ],
+      "rank": {
+        "known": 90,
+        "rare": 85,
+        "letters": 30,
+        "other": 20
+      },
+      "convert": [
+        {
+          "with": "script",
+          "forms": [
+            {
+              "entry": -1,
+              "to": "hiragana"
+            }
+          ]
+        }
+      ]
     }
   }
 ]

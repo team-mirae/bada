@@ -1,5 +1,5 @@
 // The keyboard drawn on the page: a board of keyboards.js with the legends of the layouts in use,
-// read from their bada-layout/2 files. Keys can be clicked (app.js).
+// read from their bada-layout/3 files. Keys can be clicked (app.js).
 
 import { JIS, KEYBOARDS } from "./keyboards.js";
 
@@ -34,7 +34,7 @@ function enter(x, y, U) {   // 1.5u on top, 1.25u below
 }
 
 /**
- * Draws board `name` with `layouts` (bada-layout/2 objects, in candidate order: three at most show)
+ * Draws board `name` with `layouts` (bada-layout/3 objects, in candidate order: three at most show)
  * into `host`. `bound`: the codes the key table has a binding on, which are outlined.
  * Returns code → key group.
  */

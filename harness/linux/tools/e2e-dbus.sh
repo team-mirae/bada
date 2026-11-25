@@ -21,6 +21,8 @@ export XDG_CONFIG_HOME=$HOME/.config
 mkdir -p "$XDG_CONFIG_HOME/fcitx5" "$XDG_CONFIG_HOME/bada" "$XDG_RUNTIME_DIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 unset XDG_DATA_HOME WAYLAND_DISPLAY DISPLAY
+# No data, whatever is installed: what the test types doesn't depend on it.
+export BADA_DATA_DIR=$work/no-data
 if [ -n "$prefix" ]; then
   # Fcitx5 finds the addon under the prefix first, and its own addons where they are installed.
   libdir=$(cd "$prefix"/lib*/fcitx5 && pwd)

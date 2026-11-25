@@ -1,7 +1,7 @@
 #!/bin/sh
 # Builds what a release carries for Linux: build/dist/bada-<version>-linux-<arch>.tar.gz. It holds
-# the Fcitx5 addon as `cmake --install` lays it out under /usr, with INSTALL.txt. The IBus engine is
-# left out: it has not been run.
+# the Fcitx5 addon and the engine's data as `cmake --install` lays them out under /usr, with
+# INSTALL.txt. The IBus engine is left out: it has not been run.
 #
 # The addon is built against this machine's Fcitx5 and C++ library, so it loads where those are the
 # same or newer. INSTALL.txt says what it was built with.
@@ -33,6 +33,9 @@ Install:
     sudo cp -a usr/. /usr/
     fcitx5 -r
 
+The engine's data (the word lists and the kanji dictionary) is in usr/share/bada/data, and the
+addon reads it from /usr/share/bada/data.
+
 The addon is $addon. A distribution that keeps Fcitx5's addons elsewhere (Debian and Ubuntu:
 /usr/lib/x86_64-linux-gnu/fcitx5) needs it moved there.
 
@@ -47,6 +50,7 @@ https://github.com/team-mirae/bada/blob/dev-latest/harness/linux/README.md#first
 Remove:
 
     sudo rm /$addon /usr/share/fcitx5/addon/bada.conf /usr/share/fcitx5/inputmethod/bada.conf
+    sudo rm -r /usr/share/bada
     fcitx5 -r
 EOF
 

@@ -66,7 +66,7 @@ public:
     Row(BadaEngine* engine, size_t row, const bada::Row& r, bool strip) : engine_(engine), row_(row) {
         setText(fcitx::Text(r.text));
         if (!r.note.empty()) setComment(fcitx::Text(r.note));
-        // Script forms are labelled with their entries (−2, −1). A strip's rows have the digits
+        // A layout's forms are labelled with their entries (−2, −1). A strip's rows have the digits
         // that pick them: 1 to 9, then 0. The other rows have no label.
         std::string label;
         if (r.entry < 0) label = "\xE2\x88\x92" + std::to_string(-r.entry) + " ";
@@ -247,6 +247,7 @@ public:
         bada::Session::Options options;
         options.frontend = "fcitx5";
         options.version = BADA_VERSION;
+        options.data_dir = bada::Session::DataDir();
         options.sink = &publisher_;
         options.log = [](const std::string& line) { BADA_INFO() << line; };
         std::string error;

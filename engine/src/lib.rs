@@ -1,5 +1,5 @@
 //! bada's engine: keys in, text out (`docs/bada-compatible-v2.md`). Every layout is read from its
-//! `bada-layout/2` file by a few general ways of reading keys; no layout has code of its own.
+//! `bada-layout/3` file by a few general ways of reading keys; no layout has code of its own.
 //!
 //! It is exported with `bada-compat`, like any engine: the C functions are `bada_describe`,
 //! `bada_data_new`, `bada_session_new`, `bada_new`, `bada_send` and their `_free`s.

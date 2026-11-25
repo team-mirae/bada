@@ -291,7 +291,7 @@ fn japanese_reads_and_changes_script() {
     let field = session.field(Some("ja"));
     let out = field.typed("konnichiha");
     assert_eq!(out.preedit.text, "こんにちは");
-    // Script forms below the top entry: −1 hiragana, −2 katakana.
+    // The layout's forms below the top entry: −1 hiragana, −2 katakana.
     let entries: Vec<(i32, &str)> = out.menu.rows.iter().map(|r| (r.entry, r.text.as_str())).collect();
     assert_eq!(entries, [(-2, "コンニチハ"), (-1, "こんにちは"), (0, "こんにちは")]);
     assert_eq!(out.menu.selected, Some(2));
@@ -803,7 +803,7 @@ fn japanese_converts_to_kanji() {
     );
     assert_eq!(rows(&field.typed("sa-ba-"))[0], "サーバー");
     field.flush();
-    // With script forms on, katakana is entry −2 and isn't repeated among the conversions.
+    // With the forms on, katakana is entry −2 and isn't repeated among the conversions.
     let field = session.field(Some("forms"));
     let out = field.typed("ra-men");
     let kata: Vec<i32> = out.menu.rows.iter().filter(|r| r.text == "ラーメン").map(|r| r.entry).collect();
@@ -914,4 +914,249 @@ fn searches_find_symbols_emoji_and_characters() {
     assert_eq!(shown, "euro");
     assert_eq!(found.iter().filter(|f| f.0 == "euro").count(), 1);
     assert!(found.iter().any(|f| f.0 == "€"), "{found:?}");
+}
+
+/// A copy of a stock layout under another id, with these forms.
+fn with_forms(stock: &str, id: &str, forms: Value) -> Value {
+    let mut layout: Value = serde_json::from_str(stock).unwrap();
+    layout["id"] = json!(id);
+    layout["forms"] = forms;
+    layout
+}
+
+fn entries(reply: &Reply) -> Vec<(i32, &str)> {
+    reply.menu.rows.iter().map(|r| (r.entry, r.text.as_str())).collect()
+}
+
+#[test]
+fn a_layout_lists_as_many_forms_as_it_wants() {
+    let session = Session::new(json!({"main": ["ko-2-set"]}));
+    let five = json!([
+        {"do": "script", "to": "hiragana"},
+        {"do": "script", "to": "katakana"},
+        {"do": "script", "to": "halfwidth-katakana"},
+        {"do": "keys", "width": "full"},
+        {"do": "keys", "width": "half"}
+    ]);
+    let layouts = [
+        with_forms(include_str!("../layouts/ja-romaji.json"), "ja-five", five),
+        with_forms(
+            include_str!("../layouts/ko-2-set.json"),
+            "ko-jamo",
+            json!([{"do": "jamo", "keep": "initials"}, {"do": "keys", "width": "half"}, {"do": "jamo", "keep": "initials"}]),
+        ),
+        with_forms(include_str!("../layouts/en-qwerty.json"), "en-wide", json!([{"do": "keys", "width": "full"}])),
+    ];
+    for layout in &layouts {
+        let added = session.event(json!({"type": "layout", "value": layout}));
+        assert!(added.ok, "{:?}", added.problems);
+    }
+    let profile = |id: &str, layouts: Value, more: Value| {
+        let mut p = json!({"id": id, "name": id, "layouts": layouts});
+        p.as_object_mut().unwrap().extend(more.as_object().unwrap().clone());
+        p
+    };
+    let on = json!({"script_forms": true});
+    let set = session.event(json!({"type": "settings", "set": {"muhenkan": {"layout": "en-qwerty"}, "henkan": {"profiles": [
+        profile("five", json!(["ja-five"]), on.clone()),
+        profile("off", json!(["ja-five"]), json!({})),
+        profile("ko", json!(["ko-jamo"]), on.clone()),
+        profile("mixed", json!(["en-wide", "ko-jamo", "ja-five"]), on.clone()),
+        profile("named", json!(["en-wide", "ko-jamo", "ja-five"]), json!({"script_forms": true, "script_forms_layout": "ja-five"})),
+        profile("stock", json!(["ja-kana", "en-qwerty"]), on.clone()),
+        profile("none", json!(["ko-2-set", "en-qwerty"]), on.clone()),
+    ]}}}));
+    assert!(set.ok, "{:?}", set.problems);
+
+    // Five forms: the first of the file is −1, and the rows go down from there.
+    let field = session.field(Some("five"));
+    let out = field.typed("gakkou");
+    assert_eq!(
+        entries(&out),
+        [(-5, "gakkou"), (-4, "ｇａｋｋｏｕ"), (-3, "ｶﾞｯｺｳ"), (-2, "ガッコウ"), (-1, "がっこう"), (0, "がっこう")]
+    );
+    assert_eq!(out.menu.selected, Some(5));
+    assert!(
+        out.menu.rows[..5].iter().all(|r| r.layout.as_deref() == Some("ja-five") && r.lang.as_deref() == Some("ja"))
+    );
+    // The previous entry goes all the way down, and stops there.
+    let shown: Vec<String> = (0..6).map(|_| field.action("menu.prev").preedit.text).collect();
+    assert_eq!(shown, ["がっこう", "ガッコウ", "ｶﾞｯｺｳ", "ｇａｋｋｏｕ", "gakkou", "gakkou"]);
+    assert_eq!(field.action("menu.prev").menu.selected, Some(0), "no wrap");
+    assert_eq!(field.action("menu.next").preedit.text, "ｇａｋｋｏｕ");
+    assert_eq!(field.flush(), "ｇａｋｋｏｕ", "committing commits the form that shows");
+    // A row is picked by its place, a form like any other.
+    field.typed("ka");
+    assert_eq!(field.ok(json!({"type": "pick", "row": 2})).preedit.text, "ｶ");
+    assert_eq!(
+        field.typed("n").preedit.text,
+        "かん",
+        "…but typing on doesn't fix a form: the reading goes on at entry 0"
+    );
+    field.flush();
+    // A reading that isn't finished has its forms too: they are of the keys, whatever they spell.
+    assert_eq!(entries(&field.typed("ky")), [(-5, "ky"), (-4, "ｋｙ"), (-3, "ky"), (-2, "ky"), (-1, "ky"), (0, "ky")]);
+    field.flush();
+    // After a fix, the forms are of the keys typed since.
+    field.typed("ka");
+    field.action("fix");
+    let after = field.typed("ki");
+    assert_eq!(entries(&after)[..2], [(-5, "ki"), (-4, "ｋｉ")]);
+    assert_eq!(field.action("menu.prev").preedit.text, "かき");
+    assert_eq!(field.action("menu.prev").preedit.text, "かキ");
+    field.flush();
+    // Off, as a profile is unless it says otherwise: no negative entry.
+    let field = session.field(Some("off"));
+    assert!(field.typed("gakkou").menu.rows.is_empty());
+    assert_eq!(field.action("menu.prev").preedit.text, "がっこう");
+    field.flush();
+
+    // Any layout: a jamo of each syllable, and the keys as typed. Forms that say the same are both rows.
+    let field = session.field(Some("ko"));
+    let out = field.typed("gksrmf");
+    assert_eq!(entries(&out), [(-3, "ㅎㄱ"), (-2, "gksrmf"), (-1, "ㅎㄱ"), (0, "한글")]);
+    assert_eq!(field.action("menu.prev").preedit.text, "ㅎㄱ");
+    assert_eq!(field.key("Space").commit, "ㅎㄱ");
+
+    // With several layouts the forms are one layout's: the first of the profile that lists any…
+    let field = session.field(Some("mixed"));
+    let out = field.typed("gk");
+    assert_eq!(entries(&out)[..2], [(-1, "ｇｋ"), (0, "하")]);
+    assert_eq!(out.menu.rows[0].layout.as_deref(), Some("en-wide"));
+    field.flush();
+    // …or the one the profile names.
+    let field = session.field(Some("named"));
+    let out = field.typed("ka");
+    assert_eq!(entries(&out)[..5], [(-5, "ka"), (-4, "ｋａ"), (-3, "ｶ"), (-2, "カ"), (-1, "か")]);
+    assert!(out.menu.rows[5..].iter().all(|r| r.entry >= 0));
+    field.flush();
+    // The stock Japanese layouts: hiragana and katakana, beside another layout too.
+    let field = session.field(Some("stock"));
+    let out = field.typed("t");
+    assert_eq!(entries(&out)[..2], [(-2, "カ"), (-1, "か")]);
+    assert_eq!(out.menu.rows[2].entry, 0);
+    field.flush();
+    // No layout of the profile lists any: none.
+    let field = session.field(Some("none"));
+    assert!(field.typed("gk").menu.rows.iter().all(|r| r.entry >= 0));
+    field.flush();
+
+    // What a form can't be: an operation that needs data, or one the format doesn't have.
+    for forms in [
+        json!([{"do": "lookup", "data": "hanja"}]),
+        json!([{"do": "script", "to": "hiragana", "entry": -1}]),
+        json!([{"do": "script", "to": "cyrillic"}]),
+        json!([{"to": "hiragana"}]),
+    ] {
+        let refused = session.event(json!({"type": "layout", "value": with_forms(include_str!("../layouts/ja-romaji.json"), "ja-wrong", forms.clone())}));
+        assert!(!refused.ok, "{forms}");
+    }
+    // `bada-layout/2` listed script forms in `convert`: that isn't the format's any more.
+    let mut old: Value = serde_json::from_str(include_str!("../layouts/ja-romaji.json")).unwrap();
+    old["id"] = json!("ja-old");
+    old["convert"] = json!([{"with": "script", "forms": [{"entry": -1, "to": "hiragana"}]}]);
+    assert!(!session.event(json!({"type": "layout", "value": old})).ok);
+}
+
+#[test]
+fn forms_come_from_the_keys_and_the_file_alone() {
+    // The same keys in a bare session, and in one with the dictionaries and the user's own words.
+    let settings =
+        json!({"henkan": {"profiles": [{"id": "ja", "name": "ja", "layouts": ["ja-romaji"], "script_forms": true}]}});
+    let bare = Session::with(settings.clone());
+    let (kanji, words, native, common) =
+        (file("kanji.bin"), file("ja-words.txt"), file("ja-kana-native.txt"), file("ja-common-words.txt"));
+    let full = Session::with_data(
+        settings,
+        &[("kanji", &kanji), ("ja-words", &words), ("ja-kana-native", &native), ("ja-common-words", &common)],
+    );
+    assert!(
+        full.event(json!({"type": "dictionary", "value": {"format": "bada-dictionary", "version": 1,
+            "positive": [{"word": "サーバー", "language": "japanese", "count": 99}, {"word": "らーめん", "language": "japanese"}],
+            "negative": [{"word": "ラーメン", "language": "japanese", "strength": "strong"}, {"word": "がっこう", "language": "japanese", "strength": "strong"}]}}))
+            .ok
+    );
+    for text in ["ra-men", "sa-ba-", "gakkou", "kanji", "watashiha", "ky", "nihon1"] {
+        let (a, b) = (bare.field(Some("ja")), full.field(Some("ja")));
+        let (mut plain, mut rich) = (Reply::default(), Reply::default());
+        for (i, c) in text.chars().enumerate() {
+            let (code, _) = key_for(c);
+            (plain, rich) = (a.key(&code), b.key(&code));
+            let negative = |r: &Reply| {
+                r.menu.rows.iter().filter(|r| r.entry < 0).map(|r| (r.entry, r.text.clone())).collect::<Vec<_>>()
+            };
+            assert_eq!(negative(&plain), negative(&rich), "{text}, after {} keys", i + 1);
+            assert_eq!(negative(&plain).len(), 2);
+        }
+        assert!(rich.menu.rows.len() >= plain.menu.rows.len(), "the dictionaries only add rows from 0 up");
+        // Twice the previous entry is katakana, whatever is ranked above entry 0.
+        b.action("menu.prev");
+        let kata = b.action("menu.prev").preedit.text;
+        a.action("menu.prev");
+        assert_eq!(kata, a.action("menu.prev").preedit.text, "{text}");
+        // A conversion that a form already writes isn't listed again; a word of the user's own is.
+        let again = rich.menu.rows.iter().filter(|r| r.entry >= 0 && r.text == kata).count();
+        if rich.menu.rows.iter().any(|r| r.entry == -1 && r.text != kata) {
+            assert_eq!(again, usize::from(text == "sa-ba-"), "{text}: {:?}", entries(&rich));
+        }
+        a.flush();
+        b.flush();
+    }
+}
+
+#[test]
+fn half_width_takes_kana_that_shows_or_is_selected() {
+    let (kanji, words, native, common) =
+        (file("kanji.bin"), file("ja-words.txt"), file("ja-kana-native.txt"), file("ja-common-words.txt"));
+    let settings = json!({"muhenkan": {"layout": "en-qwerty"}, "henkan": {"profiles": [
+        {"id": "ja", "name": "ja", "layouts": ["ja-romaji"], "script_forms": true},
+        {"id": "plain", "name": "plain", "layouts": ["ja-romaji"]},
+        {"id": "kana", "name": "kana", "layouts": ["ja-kana", "en-qwerty"]}]}});
+    let session = Session::with_data(
+        settings,
+        &[("kanji", &kanji), ("ja-words", &words), ("ja-kana-native", &native), ("ja-common-words", &common)],
+    );
+    let field = session.field(Some("ja"));
+    // Hiragana that shows: half-width katakana, as Japanese input methods make it.
+    assert_eq!(field.typed("kana").preedit.text, "かな");
+    let half = field.action("width.half");
+    assert_eq!((half.preedit.text.as_str(), half.staged.as_str()), ("ｶﾅ", "ｶﾅ"));
+    assert!(half.menu.rows.is_empty());
+    assert_eq!(field.typed("ka").preedit.text, "ｶﾅか", "it stays staged, and typing goes on after it");
+    assert_eq!(field.action("width.half").preedit.text, "ｶﾅｶ");
+    assert_eq!(field.action("width.full").preedit.text, "カナカ", "full-width puts it back, as katakana");
+    assert_eq!(field.flush(), "カナカ");
+    // Katakana that shows, as the top entry or as a form: voiced kana take their mark, ー and small kana too.
+    let plain = session.field(Some("plain"));
+    assert_eq!(plain.typed("pa-thi-").preedit.text, "パーティー");
+    assert_eq!(plain.action("width.half").preedit.text, "ﾊﾟｰﾃｨｰ");
+    assert_eq!(plain.flush(), "ﾊﾟｰﾃｨｰ");
+    field.typed("gakkou");
+    field.action("menu.prev");
+    assert_eq!(field.action("menu.prev").preedit.text, "ガッコウ");
+    assert_eq!(field.action("width.half").preedit.text, "ｶﾞｯｺｳ");
+    assert_eq!(field.flush(), "ｶﾞｯｺｳ");
+    // The hiragana form, then half-width.
+    field.typed("gakkou");
+    assert_eq!(field.action("menu.prev").preedit.text, "がっこう");
+    assert_eq!(field.action("width.half").preedit.text, "ｶﾞｯｺｳ");
+    field.flush();
+    // JIS kana beside QWERTY.
+    let field = session.field(Some("kana"));
+    assert_eq!(field.typed("t").preedit.text, "か");
+    assert_eq!(field.action("width.half").preedit.text, "ｶ");
+    field.flush();
+    // Nothing staged: the selection, in henkan and in muhenkan. Kanji have no other width.
+    for mode in [Some("ja"), None] {
+        let field = session.field(mode);
+        for (selected, made) in
+            [("かな", "ｶﾅ"), ("ガッコウ", "ｶﾞｯｺｳ"), ("ぱーてぃー、「ヴ」・。", "ﾊﾟｰﾃｨｰ､｢ｳﾞ｣･｡"), ("漢字とかな", "漢字ﾄｶﾅ")]
+        {
+            assert_eq!(field.action("width.half").ask, Some(Ask::Selection("half".into())));
+            let out = field.ok(json!({"type": "text", "selection": selected}));
+            assert_eq!((out.commit.as_str(), out.replace), (made, Replace::Selection), "{mode:?}");
+        }
+        assert_eq!(field.action("width.full").ask, Some(Ask::Selection("full".into())));
+        assert_eq!(field.ok(json!({"type": "text", "selection": "ｶﾞｯｺｳ"})).commit, "ガッコウ");
+    }
 }

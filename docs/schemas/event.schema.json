@@ -251,7 +251,7 @@
           "const": "layout"
         },
         "value": {
-          "description": "A bada-layout/2 object, or null.",
+          "description": "A bada-layout/3 object, or null.",
           "type": [
             "object",
             "null"

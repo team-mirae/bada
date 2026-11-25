@@ -29,7 +29,7 @@
 {"to": "a", "send": {"type": "key", "key": "KeyA"}}
 {"to": "a", "send": {"type": "key", "key": "KeyN"}, "expect": {"preedit": {"text": "한"}}}
 {"to": "a", "send": {"type": "key", "key": "Period"}, "expect": {"commit": "한.", "consumed": true, "preedit": {"text": ""}}}
-{"note": "romaji, with script forms: -1 hiragana, -2 katakana; fix keeps what shows"}
+{"note": "romaji, with its forms: -1 hiragana, -2 katakana; fix keeps what shows"}
 {"to": "a", "send": {"type": "select", "mode": "henkan", "profile": "ja"}}
 {"to": "a", "send": {"type": "key", "key": "KeyK"}, "expect": {"preedit": {"text": "k"}}}
 {"to": "a", "send": {"type": "key", "key": "KeyA"}, "expect": {"preedit": {"text": "か"}, "menu": {"rows": [{"text": "カ", "entry": -2}, {"text": "か", "entry": -1}, {"text": "か", "entry": 0, "lang": "ja", "layout": "ja-romaji"}], "selected": 2}}}

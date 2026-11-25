@@ -179,6 +179,30 @@ do {
     let read = KeyTable.read(example["keys"], preset: .jisMac)
     check(read.flaws.isEmpty && read.table.bindings.count == 12 && read.table.cycle == ["main", "work", "ja"], "the schema's example settings file is read")
     check(read.table.pairs == [Chord.pair(of: "KanaMode", "Lang1")], "…with its pair")
+    // かな through a session with that file (§9.5): the next entry wherever the menu has two rows or
+    // more, and otherwise the key to its profile. The state is carried from press to press.
+    var state = KeyState(mode: .muhenkan, profile: nil)
+    func press(_ code: String, _ mods: Mods = []) -> Decision {
+        let decision = read.table.decide(.key(code, mods), state: state, profiles: profiles)
+        state.apply(decision)
+        return decision
+    }
+    /// What the engine's reply would leave after typing.
+    func typed(_ staged: String, rows: Int) { state.staged = staged; state.menuRows = rows }
+    check(press("Lang1").then == .select(.henkan, "main"), "かな in muhenkan enters its profile")
+    check(press("KanaMode").then == .select(.henkan, "ja"), "カタカナ goes to its own")
+    typed("かんじ", rows: 3)
+    check(press("Lang1").then == .action("menu.next") && state.profile == "ja", "かな with a menu in another profile is the next entry, and the profile stays")
+    check(press("Lang1", .shift).then == .action("menu.prev") && state.profile == "ja", "…and ⇧かな the one before")
+    typed("か", rows: 1)
+    check(press("Lang1", .shift).then == .swallow && state.profile == "ja", "⇧かな with one row does nothing")
+    check(press("Lang1") == Decision(then: .select(.henkan, "main"), binding: 7, ran: "profile:main", capsLock: nil), "かな with one row isn't the next entry: it goes to its profile")
+    check(state.mode == .henkan && state.profile == "main" && state.previous == "ja" && state.staged == "" && state.menuRows == 0, "…which commits what was staged")
+    check(press("Lang1").then == .swallow, "かな in its own profile with no menu does nothing")
+    typed("한", rows: 2)
+    check(press("Lang1").then == .action("menu.next") && state.profile == "main", "…and with a menu it is the next entry")
+    check(press("KanaMode").then == .select(.henkan, "ja") && press("Lang1").then == .select(.henkan, "main"), "with nothing staged in another profile, かな is its profile's key")
+    check(press("Lang2").then == .select(.muhenkan, "main") && press("Lang1").then == .select(.henkan, "main"), "…and from muhenkan too")
 } catch {
     check(false, "the example settings file can't be read: \(error)")
 }
@@ -350,7 +374,7 @@ remove("layouts/stock.json")
 store.reload()
 check(store.layouts.contains { $0.id == "ko-2-set" && $0.stock && !$0.modified }, "removing the file brings the stock layout back")
 check(!store.problems.contains { $0.file == "layouts/stock.json" }, "…and its problems go with it")
-put("layouts/bad.json", #"{"format": "bada-layout/2", "id": "ko-bad", "name": {"en": "bad"}, "lang": "ko", "kind": "henkan", "read": "direct"}"#)
+put("layouts/bad.json", #"{"format": "bada-layout/3", "id": "ko-bad", "name": {"en": "bad"}, "lang": "ko", "kind": "henkan", "read": "direct"}"#)
 store.reload()
 check(store.problems.contains { $0.file == "layouts/bad.json" && $0.isError } && !store.layouts.contains { $0.id == "ko-bad" }, "a layout with an error isn't loaded")
 put("layouts/bad.json", "[1, 2")

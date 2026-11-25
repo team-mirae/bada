@@ -36,7 +36,7 @@ pub const MINOR: u32 = 0;
 
 /// The file formats' names.
 pub const SETTINGS_FORMAT: &str = "bada-settings/2";
-pub const LAYOUT_FORMAT: &str = "bada-layout/2";
+pub const LAYOUT_FORMAT: &str = "bada-layout/3";
 pub const STATE_FORMAT: &str = "bada-compatible-state/2";
 
 /// The two modes (§2).

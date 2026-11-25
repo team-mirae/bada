@@ -1,5 +1,5 @@
 {
-  "format": "bada-layout/2",
+  "format": "bada-layout/3",
   "id": "ja-romaji",
   "name": {"en": "Japanese - Romaji", "ko": "일본어 - 로마자", "ja": "日本語 - ローマ字"},
   "lang": "ja",
@@ -121,8 +121,11 @@
       "native": "ja-kana-native",
       "notes": {"kana": "romaji", "converted": "reading"}
     },
-    {"with": "script", "forms": [{"entry": -1, "to": "hiragana"}, {"entry": -2, "to": "katakana"}]},
     {"with": "width", "to": "half"}
+  ],
+  "forms": [
+    {"do": "script", "to": "hiragana"},
+    {"do": "script", "to": "katakana"}
   ],
   "actions": [
     {

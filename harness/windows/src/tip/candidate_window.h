@@ -22,7 +22,7 @@ public:
     CandidateWindow& operator=(const CandidateWindow&) = delete;
 
     // Shows `menu` below `anchor` (screen coordinates of the text), or above it when there is no
-    // room below. Script forms (negative entries) are set off from the readings by a line. A menu
+    // room below. A layout's forms (negative entries) are set off from the readings by a line. A menu
     // with no rows hides the window.
     void Show(const Menu& menu, const RECT& anchor);
     // Shows one line of text that can't be picked.

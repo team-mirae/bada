@@ -820,6 +820,8 @@ int wmain(int argc, wchar_t** argv) {
     }
     SetEnvironmentVariableW(L"BADA_CONFIG_DIR", dir.c_str());
     SetEnvironmentVariableW(L"BADA_LOG_FILE", (dir / "bada.log").c_str());
+    // No data, wherever the DLL is: what this test types doesn't depend on what is installed.
+    SetEnvironmentVariableW(L"BADA_DATA_DIR", (dir / "no-data").c_str());
 
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     int result = 0;

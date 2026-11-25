@@ -1,5 +1,5 @@
 {
-  "format": "bada-layout/2",
+  "format": "bada-layout/3",
   "id": "ja-kana",
   "name": {"en": "Japanese - Kana", "ko": "일본어 - 가나", "ja": "日本語 - かな"},
   "lang": "ja",
@@ -75,8 +75,11 @@
       "common": {"data": "ja-common-words", "rows": 3},
       "native": "ja-kana-native",
       "notes": {"kana": "romaji", "converted": "reading"}
-    },
-    {"with": "script", "forms": [{"entry": -1, "to": "hiragana"}, {"entry": -2, "to": "katakana"}]}
+    }
+  ],
+  "forms": [
+    {"do": "script", "to": "hiragana"},
+    {"do": "script", "to": "katakana"}
   ],
   "actions": [
     {

@@ -85,7 +85,23 @@ add_library(bada_core STATIC
 target_include_directories(bada_core PUBLIC src/core)
 target_link_libraries(bada_core PUBLIC bada_engine)
 
+# The engine's data (the standard, §11): each file is the buffer of its name. With their licenses.
+set(BADA_DATA_NAMES ko-words.tsv en-words.txt ja-words.txt ja-kana-native.txt ja-common-words.txt kanji.bin
+  hanja.tsv ko-jamo-4gram.bin ja-shortcuts.tsv symbols.tsv emoji.tsv unicode-names.tsv key-models.bin)
+list(TRANSFORM BADA_DATA_NAMES PREPEND "${BADA_ROOT}/engine/data/" OUTPUT_VARIABLE BADA_DATA)
+file(GLOB BADA_DATA_LICENSES "${BADA_ROOT}/engine/data/LICENSE-*.txt")
+
 if(WIN32)
+  # Beside the build folders (build\data): where a text service in build\x64 or build\x86 looks for
+  # it, and where the installer takes it from. A file that didn't change isn't written again, so one
+  # that apps have mapped is left alone.
+  get_filename_component(BADA_DATA_OUT "${CMAKE_CURRENT_BINARY_DIR}/../data" ABSOLUTE)
+  add_custom_target(bada_data ALL
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${BADA_DATA_OUT}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BADA_DATA} ${BADA_DATA_LICENSES} "${BADA_DATA_OUT}"
+    COMMENT "the engine's data, in ${BADA_DATA_OUT}"
+    VERBATIM)
+
   # The text service: one DLL, the engine inside it.
   enable_language(RC)
   configure_file(src/tip/bada-tsf.rc.in "${CMAKE_CURRENT_BINARY_DIR}/bada-tsf.rc" @ONLY)

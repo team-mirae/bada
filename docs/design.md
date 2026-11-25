@@ -270,7 +270,7 @@ Every event answers with the same object: what to do now, and everything that sh
 | `types`: string \| null | The harnesses' JIS legend tables | With `consumed: false` on a character key: what the key should type, by the layout (§6). The harness lets the OS type it when the OS's keyboard layout gives the same character, and inserts it otherwise |
 | `replace`: `"marked"` \| `"selection"` | `replace_selection` | |
 | `preedit.text`, `.caret`, `.segments` | `preedit` | `kind`: `live`, `fixed` (0.3.1's fix), `picked`. A harness without `segments` draws `text` |
-| `menu.rows[]`: `text`, `entry`, `note`, `lang`, `layout` | `menu`, `notes`, `japanese`, `zero` | `entry` is the signed index (0 the top reading, −1 / −2 script forms). `lang` is BCP 47: the harness picks the font |
+| `menu.rows[]`: `text`, `entry`, `note`, `lang`, `layout` | `menu`, `notes`, `japanese`, `zero` | `entry` is the signed index (0 the top reading, −1 and down a layout's forms). `lang` is BCP 47: the harness picks the font |
 | `menu.selected`: integer \| null | `selected` past the end | |
 | `menu.strip` | `horizontal` | |
 | `mode`, `profile` | `P_state` | As the harness last selected them: echoed, never changed by the engine |
@@ -401,10 +401,10 @@ in with `include_str!`, and only its keys' roles); every other layout, and every
 Rust code (`layout.rs`, `japanese.rs`, `search.rs`). Taking all of that out of the code and into
 the files is the largest piece of engine work in this design.
 
-What a `bada-layout/2` file holds:
+What a `bada-layout/3` file holds:
 
 ```json
-{"format": "bada-layout/2", "id": "ko-2-set", "name": {"en": "Korean - 2-set", "ko": "두벌식"},
+{"format": "bada-layout/3", "id": "ko-2-set", "name": {"en": "Korean - 2-set", "ko": "두벌식"},
  "lang": "ko", "kind": "henkan", "read": "hangul",
  "keys": {"KeyR": {"base": {"t": "ㄱ", "r": "c"}, "shift": {"t": "ㄲ", "r": "c"}},
           "KeyK": {"base": {"t": "ㅏ", "r": "v"}}},
@@ -418,7 +418,8 @@ What a `bada-layout/2` file holds:
 | `keys` | Each key's layers (`base`, `shift`, `alt_shift`) and each legend's role. A slot left out is the JIS table's (§6.3) | A table in Rust, but for layout 14 |
 | `read` | Which general way of reading the keys: `direct`, `hangul`, `table` (romaji and the like), `kana`, `search` | The layout's own module |
 | That way's tables | Hangul: which vowels join, which finals cluster, doubling, whether a final moves on. `table`: the spellings (`"ka": "か"`) and punctuation (`","`: `"、"`). `kana`: the voicing marks | Rust code; romaji's spellings were in the JSON but not read |
-| `convert` | What turns the reading into candidates, and the data it uses, by name: `{"with": "kanji", "data": "kanji"}`; script forms (hiragana, katakana) | `japanese.rs`, `kanji.rs` |
+| `convert` | What turns the reading into candidates, and the data it uses, by name: `{"with": "kanji", "data": "kanji"}` | `japanese.rs`, `kanji.rs` |
+| `forms` | Other ways of writing what was typed, as the menu's negative entries: as many as the layout lists, each made from the keys and the file alone (hiragana and katakana, in the Japanese layouts) | `engine.rs` |
 | `search` | What is searched: a named data buffer (`"data": "emoji"`), or entries written in the file | `search.rs` |
 | `actions` | The layout's named actions (F keys and `action` events), each one of the engine's general operations with its arguments | A constant in `engine.rs` |
 | `words` | The word lists that rank its readings, by name (`"ko-words"`) | Fixed per layout in code |
@@ -561,12 +562,12 @@ keys as W3C codes so a file moves between platforms:
   "bindings": [
     {"on": "CapsLock",    "do": ["mode.toggle"]},
     {"on": "Lang2",       "do": ["mode:muhenkan"]},
-    {"on": "Lang1",       "do": ["profile:main", "menu.next"]},
+    {"on": "Lang1",       "do": ["profile:main"]},
     {"on": "shift+Lang1", "do": ["menu.prev"], "when": "henkan"},
     {"on": "ctrl+Lang1",  "do": ["fix"], "when": "henkan"},
     {"on": "Convert",     "do": ["profile:work", "menu.next"]},
     {"on": "KanaMode",    "do": ["profile:ja", "menu.next"]},
-    {"on": "Lang1",       "do": ["menu.next", "profile:main"], "when": "profile:ja"},
+    {"on": "Lang1",       "do": ["menu.next", "profile:main"], "when": "henkan"},
     {"on": "ctrl+alt+shift+meta+Space", "do": ["profile.next"]}
   ],
   "cycle": ["main", "work", "ja"],
@@ -652,6 +653,11 @@ Mac's today. They are test data, not code (owner, 2026-11-24).
 | JIS on a Mac | 英数 muhenkan; かな the first profile (none yet: the onboarding, §7.1), then next entry; ⇧かな previous; ⌃かな fix. v1's behaviour, key for key |
 | JIS on a PC | 無変換 muhenkan; 変換 the first profile, then next entry; カタカナ unbound |
 | No language keys | Caps Lock toggle |
+
+**かな on a Mac and 変換 on a PC are the next entry in every profile** (owner, 2026-11-26), and with
+⇧ the previous one, whenever the menu has two rows or more. With one row or none there is nothing
+to step through, and the key goes to its profile. A table that gives other profiles keys of their
+own keeps this: for henkan, `menu.next` first and then the profile, as in §8.1's.
 
 **半角/全角 makes full-width, and ⇧半角/全角 half-width, by default on every keyboard that has the key**
 (owner, 2026-11-24), as in bada ime 0.3.1: the staged text, or else the selection. They are two
@@ -845,6 +851,8 @@ Settled by the owner, 2026-11-24:
 | The key table's code | Each harness's own; no shared crate. The format, the rules and a set of test cases are the standard's, and each harness's tests replay the cases |
 | The layouts on JIS (§6.4) | Dvorak and Colemak keep their own symbol places; the characters that lose their key move: Dvorak `@` `` ` `` to the `]` key, `~` ⇧0, `^` ⇧2, `*` ⇧7; Colemak `+` ⇧0. `ja-kana` as it is now |
 | `ko-3-set-unshifted` | Left out of the stock layouts: its key map came from an LGPL-2.1 file |
+| かな and 変換 in a profile that has its own key | Still the next entry (⇧: the previous one) when the menu has two rows or more; otherwise the key to their profile (owner, 2026-11-26; §8.4) |
+| Negative entries | A layout's `forms`, in its file: as many as it lists, the first −1, each made from the staged keys and the file alone (a script, the keys in a width, a jamo of each syllable), so the same keys give the same entries. One layout's, in a profile with `script_forms` on. v1 had two at most, hiragana and katakana (owner, 2026-11-26) |
 | Pairs of language keys | Two language keys held together (`KanaMode+Lang1`, `Convert+Lang1`, …) are a binding of their own, for any action; unbound by default (§8.2) |
 | ¥ in the Korean layouts | `ko-2-set` and `ko-bada-roman` type ₩ on the ¥ key (owner, 2026-11-24); ⇧¥ stays `\|` |
 

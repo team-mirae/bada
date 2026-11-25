@@ -185,7 +185,7 @@ void CandidateWindow::Paint(HDC dc) {
         const Row& r = rows_[i];
         const bool focused = static_cast<int>(i) == selected_;
         if (focused) FillRect(dc, &r.cell, GetSysColorBrush(COLOR_HIGHLIGHT));
-        // Script forms (negative entries) are set off from the readings after them by a line.
+        // A layout's forms (negative entries) are set off from the readings after them by a line.
         if (!strip_ && i > 0 && rows_[i - 1].entry < 0 && r.entry >= 0) {
             RECT line = {client.left + padding_, r.cell.top - 1, client.right - padding_, r.cell.top};
             FillRect(dc, &line, GetSysColorBrush(COLOR_GRAYTEXT));

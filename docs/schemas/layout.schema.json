@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "bada-layout/2",
+  "title": "bada-layout/3",
   "description": "A layout file (the standard, §7.5): everything a layout is.",
   "type": "object",
   "required": [
@@ -15,7 +15,7 @@
   "additionalProperties": false,
   "properties": {
     "format": {
-      "const": "bada-layout/2"
+      "const": "bada-layout/3"
     },
     "id": {
       "$ref": "#/$defs/layout_id"
@@ -187,45 +187,6 @@
             ]
           },
           {
-            "description": "The reading in another script, as negative entries when script forms are on.",
-            "type": "object",
-            "properties": {
-              "with": {
-                "const": "script"
-              },
-              "forms": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "entry": {
-                      "type": "integer",
-                      "maximum": -1
-                    },
-                    "to": {
-                      "enum": [
-                        "hiragana",
-                        "katakana",
-                        "halfwidth-katakana"
-                      ]
-                    }
-                  },
-                  "additionalProperties": false,
-                  "required": [
-                    "entry",
-                    "to"
-                  ]
-                },
-                "minItems": 1
-              }
-            },
-            "additionalProperties": false,
-            "required": [
-              "with",
-              "forms"
-            ]
-          },
-          {
             "description": "The reading in the other width, as a row.",
             "type": "object",
             "properties": {
@@ -362,6 +323,76 @@
               "label",
               "do",
               "data"
+            ]
+          }
+        ]
+      }
+    },
+    "forms": {
+      "description": "Other ways of writing what was typed, as the menu's negative entries: the first is entry −1, the second −2, and so on. Each is made from the staged keys and this file alone.",
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "description": "The layout's reading of the keys, in a script.",
+            "type": "object",
+            "properties": {
+              "do": {
+                "const": "script"
+              },
+              "to": {
+                "enum": [
+                  "hiragana",
+                  "katakana",
+                  "halfwidth-katakana"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "do",
+              "to"
+            ]
+          },
+          {
+            "description": "The keys as their JIS characters, in a width.",
+            "type": "object",
+            "properties": {
+              "do": {
+                "const": "keys"
+              },
+              "width": {
+                "enum": [
+                  "full",
+                  "half"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "do",
+              "width"
+            ]
+          },
+          {
+            "description": "One jamo of each syllable of the layout's reading.",
+            "type": "object",
+            "properties": {
+              "do": {
+                "const": "jamo"
+              },
+              "keep": {
+                "enum": [
+                  "initials",
+                  "vowels",
+                  "finals"
+                ]
+              }
+            },
+            "additionalProperties": false,
+            "required": [
+              "do",
+              "keep"
             ]
           }
         ]
