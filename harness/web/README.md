@@ -18,8 +18,8 @@ node harness/web/serve.mjs       # http://localhost:8000 (a port may follow), th
 `python3 -m http.server -d harness/web/dist` serves it as well. There are no npm packages and no
 framework: plain modules.
 
-`vercel.json` is for a Vercel project whose root directory is this folder: it installs Rust with the
-wasm target, runs `build.mjs`, and serves `dist`. Without it Vercel serves this folder as it is,
+`vercel.json` is for a Vercel project whose root directory is this folder: it adds the wasm target to
+the Rust that Vercel's build image has, runs `build.mjs`, and serves `dist`. Without it Vercel serves this folder as it is,
 which has no page at its root.
 
 | Test | Checks |

@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --target wasm32-unknown-unknown",
-  "buildCommand": ". \"$HOME/.cargo/env\" && node build.mjs",
+  "installCommand": "rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown && rustup default stable",
+  "buildCommand": "node build.mjs",
   "outputDirectory": "dist"
 }
