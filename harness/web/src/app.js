@@ -419,7 +419,8 @@ function drawHelp() {
   }
   const hint = document.createElement("div");
   hint.textContent = "A language key your keyboard lacks can be clicked on the keyboard above, and the mode's buttons are at the top. "
-    + "In henkan: Tab and ↓ the next row, ⇧Tab and ↑ the previous; Space, Enter and Esc commit.";
+    + "In henkan: Tab and ↓ the next row, ⇧Tab and ↑ the previous; Space, Enter and Esc commit. "
+    + "With no menu open, ⇧Tab goes between muhenkan and henkan.";
   const title = document.createElement("div");
   title.textContent = h.table.preset ? `Keys: the preset "${PRESET_NAMES[h.table.preset]}" (the settings have no bindings of their own)` : "Keys: the settings' own bindings";
   $("help").replaceChildren(title, list, hint);

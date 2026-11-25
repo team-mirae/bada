@@ -101,6 +101,16 @@ ranking, and the search layouts find nothing. The place for it is ready and mark
 3. `Engine.dataNew` in `src/engine.js` passes them to `bada_data_new` as named buffers (§11),
    borrowed where `bada_describe` says `borrow`.
 
+## A key of this harness's own
+
+**⇧Tab is the toggle between muhenkan and henkan while no menu is open** (one row or none), as
+`mode.toggle` goes (§9.2): into `henkan_enters`' profile, or the onboarding with no profile. A
+browser's keyboard often has no language key, and this gives it a way into henkan without the
+mouse. With a menu open ⇧Tab is the engine's, the entry before. No other harness has this, and it
+isn't in the key table: a binding on `shift+Tab` in the settings comes first, so
+`{"on": "shift+Tab", "do": ["pass"]}` gives the key back to the browser. Without that, ⇧Tab no
+longer moves the focus back out of the text field.
+
 ## Where the standard is silent, this harness decides
 
 - **A profile action with no profile at all** opens the onboarding, `profile.next`, `profile.prev`

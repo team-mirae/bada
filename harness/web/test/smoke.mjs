@@ -298,6 +298,56 @@ for (const [platform, main, leave, own] of [["mac", "Lang1", "Lang2", "Convert"]
   });
 }
 
+await test("⇧Tab is the toggle while no menu is open, and the engine's while one is", async () => {
+  const { h, told } = await page(new Memory({ [S.STORE.settings]: two() }));
+  const selects = () => told.sent.filter(e => e.type === "select").length;
+  assert.deepEqual([h.mode, h.profile], ["muhenkan", null]);
+  assert.equal(tap(h, "shift+Tab", {}), true, "the browser doesn't get it: the focus stays in the field");
+  assert.deepEqual([h.mode, h.profile], ["henkan", "main"], "from muhenkan, into henkan_enters' profile");
+  tap(h, "shift+Tab");
+  assert.deepEqual([h.mode, h.profile], ["muhenkan", "main"], "and back");
+  // One candidate is no menu: the toggle, and what was staged is committed by the select.
+  tap(h, "shift+Tab");
+  type(h, "gks");
+  assert.deepEqual([h.field.menu.rows, h.reply.staged], [[], "한"]);
+  tap(h, "shift+Tab");
+  assert.deepEqual([h.mode, h.field.text, h.field.marked], ["muhenkan", "한", null]);
+  // A menu open: ⇧Tab is the engine's, the entry before, and the mode stays.
+  h.enter("henkan", "work");
+  type(h, "gk");
+  tap(h, "Tab");
+  assert.deepEqual([h.field.menu.rows.length, h.field.menu.selected], [2, 1]);
+  const before = selects();
+  tap(h, "shift+Tab");
+  assert.deepEqual([h.mode, h.profile, h.field.menu.selected, h.field.markedText, selects()], ["henkan", "work", 0, "하", before]);
+  assert.deepEqual(told.sent.at(-1), { type: "key", key: "Tab", shift: true, ctrl: false, alt: false, meta: false });
+  tap(h, "Enter");
+  // It enters the profile last used; held, it toggles once; with another modifier it isn't the toggle.
+  tap(h, "shift+Tab");
+  assert.deepEqual([h.mode, h.profile], ["muhenkan", "work"]);
+  h.press({ code: "Tab", shift: true, ctrl: false, alt: false, meta: false, repeat: false }, { synthetic: true });
+  h.press({ code: "Tab", shift: true, ctrl: false, alt: false, meta: false, repeat: true }, { synthetic: true });
+  h.release("Tab");
+  assert.deepEqual([h.mode, h.profile], ["henkan", "work"]);
+  tap(h, "ctrl+shift+Tab");
+  tap(h, "Tab");
+  assert.equal(h.mode, "henkan", "Tab alone and ⌃⇧Tab are not it");
+  // No profile at all: the onboarding, as the toggle has it.
+  const fresh = await page();
+  tap(fresh.h, "shift+Tab");
+  assert.deepEqual([fresh.told.onboarding, fresh.h.mode], [1, "muhenkan"]);
+  // A binding on shift+Tab in the settings comes first.
+  const bound = await page(new Memory({ [S.STORE.settings]: two({ bindings: [{ on: "shift+Tab", do: ["pass"] }] }) }));
+  assert.equal(tap(bound.h, "shift+Tab", {}), false, "pass: the browser has the key");
+  assert.equal(bound.h.mode, "muhenkan");
+  // transient: the lock is turned off on the way into henkan, as with any toggle.
+  const lock = await page(new Memory({ [S.STORE.settings]: two({ caps_lock: "transient" }) }));
+  tap(lock.h, "CapsLock");
+  assert.equal(lock.h.caps, true);
+  tap(lock.h, "shift+Tab");
+  assert.deepEqual([lock.h.mode, lock.h.caps], ["henkan", false]);
+});
+
 await test("a click on a menu row picks and commits; the mode's own buttons select", async () => {
   const { h, told } = await page(new Memory({ [S.STORE.settings]: two() }));
   h.enter("henkan", "work");
