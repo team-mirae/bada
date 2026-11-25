@@ -1004,6 +1004,9 @@ reply.
 | `none` | Swallows the key | never |
 
 An action doesn't apply when it would change nothing, and then the next one of the list is tried.
+So a key can be the toggle only while there is nothing to step through: `{"on": "shift+Tab",
+"do": ["menu.prev", "mode.toggle"]}` is the entry before while the menu has two rows or more, and
+the toggle otherwise. No preset binds ⇧Tab (§9.5): unbound, it is the engine's key.
 **With no profile at all, any action that would enter henkan opens the onboarding instead** (§8.3).
 Whenever a `select` changes the profile, the one before it is what `profile.last` goes back to.
 

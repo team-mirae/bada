@@ -70,6 +70,14 @@
       ],
       "cycle": [], "henkan_enters": "last", "caps_lock": "respect", "caps_rule": "allcaps"
     },
+    "toggle-key": {
+      "bindings": [
+        {"on": "NonConvert", "do": ["mode:muhenkan"]},
+        {"on": "Convert", "do": ["profile.first"]},
+        {"on": "shift+Tab", "do": ["menu.prev", "mode.toggle"]}
+      ],
+      "cycle": [], "henkan_enters": "last", "caps_lock": "respect", "caps_rule": "allcaps"
+    },
     "odd": {
       "bindings": [
         {"on": "Lang1", "do": ["mode:henkan"]},
@@ -176,6 +184,16 @@
     {"name": "⇧変換 is the previous entry there", "table": "example-pc", "profiles": "four", "state": {"mode": "henkan", "profile": "ja", "menu_rows": 3, "staged": "かんじ", "caps_lock": false}, "press": "shift+Convert", "expect": {"then": "action", "binding": 3, "ran": "menu.prev", "name": "menu.prev"}},
     {"name": "カタカナ switches from 変換's profile even with a menu open", "table": "example-pc", "profiles": "four", "state": {"mode": "henkan", "profile": "main", "menu_rows": 2, "staged": "한", "caps_lock": false}, "press": "KanaMode", "expect": {"then": "select", "binding": 4, "ran": "profile:ja", "mode": "henkan", "profile": "ja"}},
     {"name": "カタカナ in its own profile is the next entry", "table": "example-pc", "profiles": "four", "state": {"mode": "henkan", "profile": "ja", "menu_rows": 2, "staged": "かんじ", "caps_lock": false}, "press": "KanaMode", "expect": {"then": "action", "binding": 4, "ran": "menu.next", "name": "menu.next"}},
+    {"name": "a key bound to the entry before, else the toggle: with no menu it enters henkan", "table": "toggle-key", "profiles": "four", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "select", "binding": 2, "ran": "mode.toggle", "mode": "henkan", "profile": "main"}},
+    {"name": "…into the profile last used", "table": "toggle-key", "profiles": "four", "state": {"mode": "muhenkan", "profile": "work", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "select", "binding": 2, "ran": "mode.toggle", "mode": "henkan", "profile": "work"}},
+    {"name": "…and leaves it", "table": "toggle-key", "profiles": "four", "state": {"mode": "henkan", "profile": "ja", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "select", "binding": 2, "ran": "mode.toggle", "mode": "muhenkan", "profile": "ja"}},
+    {"name": "…with one candidate too: there is no entry before it", "table": "toggle-key", "profiles": "four", "state": {"mode": "henkan", "profile": "main", "menu_rows": 1, "staged": "한", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "select", "binding": 2, "ran": "mode.toggle", "mode": "muhenkan", "profile": "main"}},
+    {"name": "…but with a menu open it is the entry before, and the mode stays", "table": "toggle-key", "profiles": "four", "state": {"mode": "henkan", "profile": "work", "menu_rows": 2, "staged": "inter", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "action", "binding": 2, "ran": "menu.prev", "name": "menu.prev"}},
+    {"name": "…and with no profile it opens the onboarding", "table": "toggle-key", "profiles": "none", "state": {"mode": "muhenkan", "profile": null, "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "onboarding", "binding": 2, "ran": "mode.toggle"}},
+    {"name": "Tab without ⇧ has no binding there: it is fed to the engine", "table": "toggle-key", "profiles": "four", "state": {"mode": "henkan", "profile": "work", "menu_rows": 2, "staged": "inter", "caps_lock": false}, "press": "Tab", "expect": {"then": "key", "binding": null, "ran": null}},
+    {"name": "⇧Tab is no preset's key: on a Mac's it is fed to the engine", "table": "jis-mac", "profiles": "four", "state": {"mode": "henkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "key", "binding": null, "ran": null}},
+    {"name": "…on a PC's too", "table": "jis-pc", "profiles": "four", "state": {"mode": "muhenkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "key", "binding": null, "ran": null}},
+    {"name": "…and with no language keys", "table": "no-language-keys", "profiles": "four", "state": {"mode": "muhenkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "shift+Tab", "expect": {"then": "key", "binding": null, "ran": null}},
     {"name": "of two equal bindings the later wins", "table": "odd", "profiles": "four", "state": {"mode": "henkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "Lang1", "expect": {"then": "select", "binding": 1, "ran": "mode.toggle", "mode": "muhenkan", "profile": "main"}},
     {"name": "henkan_enters names the profile the toggle enters", "table": "odd", "profiles": "four", "state": {"mode": "muhenkan", "profile": "main", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "Lang1", "expect": {"then": "select", "binding": 1, "ran": "mode.toggle", "mode": "henkan", "profile": "work"}},
     {"name": "mode:henkan enters henkan_enters' profile too", "table": "odd", "profiles": "four", "state": {"mode": "muhenkan", "profile": "ja", "menu_rows": 0, "staged": "", "caps_lock": false}, "press": "KanaMode", "expect": {"then": "select", "binding": 3, "ran": "mode:henkan", "mode": "henkan", "profile": "work"}},

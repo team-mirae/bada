@@ -106,8 +106,9 @@ ranking, and the search layouts find nothing. The place for it is ready and mark
 **⇧Tab is the toggle between muhenkan and henkan while no menu is open** (one row or none), as
 `mode.toggle` goes (§9.2): into `henkan_enters`' profile, or the onboarding with no profile. A
 browser's keyboard often has no language key, and this gives it a way into henkan without the
-mouse. With a menu open ⇧Tab is the engine's, the entry before. No other harness has this, and it
-isn't in the key table: a binding on `shift+Tab` in the settings comes first, so
+mouse. With a menu open ⇧Tab is the engine's, the entry before. Only this harness has it built in:
+elsewhere it is a binding the user writes, `{"on": "shift+Tab", "do": ["menu.prev", "mode.toggle"]}`
+(§9.2), and no preset has one. Here a binding on `shift+Tab` in the settings comes first, so
 `{"on": "shift+Tab", "do": ["pass"]}` gives the key back to the browser. Without that, ⇧Tab no
 longer moves the focus back out of the text field.
 
