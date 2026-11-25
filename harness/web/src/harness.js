@@ -4,7 +4,7 @@
 // No DOM here: app.js binds it to the page, and test/smoke.mjs types on it as the page does.
 
 import { Field } from "./field.js";
-import { KeyTable, LANGUAGE_KEYS, MODIFIER_KEYS, PRESETS, after, presetOfKey, tableOf } from "./keytable.js";
+import { KeyTable, LANGUAGE_KEYS, MODIFIER_KEYS, PRESETS, after, decide, presetOfKey, tableOf } from "./keytable.js";
 import * as S from "./settings.js";
 
 const NOTHING = Object.freeze({
@@ -118,6 +118,8 @@ export class Harness {
 
   retable() {
     this.table = tableOf(this.file.keys, this.preset);
+    // This harness's own key (README): ⇧Tab is the toggle while the menu has nothing to go back through.
+    this.toggle = tableOf({ ...this.file.keys, bindings: [{ on: "shift+Tab", do: ["mode.toggle"] }] });
     if (this.keys) this.keys.set(this.table, this.profiles);
     else this.keys = new KeyTable(this.table, this.profiles);
   }
@@ -235,8 +237,24 @@ export class Harness {
       case "type": this.flush(); this.field.insert(outcome.text); return true;
       case "swallow": return true;
       case "pass": return false;
-      case "key": return late ? true : this.key(outcome.press, { osKey, synthetic });
+      case "key": return late ? true : this.shiftTab(outcome.press) || this.key(outcome.press, { osKey, synthetic });
     }
+    return true;
+  }
+
+  /**
+   * ⇧Tab, which the key table left alone: the toggle between muhenkan and henkan, when the menu
+   * has no row before the one that shows (one row or none). A keyboard with no language keys has
+   * a way into henkan then. With a menu open it is the engine's: the entry before. This harness
+   * only: a binding on shift+Tab in the settings comes first, as the table always does.
+   * Returns whether the press was the toggle.
+   */
+  shiftTab(press) {
+    if (press.code !== "Tab" || !press.shift || press.ctrl || press.alt || press.meta) return false;
+    const state = this.state();
+    if (state.menu_rows > 1) return false;
+    // A held key toggles once.
+    if (!press.repeat) this.run(decide(this.toggle, this.profiles, state, press));
     return true;
   }
 
