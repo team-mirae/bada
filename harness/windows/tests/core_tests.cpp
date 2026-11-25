@@ -740,6 +740,61 @@ void TestData() {
     }
 }
 
+// A key the user binds to the entry before, or else the toggle (§9.2): ⇧Tab here. No preset has it.
+void TestToggleKey() {
+    const char* settings = R"({
+      "format": "bada-settings/2",
+      "engine": {
+        "muhenkan": {"layout": "en-qwerty"},
+        "henkan": {"profiles": [
+          {"id": "ko", "name": "한국어", "layouts": ["ko-2-set"]},
+          {"id": "work", "name": "work", "layouts": ["ko-2-set", "en-qwerty"]}
+        ]}
+      },
+      "keys": {"bindings": [
+        {"on": "shift+Tab", "do": ["menu.prev", "mode.toggle"]},
+        {"on": "F13", "do": ["profile:work"]}
+      ]}
+    })";
+    Rig rig("toggle-key", settings);
+    if (!rig.session) return;
+    Context ctx(*rig.session);
+    test::TextModel field;
+    const ContextInfo info{"app", false};
+    const RawKey shift_tab = Key("Tab", "\t", kShift);
+
+    Check(ctx.KeyDown(shift_tab, field, info) && rig.session->mode() == Mode::kHenkan && rig.session->profile() == "ko",
+          "⇧Tab with no menu enters henkan, and the app doesn't get the key");
+    ctx.KeyUp(shift_tab, field, info);
+    // One candidate is no menu: the toggle, and what was staged is committed.
+    Type(ctx, field, {{"KeyG", "g"}, {"KeyK", "k"}, {"KeyS", "s"}}, info);
+    Check(field.Marked() == "한" && field.menu.rows.empty(), "one candidate, no menu");
+    Check(ctx.KeyDown(shift_tab, field, info) && rig.session->mode() == Mode::kMuhenkan && field.Text() == "한" && !field.marked,
+          "⇧Tab with one candidate leaves henkan and commits it");
+    ctx.KeyUp(shift_tab, field, info);
+    // A menu open: the entry before, and the mode stays.
+    Check(ctx.KeyDown(Key("F13"), field, info) && rig.session->profile() == "work", "the profile with two layouts");
+    Type(ctx, field, {{"KeyG", "g"}, {"KeyK", "k"}, {"Tab", "\t"}}, info);
+    Check(field.menu.rows.size() == 2 && field.menu.selected == 1u && field.Marked() == "gk", "Tab is still the engine's: the next entry");
+    Check(ctx.KeyDown(shift_tab, field, info) && rig.session->mode() == Mode::kHenkan && field.menu.selected == 0u &&
+              field.Marked() == "하",
+          "⇧Tab with a menu open is the entry before");
+    ctx.KeyUp(shift_tab, field, info);
+    Type(ctx, field, {{"Enter", "\r"}}, info);
+    Check(ctx.KeyDown(shift_tab, field, info) && rig.session->mode() == Mode::kMuhenkan && rig.session->profile() == "work",
+          "…and the toggle again once the menu is gone");
+    ctx.KeyUp(shift_tab, field, info);
+
+    // With the keyboard's preset ⇧Tab has no binding: in muhenkan the app has it, and the mode stays.
+    Rig plain("toggle-key-preset", R"({"format": "bada-settings/2", "engine": {"muhenkan": {"layout": "en-qwerty"},
+      "henkan": {"profiles": [{"id": "ko", "name": "한국어", "layouts": ["ko-2-set"]}]}}})");
+    if (!plain.session) return;
+    Context other(*plain.session);
+    test::TextModel text;
+    Check(!other.KeyDown(shift_tab, text, info) && plain.session->mode() == Mode::kMuhenkan, "unbound, ⇧Tab goes to the app");
+    other.KeyUp(shift_tab, text, info);
+}
+
 void TestTwoFieldsAndSecure() {
     Rig rig("fields");
     if (!rig.session) return;
@@ -1078,6 +1133,7 @@ int main() {
     TestNewInstall();
     TestTyping();
     TestData();
+    TestToggleKey();
     TestTwoFieldsAndSecure();
     TestPairs();
     TestCapsLock();

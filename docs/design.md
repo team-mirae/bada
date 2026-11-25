@@ -853,6 +853,7 @@ Settled by the owner, 2026-11-24:
 | `ko-3-set-unshifted` | Left out of the stock layouts: its key map came from an LGPL-2.1 file |
 | かな and 変換 in a profile that has its own key | Still the next entry (⇧: the previous one) when the menu has two rows or more; otherwise the key to their profile (owner, 2026-11-26; §8.4) |
 | Negative entries | A layout's `forms`, in its file: as many as it lists, the first −1, each made from the staged keys and the file alone (a script, the keys in a width, a jamo of each syllable), so the same keys give the same entries. One layout's, in a profile with `script_forms` on. v1 had two at most, hiragana and katakana (owner, 2026-11-26) |
+| ⇧Tab as the toggle | While no menu is open, ⇧Tab goes between muhenkan and henkan in the web harness, which has it built in for keyboards with no language key. Every other harness has it as a binding the user writes (`["menu.prev", "mode.toggle"]`), and no preset binds ⇧Tab (owner, 2026-11-26) |
 | Pairs of language keys | Two language keys held together (`KanaMode+Lang1`, `Convert+Lang1`, …) are a binding of their own, for any action; unbound by default (§8.2) |
 | ¥ in the Korean layouts | `ko-2-set` and `ko-bada-roman` type ₩ on the ¥ key (owner, 2026-11-24); ⇧¥ stays `\|` |
 
