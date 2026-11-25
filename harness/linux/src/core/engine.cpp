@@ -88,7 +88,8 @@ std::unique_ptr<EngineData> EngineData::Load(std::string* error, const std::file
             // A buffer's name is ASCII: a file with another name is no buffer's.
             std::string name;
             bool ascii = true;
-            for (const auto c : it->path().stem().native()) {
+            const std::filesystem::path stem = it->path().stem();
+            for (const auto c : stem.native()) {
                 // A char may be signed, and a wchar_t wider: compared as one unsigned number.
                 const unsigned long code = static_cast<unsigned long>(c) & 0xFFFFFFFFul;
                 ascii &= code > 0 && code < 128;

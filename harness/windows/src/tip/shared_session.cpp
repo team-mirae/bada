@@ -6,6 +6,7 @@
 #include <cwctype>
 #include <filesystem>
 
+#include "dll.h"
 #include "log.h"
 #include "state_shared.h"
 

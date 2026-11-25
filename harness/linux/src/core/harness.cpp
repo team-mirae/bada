@@ -1,5 +1,7 @@
 #include "harness.h"
 
+#include <cstdlib>
+
 namespace bada {
 namespace fs = std::filesystem;
 

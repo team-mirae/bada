@@ -490,7 +490,7 @@ int main() {
     ::setenv("BADA_CONFIG_DIR", g_config.c_str(), 1);
     ::setenv("XDG_RUNTIME_DIR", g_runtime.c_str(), 1);
     // No data, whatever is installed on this machine: what the test types doesn't depend on it.
-    ::setenv("BADA_DATA_DIR", (g_config + "/no-data").c_str(), 1);
+    ::setenv("BADA_DATA_DIR", (g_config / "no-data").c_str(), 1);
 
     fcitx::setupTestingEnvironment(BADA_TEST_BINARY_DIR, {BADA_TEST_ADDON_DIR}, {BADA_TEST_DATA_DIR});
     char arg0[] = "bada_fcitx5_e2e", arg1[] = "--disable=all", arg2[] = "--enable=testim,testfrontend,testui,bada";
