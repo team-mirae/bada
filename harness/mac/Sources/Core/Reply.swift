@@ -54,7 +54,7 @@ struct Preedit: Equatable {
 struct Menu: Equatable {
     struct Row: Equatable {
         var text: String
-        /// The signed index: 0 the top reading, 1 and up the others, −1 and −2 script forms.
+        /// The signed index: 0 the top reading, 1 and up the others, −1 and down a layout's forms.
         var entry: Int
         /// Romaji, a reading, a name.
         var note: String?

@@ -32,7 +32,7 @@ The web harness is a page: `node harness/web/build.mjs` builds it ([harness/web]
 | [docs/design.md](docs/design.md) | The design the standard was written from |
 | [docs/layouts.html](docs/layouts.html) | The typing layouts, drawn on a JIS keyboard |
 | [docs/reference/](docs/reference/) | bada-compatible v1, bada ime's spec and layout pages, and the user dictionary's contract |
-| [engine/layouts/](engine/layouts/) | The eleven stock layouts, each a `bada-layout/2` file |
+| [engine/layouts/](engine/layouts/) | The eleven stock layouts, each a `bada-layout/3` file |
 | [crates/compat/](crates/compat/) | The contract layer (Rust): the standard's types, the C ABI, the session and the panic guard, with an example engine |
 | [engine/](engine/) | The engine (Rust), with its data |
 | [harness/](harness/) | The four harnesses: [mac](harness/mac/), [windows](harness/windows/), [linux](harness/linux/), [web](harness/web/) |
@@ -66,7 +66,7 @@ platform it ships for, so a platform that is released less often skips numbers: 
 0.1.0, 0.2.0 and 0.3.0 and Windows ships next with 0.3.0, Windows goes from 0.1.0 to 0.3.0.
 
 The standard has its own version (bada-compatible 2.0), and so do the file formats
-(`bada-settings/2`, `bada-layout/2`).
+(`bada-settings/2`, `bada-layout/3`).
 
 ## License
 

@@ -1,5 +1,17 @@
 #include "engine.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
+#include <fcntl.h>
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#endif
+
+#include <cstdint>
+#include <map>
+
 #include "bada.h"
 
 namespace bada {
@@ -32,6 +44,13 @@ bool ParseDescribe(const std::string& text, Describe* out, std::string* error) {
             if (item.IsString()) (std::string(list) == "events" ? d.events : d.features).push_back(item.string);
         }
     }
+    if (const json::Value* data = parsed->Get("data"); data && data->IsArray()) {
+        for (const json::Value& item : data->array) {
+            if (!item.IsObject() || item.GetString("name").empty()) continue;
+            const json::Value* borrow = item.Get("borrow");
+            d.data.push_back({item.GetString("name"), borrow && borrow->IsBool() && borrow->boolean});
+        }
+    }
     d.raw = std::move(*parsed);
     const bool fits = d.abi_name == "bada-compatible" && d.abi_major == kAbiMajor;
     if (!fits && error) {
@@ -43,13 +62,97 @@ bool ParseDescribe(const std::string& text, Describe* out, std::string* error) {
     return fits;
 }
 
-std::unique_ptr<EngineData> EngineData::Load(std::string* error) {
+#ifdef _WIN32
+EngineData::Mapping EngineData::Map(const std::filesystem::path& file) {
+    Mapping mapping;
+    // Shared for deleting too: an installer can rename the file while apps have it mapped.
+    const HANDLE handle = CreateFileW(file.c_str(), GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr,
+                                      OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (handle == INVALID_HANDLE_VALUE) return mapping;
+    LARGE_INTEGER size{};
+    if (GetFileSizeEx(handle, &size) && size.QuadPart > 0 &&
+        static_cast<ULONGLONG>(size.QuadPart) <= static_cast<ULONGLONG>(SIZE_MAX)) {
+        if (const HANDLE section = CreateFileMappingW(handle, nullptr, PAGE_READONLY, 0, 0, nullptr)) {
+            if (const void* ptr = MapViewOfFile(section, FILE_MAP_READ, 0, 0, 0)) {
+                mapping = {ptr, static_cast<std::size_t>(size.QuadPart)};
+            }
+            // The view stays after the section and the file are closed.
+            CloseHandle(section);
+        }
+    }
+    CloseHandle(handle);
+    return mapping;
+}
+
+void EngineData::Unmap(const Mapping& mapping) {
+    if (mapping.ptr) UnmapViewOfFile(mapping.ptr);
+}
+#else
+// The portable core, built elsewhere for its tests.
+EngineData::Mapping EngineData::Map(const std::filesystem::path& file) {
+    Mapping mapping;
+    const int fd = ::open(file.c_str(), O_RDONLY | O_CLOEXEC);
+    if (fd < 0) return mapping;
+    struct stat st {};
+    if (::fstat(fd, &st) == 0 && st.st_size > 0) {
+        void* ptr = ::mmap(nullptr, static_cast<std::size_t>(st.st_size), PROT_READ, MAP_PRIVATE, fd, 0);
+        if (ptr != MAP_FAILED) mapping = {ptr, static_cast<std::size_t>(st.st_size)};
+    }
+    // The mapping stays after the file is closed.
+    ::close(fd);
+    return mapping;
+}
+
+void EngineData::Unmap(const Mapping& mapping) {
+    if (mapping.ptr) ::munmap(const_cast<void*>(mapping.ptr), mapping.len);
+}
+#endif
+
+std::unique_ptr<EngineData> EngineData::Load(std::string* error, const std::filesystem::path& dir) {
     std::unique_ptr<EngineData> data(new EngineData());
-    // No buffers yet (see the header). Later:
-    //   std::vector<bada_buf> bufs = the mapped pack's blobs, each {name, ptr, len, BADA_BORROWED};
-    //   data->data_ = bada_data_new(bufs.data(), bufs.size());
-    // with the mapping kept open in this object, since borrowed buffers must outlive the data.
-    data->data_ = bada_data_new(nullptr, 0);
+    // The files of the folder, by their names without the extension.
+    std::map<std::string, std::filesystem::path> files;
+    std::error_code failed;
+    if (!dir.empty()) {
+        for (std::filesystem::directory_iterator it(dir, failed), end; !failed && it != end; it.increment(failed)) {
+            std::error_code ignored;
+            if (!it->is_regular_file(ignored)) continue;
+            // A buffer's name is ASCII: a file with another name is no buffer's.
+            std::string name;
+            bool ascii = true;
+            for (const auto c : it->path().stem().native()) {
+                // A char may be signed, and a wchar_t wider: compared as one unsigned number.
+                const unsigned long code = static_cast<unsigned long>(c) & 0xFFFFFFFFul;
+                ascii &= code > 0 && code < 128;
+                name.push_back(static_cast<char>(c));
+            }
+            if (ascii && !name.empty()) files.emplace(std::move(name), it->path());
+        }
+    }
+    Describe description;
+    ReadDescribe(&description, nullptr);
+    std::vector<Mapping> mapped;
+    std::vector<bool> borrowed;
+    for (const DataBuffer& buffer : description.data) {
+        const auto file = files.find(buffer.name);
+        if (file == files.end()) continue;
+        const Mapping mapping = Map(file->second);
+        if (!mapping.ptr) continue;
+        mapped.push_back(mapping);
+        borrowed.push_back(buffer.borrow);
+        data->names_.push_back(buffer.name);
+    }
+    std::vector<bada_buf> bufs;
+    for (std::size_t i = 0; i < mapped.size(); ++i) {
+        bufs.push_back({data->names_[i].c_str(), static_cast<const std::uint8_t*>(mapped[i].ptr), mapped[i].len,
+                        borrowed[i] ? BADA_BORROWED : 0u});
+    }
+    data->data_ = bada_data_new(bufs.empty() ? nullptr : bufs.data(), bufs.size());
+    // The engine copied what it keeps of the buffers it wasn't lent.
+    for (std::size_t i = 0; i < mapped.size(); ++i) {
+        if (borrowed[i] && data->data_) data->kept_.push_back(mapped[i]);
+        else Unmap(mapped[i]);
+    }
     if (!data->data_) {
         if (error) *error = "bada_data_new answered NULL";
         return nullptr;
@@ -57,7 +160,11 @@ std::unique_ptr<EngineData> EngineData::Load(std::string* error) {
     return data;
 }
 
-EngineData::~EngineData() { bada_data_free(data_); }
+// The data first, then the buffers it may point into.
+EngineData::~EngineData() {
+    bada_data_free(data_);
+    for (const Mapping& mapping : kept_) Unmap(mapping);
+}
 
 std::unique_ptr<EngineSession> EngineSession::Create(const EngineData* data, const std::string& init_json,
                                                      std::string* error) {

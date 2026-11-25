@@ -4,7 +4,7 @@ bada's engine (Rust): keys in, text out, through the C ABI of
 [bada-compatible v2](../docs/bada-compatible-v2.md). The library is `bada` (`libbada.a`, `libbada.dylib`
 or `.so`), its functions `bada_*`, its header [include/bada.h](include/bada.h).
 
-**No layout has code of its own.** Each of the eleven stock layouts is a `bada-layout/2` file in
+**No layout has code of its own.** Each of the eleven stock layouts is a `bada-layout/3` file in
 [layouts/](layouts/), read by a few general ways of reading keys
 ([the standard, §7.5](../docs/bada-compatible-v2.md#75-a-layout-file-bada-layout2)).
 

@@ -39,8 +39,13 @@ std::optional<Shared> ReadShared(const std::string& text) {
 std::unique_ptr<Session> Session::Create(Options options, std::string* error) {
     fs::path dir = options.config_dir.empty() ? SettingsFolder::DefaultDir() : options.config_dir;
     std::unique_ptr<Session> s(new Session(std::move(options), std::move(dir)));
-    s->data_ = EngineData::Load(error);
+    s->data_ = EngineData::Load(error, s->options_.data_dir);
     if (!s->data_) return nullptr;
+    {
+        std::string names;
+        for (const std::string& name : s->data_->names()) names += (names.empty() ? "" : " ") + name;
+        s->Log("data: " + (names.empty() ? std::string("none") : names));
+    }
     s->engine_ = EngineSession::Create(s->data_.get(), InitJson(s->options_.version), error);
     if (!s->engine_) return nullptr;
     s->folder_.Reload(*s->engine_);

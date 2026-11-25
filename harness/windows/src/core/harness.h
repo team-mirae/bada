@@ -75,6 +75,8 @@ class Session {
 public:
     struct Options {
         std::filesystem::path config_dir;  // empty: SettingsFolder::DefaultDir()
+        // The folder of the engine's data files (§11): see EngineData::Load. Empty: no data.
+        std::filesystem::path data_dir;
         std::string version;               // the harness's own
         // The preset for `keyboard: "auto"`: what keyboard Windows reports.
         Preset detected = Preset::kNoLanguageKeys;

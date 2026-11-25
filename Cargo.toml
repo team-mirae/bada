@@ -4,7 +4,7 @@ members = ["crates/compat", "engine", "tools/conformance"]
 
 [workspace.package]
 # One version for everything in the repository: it is the VERSION file's (crates/compat checks).
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"

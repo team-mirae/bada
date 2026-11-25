@@ -42,7 +42,7 @@ examples; `uv run tools/validate/validate.py` checks them, the stock layouts and
   and `harness.version`. bada has one version number for everything in its repository (the engine,
   the command line, every harness), in the `VERSION` file at its root; a platform that is released
   less often skips numbers.
-- **File formats carry their own names**: `bada-settings/2` (§8, §9, §10.1), `bada-layout/2` (§7.5),
+- **File formats carry their own names**: `bada-settings/2` (§8, §9, §10.1), `bada-layout/3` (§7.5),
   `bada-compatible-state/2` (§6.7), `bada-key-cases/1` (§9.6). The user dictionary is still
   `bada-dictionary`, version 1 (§11).
 
@@ -155,7 +155,7 @@ Schema: [schemas/describe.schema.json](schemas/describe.schema.json).
 
 ```json
 {"harness": {"id": "com.teammirae.bada.mac", "version": "0.1.0", "features": ["segments", "pick", "around", "rtl"]},
- "layouts": [{"format": "bada-layout/2", "id": "…"}],
+ "layouts": [{"format": "bada-layout/3", "id": "…"}],
  "settings": {"muhenkan": {"layout": "en-qwerty"}, "henkan": {"profiles": []}},
  "dictionary": {"format": "bada-dictionary", "version": 1}}
 ```
@@ -304,7 +304,7 @@ fields they don't know.
 | `preedit.text` | `""` | The marked text after the commit. `""`: nothing is marked | `preedit` |
 | `preedit.caret` | the end | The caret's place in `text` | none |
 | `preedit.segments` | `[]` | `text` cut into parts, in order: `len` and `kind`, one of `live` (still being read), `fixed` (`fix`, or a picked entry typed past: it no longer changes) and `picked` (the row the user moved to). A harness without `segments` draws `text` | none |
-| `menu.rows[]` | `[]` | The menu's rows, top to bottom: `text`; `entry`, the signed index (0 the top reading, 1 and up the others, −1 and −2 script forms); optional `note` (romaji, a reading, a name), `lang` (BCP 47: the harness picks the font) and `layout` (whose reading it is) | `menu`, `notes`, `japanese`, `zero` |
+| `menu.rows[]` | `[]` | The menu's rows, top to bottom: `text`; `entry`, the signed index (0 the top reading, 1 and up the others, −1 and down a layout's forms, §7.5.12); optional `note` (romaji, a reading, a name), `lang` (BCP 47: the harness picks the font) and `layout` (whose reading it is) | `menu`, `notes`, `japanese`, `zero` |
 | `menu.selected` | null | The highlighted row, or null for none | `selected`, past the end for none |
 | `menu.strip` | false | The menu is one row of single characters | `horizontal` |
 | `mode`, `profile` | null | As the harness last selected them: echoed, never changed by the engine | `P_state` |
@@ -536,7 +536,7 @@ left a character with no key, it takes a free slot. The boards are drawn in
 - **`ja-kana`**: the harness sends `alt` and `shift` for the ⌥⇧ layer on every platform (Alt+Shift
   off the Mac).
 
-### 7.5 A layout file: `bada-layout/2`
+### 7.5 A layout file: `bada-layout/3`
 
 **Everything that makes a layout what it is lives in its JSON file, and the user can change any of
 it, the stock layouts included.** The engine has no code for any one layout: it has a few general
@@ -547,10 +547,11 @@ composition, kanji conversion, width and script conversion, the search. A new *a
 code.
 
 Schema: [schemas/layout.schema.json](schemas/layout.schema.json). A field the format doesn't have is
-a problem, not something to ignore.
+a problem, not something to ignore. A `bada-layout/2` file is refused (`bad-format`): `/3` has the
+`forms` part (§7.5.12) where `/2` listed script forms in `convert`.
 
 ```json
-{"format": "bada-layout/2", "id": "ko-2-set", "name": {"en": "Korean - 2-set", "ko": "한국어 - 두벌식"},
+{"format": "bada-layout/3", "id": "ko-2-set", "name": {"en": "Korean - 2-set", "ko": "한국어 - 두벌식"},
  "lang": "ko", "kind": "henkan", "read": "hangul",
  "keys": {"KeyR": {"base": {"t": "ㄱ", "r": "c"}, "shift": {"t": "ㄲ", "r": "c"}},
           "KeyK": {"base": {"t": "ㅏ", "r": "v"}, "shift": {"t": "ㅏ", "r": "v"}},
@@ -563,7 +564,7 @@ a problem, not something to ignore.
 
 | Part | What it says |
 |---|---|
-| `format`, `id`, `name` | `"bada-layout/2"`; the slug (§7.1); what lists show, by language (`en` required) |
+| `format`, `id`, `name` | `"bada-layout/3"`; the slug (§7.1); what lists show, by language (`en` required) |
 | `lang` | BCP 47: the language of its text, which a reply's rows carry. `und` for a layout of no language |
 | `kind` | `muhenkan` (it types directly: `read` is `direct`) or `henkan` (it composes: any other `read`). Only a `muhenkan` layout can be the muhenkan layout; either kind can be a candidate of a henkan profile (§8) |
 | `read` | Which general way of reading the keys: `direct`, `hangul`, `table`, `kana`, `search` |
@@ -572,6 +573,7 @@ a problem, not something to ignore.
 | `text_ends_word` | A text slot ends the word instead of being staged (§7.5.4) |
 | `convert` | What turns the reading into more rows, and the data it uses (§7.5.7) |
 | `actions` | The layout's named actions (§7.5.8) |
+| `forms` | Other ways of writing what was typed, as the menu's negative entries (§7.5.12) |
 | `particles` | Its particles that may follow a word typed on another layout (§7.5.9) |
 | `words`, `rank` | The word lists that say which readings are known words, and the scores of its readings (§7.5.10) |
 | `options` | The options it has in the settings (§7.5.11) |
@@ -720,7 +722,6 @@ conversions with its arguments.
 | `with` | Does | Arguments |
 |---|---|---|
 | `kanji` | Kanji conversion of a kana reading | `data`: the dictionary; `rows`: conversions listed; `user_rows`: how far down the user's own words are looked for; `common`: a list of common words by reading, and its rows; `native`: the list of words written in kana; `notes`: `kana` rows carry their `romaji`, converted rows their `reading` |
-| `script` | The reading in another script, as negative entries when the profile has script forms on (§8) | `forms`: `[{"entry": -1, "to": "hiragana"}, {"entry": -2, "to": "katakana"}]` |
 | `width` | The reading with its letters, digits and symbols in the other width, as a row, where it differs; kana stay as they are | `to`: `half` or `full` |
 | `dictionary` | A dictionary lookup of the letters typed, when every staged key is a letter | `data`; `rows`; `first: false`: never the top row; `below_top`: how far under the top reading its rows start; `case`: which of the dictionary's lists by how the word was typed (`lower`, `mixed`, `upper`: `word`, `name`, `name-then-word`, `name-else-word`). Each row's note is the word as typed |
 
@@ -774,6 +775,36 @@ defaults (§8): a name → its `type` (`boolean`, or `order`: some of the values
 its `default`, and a `title` and optional `hint` by language. The engine reports them in
 `P_describe.layouts[].options`, and the settings page draws them.
 
+#### 7.5.12 `forms`
+
+Other ways of writing what was typed, as **the menu's negative entries**: the first of the list is
+entry −1, the second −2, and so on. A layout lists as many as it wants. Each is one of the engine's
+general operations that needs **nothing but the staged keys and this file**: no data, no word list,
+no ranking, nothing of the user's. So the same keys always give the same forms, at the same entries.
+
+```json
+"forms": [{"do": "script", "to": "hiragana"}, {"do": "script", "to": "katakana"}]
+```
+
+| `do` | The form | Argument |
+|---|---|---|
+| `script` | The layout's reading of the keys, in a script | `to`: `hiragana`, `katakana`, `halfwidth-katakana` |
+| `keys` | The keys as their JIS characters (§7.2), in a width | `width`: `full`, `half` |
+| `jamo` | One jamo of each syllable of the layout's reading | `keep`: `initials`, `vowels`, `finals` |
+
+- **Forms show in a profile that has `script_forms` on** (§8.1), and they are one layout's:
+  `script_forms_layout`, or the first layout of the profile that lists any. While that layout can't
+  read the staged keys there are none.
+- **Every form is a row, in its place, whatever it says**: two forms that come out the same are both
+  listed, and so is one that says what entry 0 says. An entry never moves because of what was typed.
+- A conversion (§7.5.7) that a form already writes isn't listed again from entry 0 up: with the
+  stock Japanese layouts, the katakana. A word of the user's own (§11) still is.
+- **Typing on doesn't fix a form**, as it does a row picked above entry 0: the reading goes on at
+  entry 0. `fix` keeps a form that shows, like any entry.
+- After a `fix`, the forms are of the keys typed since.
+
+The stock `ja-romaji` and `ja-kana` list hiragana (−1) and katakana (−2).
+
 ### 7.6 Stock and custom layouts
 
 - **The stock layouts are files like any other**, shipped with the engine. A layout with a stock id
@@ -788,7 +819,7 @@ its `default`, and a `title` and optional `hint` by language. The engine reports
 
   | Code | Level | When |
   |---|---|---|
-  | `bad-format`, `missing-id`, `bad-value`, `unknown-field` | error | Not a `bada-layout/2` file; no `id`; a field of the wrong shape; a field the format doesn't have |
+  | `bad-format`, `missing-id`, `bad-value`, `unknown-field` | error | Not a `bada-layout/3` file; no `id`; a field of the wrong shape; a field the format doesn't have |
   | `unknown-key` | error | A key code that isn't one of the 48 or `Space` |
   | `bad-role` | error | A role its way of reading doesn't have |
   | `contradiction` | error | A table that contradicts itself: `kind` and `read` that disagree, a part for another way of reading, a spelling that can never be typed, an option used but not declared |
@@ -858,7 +889,7 @@ below is bada's; another engine publishes its own in `P_describe.settings.schema
 | `.name` | What menus show |
 | `.layouts` | The candidates, by layout id, stock or custom, in order: earlier wins a tie. The `en-*` layouts may be candidates |
 | `.weights` | A multiplier on every reading a layout raises, by layout id: 0 to 10, 1 when missing |
-| `.script_forms`, `.script_forms_layout` | Script forms as negative menu entries (§7.5.7), off by default; and the layout that offers them, or null for the first layout of the profile that has any |
+| `.script_forms`, `.script_forms_layout` | A layout's forms as negative menu entries (§7.5.12), off by default; and the layout whose forms they are, or null for the first layout of the profile that lists any |
 | `.options` | Per-layout options, by layout id, as each layout's file declares them (§7.5.11) |
 | `.fkeys` | **This profile's own F6–F10**, with nothing shared between profiles: `intercept` (false: every F key goes to the app), and each key `swallow`, `pass` or `<layout id>.<action id>`. A profile without `fkeys` intercepts them and binds none. The harness feeds the engine the F keys as ordinary `key` events |
 
@@ -917,12 +948,12 @@ keys as W3C codes so a file moves between platforms:
   "bindings": [
     {"on": "CapsLock",    "do": ["mode.toggle"]},
     {"on": "Lang2",       "do": ["mode:muhenkan"]},
-    {"on": "Lang1",       "do": ["profile:main", "menu.next"]},
+    {"on": "Lang1",       "do": ["profile:main"]},
     {"on": "shift+Lang1", "do": ["menu.prev"], "when": "henkan"},
     {"on": "ctrl+Lang1",  "do": ["fix"], "when": "henkan"},
     {"on": "Convert",     "do": ["profile:work", "menu.next"]},
     {"on": "KanaMode",    "do": ["profile:ja", "menu.next"]},
-    {"on": "Lang1",       "do": ["menu.next", "profile:main"], "when": "profile:ja"},
+    {"on": "Lang1",       "do": ["menu.next", "profile:main"], "when": "henkan"},
     {"on": "KanaMode+Lang1", "do": ["profile:sym"]},
     {"on": "ctrl+alt+shift+meta+Space", "do": ["profile.next"]}
   ],
@@ -1077,6 +1108,10 @@ default to `"cycle": []`, `"henkan_enters": "last"`, `"caps_lock": "respect"`, `
 **No language keys**: `[{"on": "CapsLock", "do": ["mode.toggle"]}]`.
 
 - With no profile yet, かな and 変換 open the onboarding (§8.3).
+- **かな on a Mac and 変換 on a PC are the next entry in every profile**, and with ⇧ the previous
+  one, whenever the menu has two rows or more. With one row or none there is nothing to step
+  through, and the key goes to its profile. A table that gives other profiles keys of their own
+  keeps this: for henkan, `menu.next` first and then the profile, as in §9.1's.
 - **半角/全角 makes full-width, and ⇧半角/全角 half-width, by default on every keyboard that has the
   key**: the staged text, or else the selection. They are the last two lines of the JIS presets, so
   the user sees them and can rebind the key (to the toggle, say).
@@ -1303,7 +1338,7 @@ Behaviour v2 doesn't require, but that bada has and a bada-like engine should fo
 | `P_state` after every call | The reply is the state |
 | `need_selection` | `ask`, also for the text around the caret |
 | A JIS legend table in each host | `types`, from the engine's one table |
-| Integer layout ids; layouts in code | Slugs; a layout is its `bada-layout/2` file |
+| Integer layout ids; layouts in code | Slugs; a layout is its `bada-layout/3` file |
 | The language-key rules in each host's code and settings | One key table in one format, with cases |
 | `P_catalog`, free-form | `P_describe`, with a schema |
 | `bada-compatible-state/1` | `bada-compatible-state/2` |

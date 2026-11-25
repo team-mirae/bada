@@ -36,6 +36,7 @@ stage=$build/stage
 rm -rf "$stage"
 DESTDIR=$stage cmake --install "$build" > /dev/null
 (cd "$stage" && find . -type f | sort)
+test -f "$stage/usr/share/bada/data/kanji.bin" || { echo "the engine's data isn't installed"; exit 1; }
 
 echo "== a fresh fcitx5 on the staged install, over D-Bus"
 sh "$here/tools/e2e-dbus.sh" "$stage/usr"

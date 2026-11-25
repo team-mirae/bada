@@ -3,6 +3,8 @@
 // out. The library is linked, not loaded: this harness is built for bada's own engine.
 #pragma once
 
+#include <cstddef>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <vector>
@@ -22,6 +24,12 @@ inline constexpr int kAbiMajor = 2;
 // The harness's id (§12).
 inline constexpr const char* kHarnessId = "com.teammirae.bada.windows";
 
+// A buffer the engine knows (§3.2): its name, and whether it can use the bytes in place.
+struct DataBuffer {
+    std::string name;
+    bool borrow = false;
+};
+
 // What bada_describe says, as much of it as the harness reads.
 struct Describe {
     std::string abi_name;
@@ -31,6 +39,7 @@ struct Describe {
     std::string engine_version;
     std::vector<std::string> events;
     std::vector<std::string> features;
+    std::vector<DataBuffer> data;
     json::Value raw;
 };
 // Reads what a P_describe answered. False and `error` when it isn't a bada-compatible engine of
@@ -42,20 +51,35 @@ bool ReadDescribe(Describe* out, std::string* error);
 // The engine's data (§11): named buffers, built once and shared by every session.
 class EngineData {
 public:
-    // **No data buffers are passed yet**: the engine types on every layout without them, and has
-    // no kanji conversion or word ranking until they are. The text service is loaded into every
-    // app, so the data must be one file mapped once and shared (§11): when the pack is defined,
-    // this is the one place where its blobs are mapped and passed as named buffers (bada_buf:
-    // name, ptr, len, BADA_BORROWED). nullptr and `error` when the engine refuses what it was given.
-    static std::unique_ptr<EngineData> Load(std::string* error);
+    // Every buffer the engine knows (its description's `data`) is the file of that name in `dir`,
+    // whatever its extension (`kanji` is kanji.bin): mapped, not read. The ones the engine can
+    // use in place (`borrow`) stay mapped for as long as this object lives, so the OS shares them
+    // between processes; of the others the engine copies what it keeps, and they are unmapped.
+    // A buffer with no file is left out, and its feature is off: with no `dir`, or none of the
+    // files, every layout still types, without kanji conversion or word ranking.
+    // nullptr and `error` when the engine refuses what it was given.
+    static std::unique_ptr<EngineData> Load(std::string* error, const std::filesystem::path& dir = {});
     ~EngineData();
     EngineData(const EngineData&) = delete;
     EngineData& operator=(const EngineData&) = delete;
     const bada_data* get() const { return data_; }
+    // The buffers the engine was given.
+    const std::vector<std::string>& names() const { return names_; }
 
 private:
+    // A file mapped to read.
+    struct Mapping {
+        const void* ptr = nullptr;
+        std::size_t len = 0;
+    };
+    static Mapping Map(const std::filesystem::path& file);
+    static void Unmap(const Mapping& mapping);
+
     EngineData() = default;
     const bada_data* data_ = nullptr;
+    std::vector<std::string> names_;
+    // What the engine uses in place: unmapped after the data is freed.
+    std::vector<Mapping> kept_;
 };
 
 // The session: the settings, the custom layouts and the user dictionary of one process (§3.1).

@@ -136,7 +136,7 @@
   {
     "type": "layout",
     "value": {
-      "format": "bada-layout/2",
+      "format": "bada-layout/3",
       "id": "en-qwerty-underscore",
       "name": {
         "en": "English - QWERTY, with _ on ⇧0"

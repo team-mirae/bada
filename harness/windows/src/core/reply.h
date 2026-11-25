@@ -27,7 +27,7 @@ struct Preedit {
 
 struct Row {
     std::string text;
-    int entry = 0;  // 0 the top reading, 1 and up the others, -1 and -2 script forms
+    int entry = 0;  // 0 the top reading, 1 and up the others, -1 and down a layout's forms
     std::string note;
     std::string lang;
     std::string layout;

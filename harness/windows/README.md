@@ -34,10 +34,14 @@ it — add an `aarch64-pc-windows-msvc` target and a preset).
 | `tests/` | The key-table cases, the conformance transcripts, the core, the state, and the text service end to end (`tsf_host`, on a TSF text store of its own) |
 | `tools/` | `build.ps1`, `test.ps1`, `register.ps1`, `send.sh`, `make-icon.py` |
 
-The engine is linked in (`bada.lib`, the static CRT), so the DLL is one file. **No data buffers are
-passed to it yet** (§11): every layout types, but there is no kanji conversion and no word ranking.
-The one place where the pack's blobs will be passed as named buffers is `EngineData::Load` in
-`src/core/engine.cpp`.
+The engine is linked in (`bada.lib`, the static CRT), so the DLL is one file. **Its data is a folder
+of files** (§11), `data` beside the DLL's own folder (`%ProgramFiles%\bada\data`, or `build\data`
+for a build): each is the buffer of its name (`kanji.bin` is `kanji`), mapped and passed by
+`EngineData::Load` in `src/core/engine.cpp`. The ones the engine uses in place stay mapped, so
+Windows shares them between the apps; the word lists are read once in each app, when the text
+service starts there. A file that is missing turns its feature off: with none, every layout still
+types, without kanji conversion or word ranking. `BADA_DATA_DIR` names another folder. Once the
+pack's layout is in the standard, the pack is mapped instead.
 
 ## Build
 
@@ -106,10 +110,10 @@ tools\package.ps1              # build x64 and x86, then package
 tools\package.ps1 -SkipBuild   # package what is in build\ already
 ```
 
-It copies both DLLs to `%ProgramFiles%\bada`, registers them as `tools\register.ps1` does, and
-adds bada to the Japanese keyboards of the user who ran it (`installer\keyboards.ps1`). Apps that
-are open are left open: a DLL in use is moved aside, and those apps load the new one when they
-restart. Uninstalling removes bada from the keyboards and the registry, and asks whether to delete
+It copies both DLLs and the engine's data to `%ProgramFiles%\bada`, registers the DLLs as
+`tools\register.ps1` does, and adds bada to the Japanese keyboards of the user who ran it
+(`installer\keyboards.ps1`). Apps that are open are left open: a DLL or a data file in use is moved
+aside, and those apps load the new one when they restart. Uninstalling removes bada from the keyboards and the registry, and asks whether to delete
 `%APPDATA%\bada` too. The installer isn't signed unless `BADA_SIGN_CERT` names a certificate, so
 Windows warns about it.
 

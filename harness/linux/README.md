@@ -32,10 +32,12 @@ keyboard and real apps; and the IBus engine, which builds (libibus 1.5.34) but h
 | `tests/` | The tests (below) |
 | `tools/test.sh` | Builds and runs all of them. `tools/e2e-dbus.sh` is its last step, also for an installed copy |
 
-The engine is linked in (`libbada.a`), so the addon is one file. **No data files are passed to it
-yet**: every layout types, but there is no kanji conversion and no word ranking. The place where
-the pack's blobs will be passed as named buffers (§11) is `EngineData::Load` in
-`src/core/engine.cpp`.
+The engine is linked in (`libbada.a`), so the addon is one file. **Its data is a folder of files**
+(§11), `<prefix>/share/bada/data`: each is the buffer of its name (`kanji.bin` is `kanji`), mapped
+and passed by `EngineData::Load` in `src/core/engine.cpp`. The ones the engine uses in place stay
+mapped, so the OS shares them. A file that is missing turns its feature off: with none, every
+layout still types, without kanji conversion or word ranking. `BADA_DATA_DIR` names another
+folder. Once the pack's layout is in the standard, the pack is mapped instead.
 
 ## Build
 
@@ -80,13 +82,14 @@ sudo cmake --install build/linux
 ```
 
 `tools/package.sh` builds what a release carries: `build/dist/bada-<version>-linux-<arch>.tar.gz`,
-the Fcitx5 addon as it installs under `/usr`, with an `INSTALL.txt`. The IBus engine is left out of
+the Fcitx5 addon and the engine's data as they install under `/usr`, with an `INSTALL.txt`. The IBus engine is left out of
 it, since it has not been run.
 
 | File | |
 |---|---|
 | `<prefix>/lib/fcitx5/libbada-fcitx5.so` | The addon. Loaded when the input method is first used |
 | `<prefix>/share/fcitx5/addon/bada.conf`, `…/inputmethod/bada.conf` | The addon, and its one input method |
+| `<prefix>/share/bada/data/` | The engine's data, for both frontends (about 50 MB) |
 | `<prefix>/libexec/ibus-engine-bada` | The IBus engine |
 | `<prefix>/share/ibus/component/com.teammirae.Bada.xml` | Its component |
 
@@ -170,7 +173,7 @@ The harness's own settings:
 | | Fcitx5 | IBus |
 |---|---|---|
 | Preedit | In the app when it draws one, else in the panel. `live` underlined; `fixed` underlined and bold; `picked` underlined and highlighted. The caret is `preedit.caret` | `live` single underline, `fixed` low, `picked` double |
-| Menu | The candidate window, ten rows a page, the page following the selected row. `note` is the row's comment. Script forms are labelled −2 and −1. A `strip` is horizontal, labelled 1 to 9 and 0 | The lookup table; `note` after the text |
+| Menu | The candidate window, ten rows a page, the page following the selected row. `note` is the row's comment. A layout's forms are labelled with their entries (−2, −1). A `strip` is horizontal, labelled 1 to 9 and 0 | The lookup table; `note` after the text |
 | A click on a row | `pick`, then `flush` | The same |
 | Indicator | The sub mode: the profile's name in henkan, and its first character as the label; `A` in muhenkan | The `InputMode` property; a click toggles |
 | Input menu | muhenkan, and the profiles by name | No |
@@ -215,7 +218,7 @@ jq -r '.mode, .profile' "$XDG_RUNTIME_DIR/bada/state.json"
 - Nothing has been tried on a desktop: real apps (which give surrounding text, and how each resets),
   the candidate window, the indicator, a JIS keyboard's keys under X11 and Wayland.
 - The onboarding is a notice, not a window: the shared settings page doesn't exist yet.
-- No data files (§11): the pack's layout isn't in the standard yet.
+- The data is files in a folder, not the pack (§11): its layout isn't in the standard yet.
 - `settings.json`'s `history/` is the settings page's and the command line's to write: the harness
   only reads the folder.
 - bada-linux's per-program off list (`off_in`) and its packaging are not carried over.

@@ -79,8 +79,7 @@
       {
         "on": "Lang1",
         "do": [
-          "profile:main",
-          "menu.next"
+          "profile:main"
         ]
       },
       {
@@ -117,7 +116,7 @@
           "menu.next",
           "profile:main"
         ],
-        "when": "profile:ja"
+        "when": "henkan"
       },
       {
         "on": "ctrl+alt+shift+meta+Space",

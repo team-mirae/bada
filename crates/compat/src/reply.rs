@@ -138,7 +138,7 @@ impl Preedit {
 #[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Row {
     pub text: String,
-    /// The signed index: 0 the top reading, 1 and up the others, −1 and −2 script forms.
+    /// The signed index: 0 the top reading, 1 and up the others, −1 and down a layout's forms.
     pub entry: i32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub note: Option<String>,

@@ -51,12 +51,16 @@ class Session {
 public:
     struct Options {
         std::filesystem::path config_dir;  // empty: SettingsFolder::DefaultDir()
+        // The folder of the engine's data files (§11): see EngineData::Load. Empty: no data.
+        std::filesystem::path data_dir;
         std::string frontend;              // "fcitx5" or "ibus"
         std::string version;               // the harness's own
         StateSink* sink = nullptr;
         // One line for the log. Never typed text.
         std::function<void(const std::string&)> log;
     };
+    // Where `cmake --install` puts the engine's data, or the folder $BADA_DATA_DIR names.
+    static std::filesystem::path DataDir();
     // Builds the data and the session and reads the settings folder. nullptr and `error` when the
     // engine can't be used: another major version, or it refuses to start.
     static std::unique_ptr<Session> Create(Options options, std::string* error);

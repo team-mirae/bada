@@ -19,6 +19,8 @@ if (-not $SkipBuild) {
 }
 $dlls = foreach ($arch in 'x64', 'x86') { "$build\$arch\bada-tsf.dll" }
 foreach ($dll in $dlls) { if (-not (Test-Path $dll)) { throw "$dll is missing: run tools\build.ps1 -Arch x64 and -Arch x86." } }
+# The engine's data, which either build copies beside the two.
+if (-not (Test-Path "$build\data\kanji.bin")) { throw "$build\data is missing: run tools\build.ps1." }
 
 # One version for the whole repository.
 $version = (Get-Content "$root\VERSION" -Raw).Trim()

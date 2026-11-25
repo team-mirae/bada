@@ -69,6 +69,8 @@ FinishedLabel=Restart the apps that were open: they keep the old version, or non
 ; The engine is inside the DLL.
 Source: "{#Build}\x64\bada-tsf.dll"; DestDir: "{app}\x64"; Flags: ignoreversion
 Source: "{#Build}\x86\bada-tsf.dll"; DestDir: "{app}\x86"; Flags: ignoreversion
+; The engine's data, for both: each file is the buffer of its name, mapped by the text service.
+Source: "{#Build}\data\*"; DestDir: "{app}\data"; Flags: ignoreversion
 Source: "{#Root}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 Source: "..\src\tip\bada.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; Run by Setup and the uninstaller as the user, to change their language list.
@@ -130,7 +132,7 @@ var
   Find: TFindRec;
 begin
   Result := False;
-  if FindFirst(Dir + '\bada-tsf.dll.old-*', Find) then begin
+  if FindFirst(Dir + '\*.old-*', Find) then begin
     try
       repeat
         if not DeleteFile(Dir + '\' + Find.Name) and AtRestart then begin
@@ -146,17 +148,51 @@ end;
 
 { A process with the text service loaded keeps the file open, but it can be renamed: move it
   aside so new processes load the new build. Returns the new name, or '' if the file is gone. }
-function RenameAside(Dir: String): String;
-var
-  Target: String;
+function RenameAside(Target: String): String;
 begin
   Result := '';
-  Target := Dir + '\bada-tsf.dll';
   if FileExists(Target) and not DeleteFile(Target) then begin
     Result := Target + '.old-' + GetDateTimeString('yyyymmddhhnnsszzz', #0, #0);
     if not RenameFile(Target, Result) then
       RaiseException('Can''t replace ' + Target + '.');
   end;
+end;
+
+{ The data files are mapped by every process that has the text service loaded: they are moved
+  aside the same way. With AtRestart, what is left is deleted when Windows restarts; returns
+  whether anything was. }
+function MoveDataAside(AtRestart: Boolean): Boolean;
+var
+  Dir, Aside: String;
+  Find: TFindRec;
+  Names: TStringList;
+  I: Integer;
+begin
+  Dir := ExpandConstant('{app}\data');
+  Result := DeleteOldCopies(Dir, AtRestart);
+  Names := TStringList.Create;
+  try
+    if FindFirst(Dir + '\*', Find) then begin
+      try
+        repeat
+          if (Find.Attributes and FILE_ATTRIBUTE_DIRECTORY = 0) and (Pos('.old-', Find.Name) = 0) then
+            Names.Add(Find.Name);
+        until not FindNext(Find);
+      finally
+        FindClose(Find);
+      end;
+    end;
+    for I := 0 to Names.Count - 1 do begin
+      Aside := RenameAside(Dir + '\' + Names[I]);
+      if (Aside <> '') and AtRestart then begin
+        DeleteAtRestart(Aside, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
+        Result := True;
+      end;
+    end;
+  finally
+    Names.Free;
+  end;
+  if Result and AtRestart then DeleteAtRestart(Dir, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
 end;
 
 procedure CurStepChanged(CurStep: TSetupStep);
@@ -168,8 +204,9 @@ begin
     for I := 0 to 1 do begin
       if I = 0 then Arch := 'x64' else Arch := 'x86';
       DeleteOldCopies(ExpandConstant('{app}\' + Arch), False);
-      RenameAside(ExpandConstant('{app}\' + Arch));
+      RenameAside(ExpandConstant('{app}\' + Arch + '\bada-tsf.dll'));
     end;
+    MoveDataAside(False);
   end else if CurStep = ssPostInstall then begin
     if not RegSvr('x64', '/s') or not RegSvr('x86', '/s') then
       MsgBox('bada couldn''t be registered with Windows. Run Setup again; if it keeps failing, ' +
@@ -248,13 +285,14 @@ begin
       if I = 0 then Arch := 'x64' else Arch := 'x86';
       Dir := ExpandConstant('{app}\' + Arch);
       if DeleteOldCopies(Dir, True) then LeftForRestart := True;
-      Aside := RenameAside(Dir);
+      Aside := RenameAside(Dir + '\bada-tsf.dll');
       if Aside <> '' then begin
         DeleteAtRestart(Aside, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
         LeftForRestart := True;
       end;
       if LeftForRestart then DeleteAtRestart(Dir, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
     end;
+    if MoveDataAside(True) then LeftForRestart := True;
   end else if CurUninstallStep = usPostUninstall then begin
     if LeftForRestart then
       DeleteAtRestart(ExpandConstant('{app}'), 0, MOVEFILE_DELAY_UNTIL_REBOOT);

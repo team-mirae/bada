@@ -58,6 +58,16 @@ add_library(bada_core STATIC
 target_include_directories(bada_core PUBLIC src/core)
 target_link_libraries(bada_core PUBLIC bada_engine)
 
+# The engine's data (the standard, §11): each file is the buffer of its name. With their licenses.
+set(BADA_DATA_NAMES ko-words.tsv en-words.txt ja-words.txt ja-kana-native.txt ja-common-words.txt kanji.bin
+  hanja.tsv ko-jamo-4gram.bin ja-shortcuts.tsv symbols.tsv emoji.tsv unicode-names.tsv key-models.bin)
+list(TRANSFORM BADA_DATA_NAMES PREPEND "${BADA_ROOT}/engine/data/" OUTPUT_VARIABLE BADA_DATA)
+file(GLOB BADA_DATA_LICENSES "${BADA_ROOT}/engine/data/LICENSE-*.txt")
+# Installed once, for both frontends, which map the files: $BADA_DATA_DIR names another folder.
+set(BADA_DATA_DIR "${CMAKE_INSTALL_FULL_DATADIR}/bada/data")
+target_compile_definitions(bada_core PRIVATE BADA_DATA_DIR="${BADA_DATA_DIR}")
+install(FILES ${BADA_DATA} ${BADA_DATA_LICENSES} DESTINATION ${CMAKE_INSTALL_DATADIR}/bada/data)
+
 # What both frontends share beyond the core: the published state.
 add_library(bada_common STATIC src/common/publish.cpp)
 target_include_directories(bada_common PUBLIC src/common)

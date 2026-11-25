@@ -32,7 +32,7 @@ what each folder holds.
 - **The harness decides what language keys and Caps Lock do**; the engine only sees what its harness
   feeds it. Each harness reads the key table with its own code: no shared crate for it.
 - **A layout is its JSON file, all of it.** No code for any one layout: a rule that belongs to a
-  layout goes in its `bada-layout/2` file, and into the schema and the standard's §7.5 if the
+  layout goes in its `bada-layout/3` file, and into the schema and the standard's §7.5 if the
   vocabulary lacks it.
 - The new input method is `bada` under `com.teammirae`, publisher Mirae Research.
 - Layout ids are slugs (`ko-2-set`). No integer ids anywhere.
@@ -56,7 +56,7 @@ what each folder holds.
   is: create the release as a draft, push the tag (CI attaches the Mac zip to the draft), attach
   the other builds, and publish last.
 - The standard's version (bada-compatible 2.0) and the file formats' (`bada-settings/2`,
-  `bada-layout/2`) are separate, and change only when the standard does.
+  `bada-layout/3`) are separate, and change only when the standard does.
 
 ## Checking
 

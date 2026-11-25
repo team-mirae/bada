@@ -4,6 +4,7 @@
 //
 //   bada_core_tests
 #include <chrono>
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -135,11 +136,13 @@ struct Rig {
     std::vector<std::string> log;
     std::unique_ptr<Session> session;
 
-    explicit Rig(const char* name, const char* settings = kSettings, Preset detected = Preset::kNoLanguageKeys)
+    explicit Rig(const char* name, const char* settings = kSettings, Preset detected = Preset::kNoLanguageKeys,
+                 const fs::path& data = {})
         : dir(TempDir(name)) {
         if (settings) WriteFile(dir / "settings.json", settings);
         Session::Options options;
         options.config_dir = dir;
+        options.data_dir = data;
         options.version = "0.1.0";
         options.detected = detected;
         options.sink = &sink;
@@ -693,6 +696,50 @@ void TestTyping() {
     Check(rig.session->mode() == Mode::kMuhenkan && rig.session->profile() == "ja", "muhenkan keeps the profile for later");
 }
 
+// The engine's data (§11): the files of a folder, each the buffer of its name.
+void TestData() {
+    std::string error;
+    const fs::path data = fs::path(BADA_ROOT) / "engine" / "data";
+    const auto none = EngineData::Load(&error);
+    Check(none && none->names().empty(), "no folder: no buffers, and the engine still starts");
+    const auto missing = EngineData::Load(&error, TempDir("no-data") / "nothing-here");
+    Check(missing && missing->names().empty(), "a folder that isn't there is no data");
+    const auto all = EngineData::Load(&error, data);
+    Check(all != nullptr, "the data loads: " + error);
+    if (!all) return;
+    std::string names;
+    for (const std::string& name : all->names()) names += name + " ";
+    const auto has = [&](const char* name) {
+        return std::find(all->names().begin(), all->names().end(), name) != all->names().end();
+    };
+    Check(all->names().size() == 13 && has("kanji") && has("ko-words") && has("key-models") && !has("en-ko"),
+          "every buffer the engine knows that has a file: " + names);
+
+    // A session on the data converts kana to kanji; one without it types the kana.
+    for (const bool with : {false, true}) {
+        Rig rig(with ? "with-data" : "without-data", kSettings, Preset::kNoLanguageKeys, with ? data : fs::path());
+        if (!rig.session) return;
+        Context ctx(*rig.session);
+        test::TextModel field;
+        const ContextInfo info{"app", false};
+        Check(ctx.KeyDown(Key("KanaMode"), field, info) && rig.session->profile() == "ja", "the romaji profile");
+        Type(ctx, field, {{"KeyK", "k"}, {"KeyA", "a"}, {"KeyN", "n"}, {"KeyJ", "j"}, {"KeyI", "i"}}, info);
+        bool kanji = false;
+        for (const auto& row : field.menu.rows) kanji |= row.text == "漢字";
+        const bool logged = std::any_of(rig.log.begin(), rig.log.end(), [&](const std::string& line) {
+            return line.rfind("data: ", 0) == 0 && (line.find(" kanji") != std::string::npos) == with;
+        });
+        if (with) {
+            Check(kanji && field.menu.rows.size() > 2, "with the data, kanji is 漢字 among the rows");
+            Check(field.Marked() != "かんじ", "…and a conversion shows first: " + field.Marked());
+        } else {
+            Check(!kanji && field.menu.rows.empty() && field.Marked() == "かんじ", "without it, the kana and no menu");
+        }
+        Check(logged, "the log says which buffers were passed");
+        ctx.FocusOut(field);
+    }
+}
+
 void TestTwoFieldsAndSecure() {
     Rig rig("fields");
     if (!rig.session) return;
@@ -1030,6 +1077,7 @@ int main() {
     TestApply();
     TestNewInstall();
     TestTyping();
+    TestData();
     TestTwoFieldsAndSecure();
     TestPairs();
     TestCapsLock();

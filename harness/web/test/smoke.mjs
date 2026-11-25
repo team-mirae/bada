@@ -157,6 +157,147 @@ await test("romaji, a profile switch by a chord and by a pair, and the profile b
   assert.deepEqual([h.profile, h.previous, h.field.text], ["main", "work", "か\nにほんgk"]);
 });
 
+// かな on a Mac and 変換 on a PC (§9.5): the next entry in every profile while the menu has two rows
+// or more, and otherwise the key to their profile. `ko` and `ja` have two layouts, so what is typed
+// has two rows; `han` has one layout, so there is never more than one candidate.
+const three = keys => S.print({
+  format: S.FORMAT,
+  engine: { muhenkan: { layout: "en-qwerty" }, henkan: { profiles: [
+    { id: "ko", name: "한국어", layouts: ["ko-2-set", "en-qwerty"] },
+    { id: "ja", name: "日本語", layouts: ["ja-kana", "en-qwerty"] },
+    { id: "han", name: "한글", layouts: ["ko-2-set"] },
+  ] } },
+  keys,
+  harness: {},
+});
+const seen = h => [h.mode, h.profile, h.field.menu.rows.map(r => r.text), h.field.menu.selected, h.field.markedText];
+
+for (const [platform, main, leave, own] of [["mac", "Lang1", "Lang2", "Convert"], ["pc", "Convert", "NonConvert", "Lang1"]]) {
+  // A table of the user's own: every profile has its key, and the keyboard's main key is the first one's.
+  const keys = { bindings: [
+    { on: leave, do: ["mode:muhenkan"] },
+    { on: main, do: ["profile:ko"] },
+    { on: main, do: ["menu.next", "profile:ko"], when: "henkan" },
+    { on: "shift+" + main, do: ["menu.prev"], when: "henkan" },
+    { on: "KanaMode", do: ["profile:ja", "menu.next"] },
+    { on: own, do: ["profile:han", "menu.next"] },
+  ] };
+
+  await test(`${main} steps through the entries of another profile, and ⇧${main} back (${platform}, the settings' own keys)`, async () => {
+    const { h, told } = await page(new Memory({ [S.STORE.settings]: three(keys) }), platform);
+    tap(h, "KanaMode");
+    assert.deepEqual([h.mode, h.profile], ["henkan", "ja"]);
+    type(h, "t");
+    assert.deepEqual(seen(h), ["henkan", "ja", ["か", "t"], 0, "か"]);
+    tap(h, main);
+    assert.deepEqual(seen(h), ["henkan", "ja", ["か", "t"], 1, "t"], "two rows: the next entry, and the profile stays");
+    tap(h, main);
+    assert.deepEqual(seen(h), ["henkan", "ja", ["か", "t"], 1, "t"], "at the last row it still isn't a profile's key: the menu doesn't wrap");
+    tap(h, "shift+" + main);
+    assert.deepEqual(seen(h), ["henkan", "ja", ["か", "t"], 0, "か"], "with ⇧, the entry before");
+    assert.deepEqual(told.sent.filter(e => e.type === "action").map(e => e.name), ["menu.next", "menu.next", "menu.prev"]);
+    assert.deepEqual(told.sent.filter(e => e.type === "select").map(e => e.profile), [null, "ja"], "no select was sent for them");
+    // The profile's own key steps too.
+    tap(h, "KanaMode");
+    assert.deepEqual(seen(h), ["henkan", "ja", ["か", "t"], 1, "t"]);
+  });
+
+  await test(`${main} with nothing to step through goes to its profile (${platform}, the settings' own keys)`, async () => {
+    const { h, told } = await page(new Memory({ [S.STORE.settings]: three(keys) }), platform);
+    // Nothing staged.
+    tap(h, "KanaMode");
+    tap(h, main);
+    assert.deepEqual(seen(h), ["henkan", "ko", [], null, ""], "no menu: to the first profile");
+    // One candidate: a profile with one layout has no second row.
+    tap(h, own);
+    type(h, "gks");
+    assert.deepEqual([...seen(h), h.reply.staged], ["henkan", "han", [], null, "한", "한"]);
+    tap(h, "shift+" + main);
+    assert.deepEqual([...seen(h), h.reply.staged], ["henkan", "han", [], null, "한", "한"], "⇧ with one candidate does nothing: it is no profile's key");
+    tap(h, main);
+    assert.deepEqual([...seen(h), h.field.text], ["henkan", "ko", [], null, "", "한"], "one candidate isn't stepped through: the profile changes, and what was staged is committed");
+    assert.equal(told.sent.some(e => e.type === "action"), false, "no menu.next was sent");
+    // After committing the menu is gone, and the key is the profile's again.
+    tap(h, "KanaMode");
+    type(h, "t");
+    tap(h, main);
+    tap(h, "Enter");
+    assert.deepEqual([...seen(h), h.field.text], ["henkan", "ja", [], null, "", "한t\n"]);
+    tap(h, main);
+    assert.deepEqual([h.mode, h.profile], ["henkan", "ko"]);
+    // In its own profile: the next entry, or nothing.
+    type(h, "gks");
+    tap(h, main);
+    assert.deepEqual(seen(h), ["henkan", "ko", ["한", "gks"], 1, "gks"]);
+    tap(h, "Enter");
+    tap(h, "Digit1");
+    tap(h, main);
+    assert.deepEqual([...seen(h), h.reply.staged], ["henkan", "ko", [], null, "1", "1"], "one candidate in its own profile: nothing happens");
+    // From muhenkan it enters its profile, whichever was last used.
+    tap(h, "KanaMode");
+    tap(h, leave);
+    assert.deepEqual([h.mode, h.profile], ["muhenkan", "ja"]);
+    tap(h, main);
+    assert.deepEqual([h.mode, h.profile], ["henkan", "ko"]);
+  });
+
+  await test(`⇧${main} goes down into a layout's forms, and ⇧半角/全角 makes the kana half-width (${platform})`, async () => {
+    const file = JSON.parse(three(keys));
+    file.keys.bindings.push({ on: "shift+Backquote", do: ["width.half"] }, { on: "Backquote", do: ["width.full"] });
+    file.engine.henkan.profiles[1].script_forms = true;
+    const { h } = await page(new Memory({ [S.STORE.settings]: S.print(file) }), platform);
+    const entries = () => h.field.menu.rows.map(r => [r.entry, r.text]);
+    tap(h, "KanaMode");
+    type(h, "tt");
+    assert.deepEqual(entries(), [[-2, "カカ"], [-1, "かか"], [0, "かか"], [1, "tt"]], "the forms of ja-kana's file: hiragana, katakana");
+    tap(h, "shift+" + main);
+    assert.deepEqual([h.field.menu.selected, h.field.markedText, h.profile], [1, "かか", "ja"]);
+    tap(h, "shift+" + main);
+    assert.deepEqual([h.field.menu.selected, h.field.markedText, h.profile], [0, "カカ", "ja"]);
+    tap(h, "shift+" + main);
+    assert.deepEqual([h.field.menu.selected, h.field.markedText, h.profile], [0, "カカ", "ja"], "the lowest form: no wrap");
+    // Katakana that shows, half-width; and back.
+    tap(h, "shift+Backquote");
+    assert.deepEqual([h.field.markedText, h.reply.staged, h.field.menu.rows], ["ｶｶ", "ｶｶ", []]);
+    tap(h, "Backquote");
+    assert.equal(h.field.markedText, "カカ");
+    tap(h, "Enter");
+    // Hiragana that shows, half-width.
+    type(h, "t");
+    tap(h, "shift+Backquote");
+    assert.equal(h.field.markedText, "ｶ");
+    tap(h, "Enter");
+    assert.equal(h.field.text, "カカ\nｶ\n");
+    // Kana already in the text, selected: the engine asks for the selection.
+    h.field.text = "がっこう";
+    h.field.start = 0;
+    tap(h, "shift+Backquote");
+    assert.equal(h.field.text, "ｶﾞｯｺｳ");
+    // With the forms there are always rows to step through while something is staged.
+    type(h, "t");
+    tap(h, main);
+    assert.deepEqual([h.profile, h.field.menu.selected], ["ja", 3]);
+  });
+
+  await test(`${main} in the keyboard's preset: the next entry in any profile, or else the first profile (${platform})`, async () => {
+    const { h } = await page(new Memory({ [S.STORE.settings]: three({}) }), platform);
+    assert.equal(h.table.preset, platform === "mac" ? "jis-mac" : "jis-pc");
+    h.enter("henkan", "ja");
+    type(h, "t");
+    tap(h, main);
+    assert.deepEqual(seen(h), ["henkan", "ja", ["か", "t"], 1, "t"]);
+    tap(h, "shift+" + main);
+    assert.deepEqual(seen(h), ["henkan", "ja", ["か", "t"], 0, "か"]);
+    tap(h, "Enter");
+    tap(h, main);
+    assert.deepEqual([h.mode, h.profile], ["henkan", "ko"], "no menu: the first profile");
+    h.enter("henkan", "han");
+    type(h, "gks");
+    tap(h, main);
+    assert.deepEqual([h.mode, h.profile, h.field.text, h.field.marked], ["henkan", "ko", "か\n한", null], "one candidate: the first profile");
+  });
+}
+
 await test("a click on a menu row picks and commits; the mode's own buttons select", async () => {
   const { h, told } = await page(new Memory({ [S.STORE.settings]: two() }));
   h.enter("henkan", "work");
@@ -285,7 +426,7 @@ await test("settings in storage that can't be used change nothing, and are not r
 
 await test("a custom layout from storage, one that replaces a stock layout, and one that is wrong", async () => {
   const stock = JSON.parse(readFileSync(root + "engine/layouts/en-qwerty.json", "utf8"));
-  const mine = { format: "bada-layout/2", id: "en-greek", name: { en: "English - with α" }, lang: "en", kind: "muhenkan", read: "direct", keys: { KeyA: { base: { t: "α", r: "l" } } } };
+  const mine = { format: "bada-layout/3", id: "en-greek", name: { en: "English - with α" }, lang: "en", kind: "muhenkan", read: "direct", keys: { KeyA: { base: { t: "α", r: "l" } } } };
   const { h, storage } = await page(new Memory({ [S.STORE.settings]: two() }));
   const tried = h.loadLayout(JSON.stringify(mine), true);
   assert.deepEqual([tried.ok, tried.problems.map(p => `${p.level} ${p.code}`), storage.getItem(S.STORE.layouts)], [true, ["warning no-model"], null], "a dry run shows the warning and keeps nothing");

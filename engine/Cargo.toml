@@ -1,6 +1,6 @@
 [package]
 name = "bada-engine"
-description = "bada's engine: keys in, text out. Every layout is read from its bada-layout/2 file."
+description = "bada's engine: keys in, text out. Every layout is read from its bada-layout/3 file."
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

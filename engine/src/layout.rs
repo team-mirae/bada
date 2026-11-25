@@ -1,4 +1,4 @@
-//! Layout files (`bada-layout/2`, the standard §7.5): the file as written, the checks that refuse
+//! Layout files (`bada-layout/3`, the standard §7.5): the file as written, the checks that refuse
 //! one, and the form the readers use. **No layout has code of its own**: everything a layout is
 //! comes from here.
 
@@ -308,13 +308,6 @@ pub enum WidthName {
     Half,
 }
 
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct Form {
-    pub entry: i32,
-    pub to: Script,
-}
-
 /// What turns the reading into more rows (§7.5.7).
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(tag = "with", rename_all = "lowercase", deny_unknown_fields)]
@@ -331,9 +324,6 @@ pub enum Convert {
         native: Option<String>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         notes: Option<Value>,
-    },
-    Script {
-        forms: Vec<Form>,
     },
     Width {
         to: WidthName,
@@ -367,6 +357,16 @@ pub enum Do {
     Keys { width: WidthName },
     Jamo { keep: Keep },
     Lookup { data: String },
+}
+
+/// Another way of writing what was typed, as a negative entry of the menu (§7.5.12): one of the
+/// general operations that needs nothing but the staged keys and the file.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "do", rename_all = "lowercase", deny_unknown_fields)]
+pub enum Form {
+    Script { to: Script },
+    Keys { width: WidthName },
+    Jamo { keep: Keep },
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
@@ -459,6 +459,9 @@ pub struct File {
     pub convert: Vec<Convert>,
     #[serde(default)]
     pub actions: Vec<Action>,
+    /// The menu's negative entries: the first is −1.
+    #[serde(default)]
+    pub forms: Vec<Form>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub particles: Option<Particles>,
     #[serde(default)]
@@ -720,6 +723,7 @@ mod tests {
         };
         assert_eq!(with(&|_| {}), None);
         assert_eq!(with(&|v| v["format"] = "bada-layout/1".into()), Some("bad-format".into()));
+        assert_eq!(with(&|v| v["format"] = "bada-layout/2".into()), Some("bad-format".into()));
         assert_eq!(with(&|v| v["id"] = 15.into()), Some("missing-id".into()));
         assert_eq!(with(&|v| v["id"] = "Dvorak".into()), Some("bad-value".into()));
         assert_eq!(with(&|v| v["input"] = "direct".into()), Some("unknown-field".into()));

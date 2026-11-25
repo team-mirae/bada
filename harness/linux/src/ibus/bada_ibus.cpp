@@ -359,6 +359,7 @@ int main(int argc, char** argv) {
     bada::Session::Options options;
     options.frontend = "ibus";
     options.version = BADA_VERSION;
+    options.data_dir = bada::Session::DataDir();
     options.sink = &publisher;
     options.log = [](const std::string& line) { std::fprintf(stderr, "ibus-engine-bada: %s\n", line.c_str()); };
     std::string error;

@@ -37,6 +37,18 @@ std::filesystem::path SettingsDir() {
     return dir;
 }
 
+// The engine's data (the standard, §11): the folder `data` beside the DLL's own folder, which is
+// where the installer puts it ({app}\data, with the DLLs in {app}\x64 and {app}\x86) and the
+// build (build\data, with them in build\x64 and build\x86). %BADA_DATA_DIR% names another.
+std::filesystem::path DataDir() {
+    wchar_t buffer[MAX_PATH];
+    DWORD n = GetEnvironmentVariableW(L"BADA_DATA_DIR", buffer, MAX_PATH);
+    if (n && n < MAX_PATH) return std::filesystem::path(std::wstring(buffer, n));
+    n = GetModuleFileNameW(DllInstance(), buffer, MAX_PATH);
+    if (!n || n >= MAX_PATH) return {};
+    return std::filesystem::path(std::wstring(buffer, n)).parent_path().parent_path() / L"data";
+}
+
 }  // namespace
 
 std::wstring Wide(const std::string& s) {
@@ -83,6 +95,7 @@ Process& GetProcess() {
     for (const wchar_t* name : kOff) process->off |= ExeName() == name;
     Session::Options options;
     options.config_dir = SettingsDir();
+    options.data_dir = DataDir();
     options.version = BADA_VERSION;
     options.detected = DetectKeyboard();
     options.sink = &StateSinkOfProcess();

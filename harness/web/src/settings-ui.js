@@ -90,7 +90,7 @@ function settingsPage(ui) {
 
 function layoutsPage(ui) {
   const h = ui.h;
-  const text = editor("layoutText", "A bada-layout/2 file: a new layout, or a changed copy of one with the same id");
+  const text = editor("layoutText", "A bada-layout/3 file: a new layout, or a changed copy of one with the same id");
   const verdict = make("div", { class: "verdict" }), problems = make("ul", { class: "problems" });
   const table = make("table", { class: "list" });
   let warned = null;   // the text whose warnings were shown: saving it again takes it
