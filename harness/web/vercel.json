@@ -1,0 +1,6 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "rustup toolchain install stable --profile minimal --target wasm32-unknown-unknown && rustup default stable",
+  "buildCommand": "node build.mjs",
+  "outputDirectory": "dist"
+}
