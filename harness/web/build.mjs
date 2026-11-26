@@ -36,6 +36,8 @@ for (const f of readdirSync(web + "src")) copyFileSync(web + "src/" + f, out + f
 // The shared settings page (settings/): the Settings dialog holds it, with this harness as its host.
 mkdirSync(out + "settings", { recursive: true });
 for (const f of readdirSync(root + "settings/src")) copyFileSync(root + "settings/src/" + f, out + "settings/" + f);
+// The layout schema, which the layout editor (layout.html) draws its fields from.
+copyFileSync(root + "docs/schemas/layout.schema.json", out + "layout.schema.json");
 copyFileSync(root + "docs/logo/bada-icon.svg", out + "icon.svg");
 copyFileSync(root + "LICENSE", out + "LICENSE.txt");
 

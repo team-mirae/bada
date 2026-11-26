@@ -27,6 +27,7 @@ which has no page at its root.
 | `test/keytable.mjs` | Every case and sequence of [docs/cases/key-table.json](../../docs/cases/key-table.json) on `src/keytable.js` (§9.6), and what the module decides beyond them |
 | `test/field.mjs` | The text field model against §6.3, rule by rule, with replies written by hand |
 | `test/conformance.mjs` | The transcripts of [tools/conformance](../../tools/conformance) (`any-engine.jsonl`, `bada.jsonl`) on the wasm: raw through `bada_send`, then again with every reply applied to a text field model, whose text is checked after each |
+| `test/layout.mjs` | The layout editor's model on the layout schema and the stock layouts: every stock layout fits, every field has a description, and a new layout of each way of reading is one the engine takes |
 | `test/smoke.mjs` | Typing through `src/harness.js`, the code the page uses: muhenkan, Korean 2-set, romaji, the key table, profiles, settings, layouts, the dictionary, the state, a trap in the engine |
 
 No test opens a browser.
@@ -44,6 +45,7 @@ No test opens a browser.
 | `src/app.js`, `index.html`, `style.css` | The page: the browser's keys in, the model mirrored into a `<textarea>`, the marked text, the menu, the state panel |
 | `src/settings-ui.js` | The settings dialog, which holds the shared [settings page](../../settings/README.md), and the onboarding |
 | `src/settings-host.js` | This harness as the page's host: the folder is local storage, and the engine is the page's own |
+| `src/layout-editor.js`, `layout-model.js`, `layout.html`, `layout.css` | The layout editor, a page of its own (below) |
 | `src/keyboard.js`, `keyboards.js` | The keyboard drawn on the page, with the legends of the layouts in use |
 | `src/load.js`, `build.mjs` | Loading and building; `manifest.json` says which wasm, data and layout files a build has |
 
@@ -86,10 +88,36 @@ A new install has no layout and no profile, and gets the onboarding (§8.3).
 | `bada.dictionary` | The user dictionary, as text, fed with a `dictionary` event |
 | `bada.web.last` | The mode and profile the page was left in (ids, never indexes) |
 | `bada.web.seen` | The preset of the language keys the page has seen |
+| `bada.web.layout-draft` | The layout being edited in the layout editor, as text |
 
 **The state** (§6.7) is in the small panel under the text field, and published as
 `bada-compatible-state/2` in `<script id="bada-state">`, with a `bada-state` event on `window`
 when it changes. Nothing is read back from either.
+
+## The layout editor
+
+`layout.html` edits one `bada-layout/3` file, field by field (§7.5). It starts from a stock layout,
+a layout saved in this browser, a new one of any way of reading, a JSON file, or pasted JSON;
+`layout.html?from=stock:ja-romaji` starts from one by its address, and the settings page's Layouts
+tab links there.
+
+- **Every field is drawn from the layout schema**, [docs/schemas/layout.schema.json](../../docs/schemas/layout.schema.json),
+  which the build copies beside the page. The schema describes every field, and those words show
+  under each one with its JSON pointer, its limits and whether it is required. A field added to the
+  schema shows in the editor with no change here. Only the keys have a view of their own: a
+  keyboard, and the four layers of the key chosen on it.
+- **The draft is checked twice**: by the schema as it is typed (`layout-model.js` has the small
+  part of JSON Schema the file uses), and by the engine a moment later, with a `layout` event that
+  is `dry`. *Try it* at the foot of the page types with the draft: in muhenkan for a layout that
+  types directly, and otherwise in a profile of that layout alone.
+- **Save** puts the layout in `bada.layouts`, where the typing page finds it at its next load. A
+  stock id replaces the stock layout, and the engine's warning says so before it is saved. The
+  draft itself is kept in `bada.web.layout-draft` as it changes, and Undo goes back a change.
+- **A program can drive it.** Every control has `data-path`, the JSON pointer of what it edits
+  (`data-add`, `data-remove`, `data-form`, `data-state` and `data-code` for the rest); the file is
+  always in `<script id="bada-layout">`; and `window.badaLayoutEditor` does what the controls do:
+  `get`, `set`, `remove`, `setRead`, `load`, `start`, `describe`, `fields`, `status`, `save`, `type`
+  and the rest. The page's last section lists them.
 
 ## Data
 
@@ -130,4 +158,5 @@ longer moves the focus back out of the text field.
 - No data (above), and no borrowed buffer has been passed for real.
 - The settings page keeps no history here: there is nothing to undo to.
 - `rtl` is not among the harness's features: a `<textarea>` can't draw one run right to left.
+- The layout editor's *Try it* has no data either: nothing is converted there and no word is known.
 - Not tried on a phone, in Safari or in Firefox.

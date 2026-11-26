@@ -546,7 +546,8 @@ refers to by name) and the general machinery, the same for every layout that ask
 composition, kanji conversion, width and script conversion, the search. A new *algorithm* is still
 code.
 
-Schema: [schemas/layout.schema.json](schemas/layout.schema.json). A field the format doesn't have is
+Schema: [schemas/layout.schema.json](schemas/layout.schema.json). It describes every field, so a
+layout editor can draw its fields from it. A field the format doesn't have is
 a problem, not something to ignore. A `bada-layout/2` file is refused (`bad-format`): `/3` has the
 `forms` part (§7.5.12) where `/2` listed script forms in `convert`.
 

@@ -10,8 +10,8 @@ if (!existsSync(here + "../wasm/target/wasm32-unknown-unknown/release/bada_web.w
   process.exit(2);
 }
 let failed = 0;
-for (const test of ["keytable.mjs", "field.mjs", "conformance.mjs", "smoke.mjs"]) {
+for (const test of ["keytable.mjs", "field.mjs", "conformance.mjs", "smoke.mjs", "layout.mjs"]) {
   if (spawnSync(process.execPath, [here + test], { stdio: "inherit" }).status !== 0) failed++;
 }
-console.log(failed ? `FAIL ${failed} of 4 test files failed` : "ok   all 4 test files passed");
+console.log(failed ? `FAIL ${failed} of 5 test files failed` : "ok   all 5 test files passed");
 process.exit(failed ? 1 : 0);

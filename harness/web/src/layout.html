@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>bada layout editor</title>
+<meta name="description" content="Edit a bada layout file (bada-layout/3) field by field: start from a stock layout or your own JSON, check it with the engine, and try it.">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="layout.css">
+</head>
+<body class="layout-editor">
+<header>
+  <div class="brand"><img src="icon.svg" alt="" width="28" height="28"><b>bada</b> <span class="muted">layout editor</span></div>
+  <div class="spacer"></div>
+  <a class="link" href="./">The typing page</a>
+  <a class="link" href="layout.schema.json">Schema</a>
+  <a class="link" href="https://github.com/team-mirae/bada/blob/dev-latest/docs/bada-compatible-v2.md#75-a-layout-file-bada-layout3" target="_blank" rel="noopener">The standard, §7.5</a>
+</header>
+
+<div class="bar" id="bar">
+  <div class="row">
+    <select id="start" aria-label="Start from a stock layout, a saved one, or a new one"><option value="">Start from…</option></select>
+    <button id="open" title="Open a bada-layout/3 file from this computer">Load a JSON file…</button>
+    <input type="file" id="file" accept=".json,application/json" hidden aria-label="A layout's JSON file">
+    <a class="link" href="#json">or paste JSON</a>
+    <span class="spacer"></span>
+    <button id="undo" disabled title="Back to the draft before the last change">Undo</button>
+    <button id="copy">Copy JSON</button>
+    <button id="download">Download JSON</button>
+    <button id="remove" hidden>Remove from this browser</button>
+    <button id="save" class="primary" disabled>Save in this browser</button>
+  </div>
+  <div class="row">
+    <span id="status" class="status" role="status">Loading…</span>
+    <span id="note" class="muted" role="status"></span>
+  </div>
+  <ul id="problems" class="problems" aria-label="What is wrong with the draft"></ul>
+  <nav id="nav" aria-label="Parts of the file"></nav>
+</div>
+
+<main>
+  <p class="lead">A layout is its JSON file, all of it: this page edits every field the format has. Each field says what it does, what it may hold, and where it is in the file. The draft is kept in this browser as you go; <b>Save</b> gives it to the typing page.</p>
+
+  <div id="form"></div>
+
+  <section id="json" aria-labelledby="json-h">
+    <h2 id="json-h">JSON</h2>
+    <p class="muted">The file as it is now. Paste a layout here, or edit the text, and apply it.</p>
+    <textarea id="jsonText" class="mono" rows="16" spellcheck="false" autocomplete="off" aria-label="The layout file as JSON"></textarea>
+    <div class="row"><button id="jsonApply">Apply this JSON</button><span id="jsonSaid" class="muted" role="status"></span></div>
+  </section>
+
+  <section id="try" aria-labelledby="try-h">
+    <h2 id="try-h">Try it</h2>
+    <p class="muted">Click the box and type: the keys go to the engine with the draft as it is now. <span id="trySaid"></span></p>
+    <div id="tryBox" class="trybox off" tabindex="0" role="textbox" aria-multiline="true" aria-label="Type here to try the draft"><span id="tryText"></span></div>
+    <ol id="tryMenu" class="trymenu" start="0" aria-label="The menu's rows"></ol>
+    <div class="row"><button id="tryClear">Clear</button></div>
+  </section>
+
+  <section id="agents" aria-labelledby="agents-h">
+    <h2 id="agents-h">For a program</h2>
+    <p>An agent or a script can edit the layout here without guessing at the page.</p>
+    <ul>
+      <li><b>Every control names what it edits.</b> <code>data-path</code> is the JSON pointer of its value (<code>/rank/known</code>, <code>/keys/KeyA/base/t</code>). A button that adds something has <code>data-add</code>, one that removes <code>data-remove</code>, a form's chooser <code>data-form</code>, a key's layer chooser <code>data-state</code>, a key on the keyboard <code>data-code</code>. The words under a field are its description from the schema, then its pointer, its limits and whether it is required.</li>
+      <li><b>The file is in the page</b>, always current: <code>&lt;script type="application/json" id="bada-layout"&gt;</code>. What is wrong with it is the list <code>#problems</code>, each item with <code>data-problem</code>.</li>
+      <li><b><code>window.badaLayoutEditor</code></b> does everything the controls do:
+        <code>schema</code>, <code>get(path)</code>, <code>text()</code>, <code>set(path, value)</code>, <code>remove(path)</code>, <code>setRead(read)</code>, <code>load(objectOrText)</code>, <code>start("stock:ja-romaji" | "mine:&lt;id&gt;" | "new:&lt;read&gt;")</code>, <code>sources()</code>, <code>describe(path)</code>, <code>fields(path)</code>, <code>places()</code>, <code>blank(path)</code>, <code>status()</code>, <code>save()</code>, <code>unsave()</code>, <code>undo()</code>, <code>reveal(path)</code>, <code>type("KeyG", "KeyK", "shift+KeyS")</code>, <code>clear()</code>.
+        <code>describe</code> answers for a place the file doesn't have yet, so ask it before you set. <code>status()</code> returns <code>{ok, format, engine}</code>: the schema's problems and the engine's.</li>
+      <li><b>The schema</b> is <a href="layout.schema.json">layout.schema.json</a> (JSON Schema 2020-12), with a description of every field. <code>layout.html?from=stock:ko-2-set</code> starts from a layout by its address.</li>
+      <li><code>&lt;html data-ready="true"&gt;</code> once the engine has loaded.</li>
+    </ul>
+  </section>
+</main>
+
+<!-- The draft, as the file's text: read it here, or call window.badaLayoutEditor.text(). -->
+<script type="application/json" id="bada-layout"></script>
+<script type="module" src="layout-editor.js"></script>
+</body>
+</html>

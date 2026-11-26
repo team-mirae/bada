@@ -35,7 +35,8 @@ export function openSettings(ui) {
   // The page is drawn once, and reads the folder again each time the dialog opens. The harness
   // has its own first run (below), so the page's is left out.
   if (page) page.then(p => p.reload());
-  else page = mount($("settingsPage"), webHost(() => ui.h, () => ui.stock), { header: false, firstRun: false });
+  else page = mount($("settingsPage"), webHost(() => ui.h, () => ui.stock), { header: false, firstRun: false,
+    layoutEditor: l => `layout.html?from=${l.stock && !l.modified ? "stock" : "mine"}:${encodeURIComponent(l.id)}` });
   dialog.onclose = () => { ui.refresh(); ui.focus(); };
   if (!dialog.open) dialog.showModal();
 }

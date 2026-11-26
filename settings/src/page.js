@@ -43,7 +43,9 @@ function historyName(name) {
 
 /**
  * Draws the page into `root`. `options.header`: false leaves the title bar out (the web harness's
- * dialog has its own). `options.firstRun`: false leaves the first run to the host. Returns
+ * dialog has its own). `options.firstRun`: false leaves the first run to the host.
+ * `options.layoutEditor`: a function from a layout of the list to the address of a host's own
+ * editor for it, which the Layouts tab then links to. Returns
  * `{reload}`: reads the folder again.
  */
 export async function mount(root, host, options = {}) {
@@ -406,6 +408,7 @@ export async function mount(root, host, options = {}) {
           ui.copyId == null ? h("button", { onclick: () => show(() => { ui.copyId = `${l.id}-copy`.slice(0, 48); }) }, "Duplicate as new…")
             : [h("input", { type: "text", class: "mono", value: ui.copyId, "aria-label": "The new layout's id", spellcheck: false, oninput: e => { ui.copyId = e.target.value; } }),
               h("button", { class: "primary", onclick: copy }, "Make it"), h("button", { onclick: () => show(() => { ui.copyId = null; }) }, "Cancel")],
+          options.layoutEditor ? h("a", { class: "button", href: options.layoutEditor(l) }, "Edit field by field…") : null,
           grow(),
           l.custom ? h("button", { class: "danger", onclick: remove }, "Remove") : h("button", { disabled: !l.modified, onclick: remove }, "Reset to stock")),
         hint("An id is a group of two or three letters, then a name: ", mono("ja-kana-mine"), ". Saving under another id makes a new layout.")),
