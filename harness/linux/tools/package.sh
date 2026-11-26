@@ -36,6 +36,9 @@ Install:
 The engine's data (the word lists and the kanji dictionary) is in usr/share/bada/data, and the
 addon reads it from /usr/share/bada/data.
 
+"bada settings" (usr/bin/bada), or bada settings in the applications menu, opens the settings page
+in the browser. The page is in usr/share/bada/settings.
+
 The addon is $addon. A distribution that keeps Fcitx5's addons elsewhere (Debian and Ubuntu:
 /usr/lib/x86_64-linux-gnu/fcitx5) needs it moved there.
 
@@ -43,14 +46,13 @@ Then add bada to a group with fcitx5-configtool (it is listed as Multilingual), 
 keys out of Fcitx5's own hotkeys, in Global Options: Zenkaku_Hankaku out of Trigger Input Method,
 and Hangul and Hangul_Hanja out of Activate and Deactivate.
 
-A new install has no layouts chosen, so keys type as the system has them until bada has a
-settings file, ~/.config/bada/settings.json. How to write one:
-https://github.com/team-mirae/bada/blob/dev-latest/harness/linux/README.md#first-run
+A new install has no layouts chosen, so keys type as the system has them until they are: run
+"bada settings", and its first screen asks for the two to start with.
 
 Remove:
 
     sudo rm /$addon /usr/share/fcitx5/addon/bada.conf /usr/share/fcitx5/inputmethod/bada.conf
-    sudo rm -r /usr/share/bada
+    sudo rm -r /usr/share/bada /usr/bin/bada /usr/share/applications/com.teammirae.bada.settings.desktop
     fcitx5 -r
 EOF
 

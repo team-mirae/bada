@@ -39,6 +39,15 @@ if CommandLine.arguments.contains("--check") {
     exit(0)
 }
 
+if CommandLine.arguments.contains("--settings") {
+    // The settings window alone, with no input method started: a way to see it from a build.
+    // `BADA_HOME` names the folder it changes, as for `--check`. It leaves when the window closes.
+    SettingsWindow.shared.quitsWhenClosed = true
+    SettingsWindow.shared.show()
+    NSApplication.shared.run()
+    exit(0)
+}
+
 let connectionName = Bundle.main.infoDictionary?["InputMethodConnectionName"] as? String ?? "com.teammirae.inputmethod.Bada_Connection"
 Bada.start()
 Modes.start()

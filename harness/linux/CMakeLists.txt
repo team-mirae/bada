@@ -14,6 +14,7 @@ set(CMAKE_CXX_VISIBILITY_PRESET hidden)
 option(BADA_FCITX5 "Build the Fcitx5 addon" ON)
 option(BADA_IBUS "Build the IBus engine" ON)
 option(BADA_TESTS "Build the tests" ON)
+option(BADA_CLI "Build and install the command line and the settings page" ON)
 option(BADA_WERROR "Warnings are errors" OFF)
 set(BADA_ENGINE_LIB "" CACHE FILEPATH "The engine's static library (libbada.a). Empty: cargo builds it here")
 
@@ -67,6 +68,31 @@ file(GLOB BADA_DATA_LICENSES "${BADA_ROOT}/engine/data/LICENSE-*.txt")
 set(BADA_DATA_DIR "${CMAKE_INSTALL_FULL_DATADIR}/bada/data")
 target_compile_definitions(bada_core PRIVATE BADA_DATA_DIR="${BADA_DATA_DIR}")
 install(FILES ${BADA_DATA} ${BADA_DATA_LICENSES} DESTINATION ${CMAKE_INSTALL_DATADIR}/bada/data)
+
+# The command line (cli/) and the settings page it hosts (settings/): `bada settings` serves the
+# page and opens the browser. The page is found beside the binary, in ../share/bada/settings.
+if(BADA_CLI)
+  find_program(CARGO cargo REQUIRED)
+  if(DEFINED ENV{CARGO_TARGET_DIR})
+    set(BADA_CLI_BIN "$ENV{CARGO_TARGET_DIR}/release/bada")
+  else()
+    set(BADA_CLI_BIN "${BADA_ROOT}/target/release/bada")
+  endif()
+  add_custom_target(bada_cli ALL
+    COMMAND ${CARGO} build --release -p bada-cli
+    WORKING_DIRECTORY "${BADA_ROOT}"
+    BYPRODUCTS "${BADA_CLI_BIN}"
+    COMMENT "cargo build --release -p bada-cli"
+    VERBATIM)
+  # One cargo at a time in the workspace's target folder.
+  if(TARGET bada_engine_build)
+    add_dependencies(bada_cli bada_engine_build)
+  endif()
+  file(GLOB BADA_PAGE "${BADA_ROOT}/settings/src/*")
+  install(PROGRAMS "${BADA_CLI_BIN}" DESTINATION ${CMAKE_INSTALL_BINDIR})
+  install(FILES ${BADA_PAGE} DESTINATION ${CMAKE_INSTALL_DATADIR}/bada/settings)
+  install(FILES src/com.teammirae.bada.settings.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+endif()
 
 # What both frontends share beyond the core: the published state.
 add_library(bada_common STATIC src/common/publish.cpp)

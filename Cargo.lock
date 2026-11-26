@@ -3,8 +3,18 @@
 version = 4
 
 [[package]]
+name = "bada-cli"
+version = "0.2.1"
+dependencies = [
+ "bada-compat",
+ "bada-engine",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "bada-compat"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -12,7 +22,7 @@ dependencies = [
 
 [[package]]
 name = "bada-conformance"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "libloading",
  "serde_json",
@@ -20,7 +30,7 @@ dependencies = [
 
 [[package]]
 name = "bada-engine"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "bada-compat",
  "serde",

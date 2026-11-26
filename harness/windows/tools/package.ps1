@@ -21,6 +21,9 @@ $dlls = foreach ($arch in 'x64', 'x86') { "$build\$arch\bada-tsf.dll" }
 foreach ($dll in $dlls) { if (-not (Test-Path $dll)) { throw "$dll is missing: run tools\build.ps1 -Arch x64 and -Arch x86." } }
 # The engine's data, which either build copies beside the two.
 if (-not (Test-Path "$build\data\kanji.bin")) { throw "$build\data is missing: run tools\build.ps1." }
+# The command line (the x64 build's) and the settings page it serves.
+if (-not (Test-Path "$build\x64\bada.exe")) { throw "$build\x64\bada.exe is missing: run tools\build.ps1." }
+if (-not (Test-Path "$build\settings\index.html")) { throw "$build\settings is missing: run tools\build.ps1." }
 
 # One version for the whole repository.
 $version = (Get-Content "$root\VERSION" -Raw).Trim()

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bada settings</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="bada-page">
+<div id="app" class="bada-settings window"></div>
+<script type="module">
+import { mount } from "./page.js";
+import { httpHost } from "./host-http.js";
+mount(document.getElementById("app"), httpHost());
+</script>
+</body>
+</html>

@@ -15,28 +15,37 @@
   "additionalProperties": false,
   "properties": {
     "format": {
+      "title": "Format",
+      "description": "Always \"bada-layout/3\". A file of another format is refused (bad-format).",
       "const": "bada-layout/3"
     },
     "id": {
+      "title": "Id",
+      "description": "The layout's slug: <group>-<name>, in lowercase letters, digits and hyphens. The group is the language (en, ko, ja) or uni for a layout of no language. Settings, profiles and actions name the layout by it. A stock layout's id makes this file replace that stock layout; a new id makes a new layout, which has no key model (it is ranked against other layouts by its rank scores alone).",
       "$ref": "#/$defs/layout_id"
     },
     "name": {
+      "title": "Name",
+      "description": "What lists show, by language (BCP 47 tags). en is required.",
       "$ref": "#/$defs/texts"
     },
     "lang": {
-      "description": "BCP 47; und for a layout of no language.",
+      "title": "Language",
+      "description": "BCP 47: the language of the text it types, which each menu row carries. und for a layout of no language. A user's dictionary words count for the layouts of their language.",
       "type": "string",
       "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]+)*$"
     },
     "kind": {
-      "description": "muhenkan: types directly. henkan: composes.",
+      "title": "Kind",
+      "description": "muhenkan: it types directly, and read is direct. henkan: it composes, and read is anything else. Only a muhenkan layout can be the muhenkan layout; either kind can be a candidate of a henkan profile.",
       "enum": [
         "muhenkan",
         "henkan"
       ]
     },
     "read": {
-      "description": "Which general way of reading the keys.",
+      "title": "Way of reading",
+      "description": "Which of the engine's general ways of reading the keys. direct: every key types its slot. hangul: jamo compose into syllables. table: letters spell text, by a table of spellings (romaji) or of syllable pieces (romanized Korean). kana: one kana per key, with marks. search: the keys spell a search and the menu lists what it finds. The part of the same name holds that way's tables, and the parts of the other ways must be absent.",
       "enum": [
         "direct",
         "hangul",
@@ -46,19 +55,23 @@
       ]
     },
     "note": {
+      "title": "Note",
       "description": "Where the layout comes from. The engine doesn't read it.",
       "type": "string"
     },
     "keys": {
-      "description": "Each key's layers. A base or shift slot left out is the JIS table's; null types nothing. alt and alt_shift are the layout's only where listed.",
+      "title": "Keys",
+      "description": "Each key's layers: base (no modifier), shift (⇧), alt (⌥) and alt_shift (⌥⇧). A layer holds one slot, {\"t\": what the key types there, \"r\": its role}, or null for a key that types nothing there. A base or shift slot left out is the JIS table's: the legend printed on a JIS keyboard, as a letter (role l) on a letter key where the way of reading has letters, and text (role x) otherwise. alt and alt_shift are the layout's only where listed: elsewhere ⌥ + the key commits what is staged and goes to the app. Space is the layout's only where listed. The keys are the 48 typing keys and Space, by KeyboardEvent.code.",
       "$ref": "#/$defs/keys_any"
     },
     "text_ends_word": {
-      "description": "A text slot commits what shows and then types, instead of being staged. Default false.",
+      "title": "Text ends the word",
+      "description": "true: a text slot (role x) commits what shows and then types its character, instead of being staged with the word. Beside another layout that has a non-text slot on that key it is staged as usual. Default false.",
       "type": "boolean"
     },
     "convert": {
-      "description": "What turns the reading into more rows.",
+      "title": "Conversions",
+      "description": "What turns the layout's reading into more menu rows. Each item names one of the engine's general conversions (with) and its arguments. They run in the order listed.",
       "type": "array",
       "items": {
         "oneOf": [
@@ -67,26 +80,33 @@
             "type": "object",
             "properties": {
               "with": {
+                "description": "kanji: kanji conversion of a kana reading.",
                 "const": "kanji"
               },
               "data": {
+                "description": "The conversion dictionary's buffer (kanji).",
                 "$ref": "#/$defs/data"
               },
               "rows": {
+                "description": "How many conversions are listed, at most.",
                 "type": "integer",
                 "minimum": 1
               },
               "user_rows": {
+                "description": "How far down the conversions the user's own words are looked for, when the user has words of this language.",
                 "type": "integer",
                 "minimum": 1
               },
               "common": {
+                "description": "A list of common words by reading, listed under the first conversion.",
                 "type": "object",
                 "properties": {
                   "data": {
+                    "description": "The common words' buffer (ja-common-words).",
                     "$ref": "#/$defs/data"
                   },
                   "rows": {
+                    "description": "How many of them are listed, at most.",
                     "type": "integer",
                     "minimum": 1
                   }
@@ -98,17 +118,21 @@
                 ]
               },
               "native": {
+                "description": "The buffer that lists words normally written in kana: such a reading's kana ranks first.",
                 "$ref": "#/$defs/data"
               },
               "notes": {
+                "description": "Notes on its rows.",
                 "type": "object",
                 "properties": {
                   "kana": {
+                    "description": "romaji: the kana row carries its romaji as a note.",
                     "enum": [
                       "romaji"
                     ]
                   },
                   "converted": {
+                    "description": "reading: each converted row carries its kana reading as a note.",
                     "enum": [
                       "reading"
                     ]
@@ -121,33 +145,40 @@
             "required": [
               "with",
               "data"
-            ]
+            ],
+            "title": "Kanji conversion"
           },
           {
             "description": "A dictionary lookup of the letters typed.",
             "type": "object",
             "properties": {
               "with": {
+                "description": "dictionary: a dictionary lookup of the letters typed, when every staged key is a letter. Each row's note is the word as typed.",
                 "const": "dictionary"
               },
               "data": {
+                "description": "The dictionary's buffer (en-ko).",
                 "$ref": "#/$defs/data"
               },
               "rows": {
+                "description": "How many results are listed, at most.",
                 "type": "integer",
                 "minimum": 1
               },
               "first": {
-                "description": "false: never the top row.",
+                "description": "false: its rows are never the top row.",
                 "type": "boolean"
               },
               "below_top": {
+                "description": "How far under the top reading's score its rows start.",
                 "type": "number"
               },
               "case": {
+                "description": "Which of the dictionary's lists is looked in, by how the word was typed.",
                 "type": "object",
                 "properties": {
                   "lower": {
+                    "description": "Typed all in lower case. word: the list of words. name: the list of names. name-then-word: both, names first. name-else-word: names, and words only when no name matches.",
                     "enum": [
                       "word",
                       "name",
@@ -156,6 +187,7 @@
                     ]
                   },
                   "mixed": {
+                    "description": "Typed with a capital first, or mixed. word: the list of words. name: the list of names. name-then-word: both, names first. name-else-word: names, and words only when no name matches.",
                     "enum": [
                       "word",
                       "name",
@@ -164,6 +196,7 @@
                     ]
                   },
                   "upper": {
+                    "description": "Typed all in capitals. word: the list of words. name: the list of names. name-then-word: both, names first. name-else-word: names, and words only when no name matches.",
                     "enum": [
                       "word",
                       "name",
@@ -184,16 +217,19 @@
             "required": [
               "with",
               "data"
-            ]
+            ],
+            "title": "Dictionary lookup"
           },
           {
             "description": "The reading in the other width, as a row.",
             "type": "object",
             "properties": {
               "with": {
+                "description": "width: the reading with its letters, digits and symbols in the other width, as a row just under the reading, where it differs. Kana stay as they are.",
                 "const": "width"
               },
               "to": {
+                "description": "half: a full-width reading's half-width form. full: a half-width reading's full-width form.",
                 "enum": [
                   "half",
                   "full"
@@ -204,13 +240,15 @@
             "required": [
               "with",
               "to"
-            ]
+            ],
+            "title": "Other width"
           }
         ]
       }
     },
     "actions": {
-      "description": "The layout's named actions, for F keys and action events.",
+      "title": "Actions",
+      "description": "The layout's named actions. A profile binds them to F6–F10, and an action event names one as <layout id>.<action id>. Each has an id, a label by language, and do, one of the engine's general operations.",
       "type": "array",
       "items": {
         "oneOf": [
@@ -219,15 +257,19 @@
             "type": "object",
             "properties": {
               "id": {
+                "description": "The action's name within the layout: <layout id>.<action id> names it in a profile's F keys and in action events.",
                 "$ref": "#/$defs/data"
               },
               "label": {
+                "description": "What the settings show for it, by language. en is required.",
                 "$ref": "#/$defs/texts"
               },
               "do": {
+                "description": "script: shows the reading in a script, until the commit.",
                 "const": "script"
               },
               "to": {
+                "description": "The script: hiragana, katakana, or halfwidth-katakana.",
                 "enum": [
                   "hiragana",
                   "katakana",
@@ -241,22 +283,27 @@
               "label",
               "do",
               "to"
-            ]
+            ],
+            "title": "Script"
           },
           {
             "description": "The staged keys as their JIS characters, in a width, until the commit.",
             "type": "object",
             "properties": {
               "id": {
+                "description": "The action's name within the layout: <layout id>.<action id> names it in a profile's F keys and in action events.",
                 "$ref": "#/$defs/data"
               },
               "label": {
+                "description": "What the settings show for it, by language. en is required.",
                 "$ref": "#/$defs/texts"
               },
               "do": {
+                "description": "keys: shows the staged keys as their JIS characters, in a width, until the commit.",
                 "const": "keys"
               },
               "width": {
+                "description": "full or half.",
                 "enum": [
                   "full",
                   "half"
@@ -269,22 +316,27 @@
               "label",
               "do",
               "width"
-            ]
+            ],
+            "title": "Keys"
           },
           {
             "description": "One jamo of each syllable of the staged text, else of the selection.",
             "type": "object",
             "properties": {
               "id": {
+                "description": "The action's name within the layout: <layout id>.<action id> names it in a profile's F keys and in action events.",
                 "$ref": "#/$defs/data"
               },
               "label": {
+                "description": "What the settings show for it, by language. en is required.",
                 "$ref": "#/$defs/texts"
               },
               "do": {
+                "description": "jamo: leaves one jamo of each syllable of the staged text, which stays staged; with nothing staged, of the selection.",
                 "const": "jamo"
               },
               "keep": {
+                "description": "Which jamo of each syllable stays: initials, vowels or finals.",
                 "enum": [
                   "initials",
                   "vowels",
@@ -298,22 +350,27 @@
               "label",
               "do",
               "keep"
-            ]
+            ],
+            "title": "Jamo"
           },
           {
             "description": "A list from a data buffer for the staged text, else for the selection.",
             "type": "object",
             "properties": {
               "id": {
+                "description": "The action's name within the layout: <layout id>.<action id> names it in a profile's F keys and in action events.",
                 "$ref": "#/$defs/data"
               },
               "label": {
+                "description": "What the settings show for it, by language. en is required.",
                 "$ref": "#/$defs/texts"
               },
               "do": {
+                "description": "lookup: opens a list from a data buffer for the staged text; with nothing staged, for the selection.",
                 "const": "lookup"
               },
               "data": {
+                "description": "The buffer the list comes from (hanja).",
                 "$ref": "#/$defs/data"
               }
             },
@@ -323,13 +380,15 @@
               "label",
               "do",
               "data"
-            ]
+            ],
+            "title": "Lookup"
           }
         ]
       }
     },
     "forms": {
-      "description": "Other ways of writing what was typed, as the menu's negative entries: the first is entry −1, the second −2, and so on. Each is made from the staged keys and this file alone.",
+      "title": "Forms",
+      "description": "Other ways of writing what was typed, as the menu's negative entries: the first is entry −1, the second −2, and so on. Each is made from the staged keys and this file alone, so the same keys always give the same forms. They show in a profile that has script_forms on.",
       "type": "array",
       "items": {
         "oneOf": [
@@ -338,9 +397,11 @@
             "type": "object",
             "properties": {
               "do": {
+                "description": "script: the layout's reading of the keys, in a script.",
                 "const": "script"
               },
               "to": {
+                "description": "The script: hiragana, katakana, or halfwidth-katakana.",
                 "enum": [
                   "hiragana",
                   "katakana",
@@ -352,16 +413,19 @@
             "required": [
               "do",
               "to"
-            ]
+            ],
+            "title": "Script"
           },
           {
             "description": "The keys as their JIS characters, in a width.",
             "type": "object",
             "properties": {
               "do": {
+                "description": "keys: the keys as their JIS characters, in a width.",
                 "const": "keys"
               },
               "width": {
+                "description": "full or half.",
                 "enum": [
                   "full",
                   "half"
@@ -372,16 +436,19 @@
             "required": [
               "do",
               "width"
-            ]
+            ],
+            "title": "Keys"
           },
           {
             "description": "One jamo of each syllable of the layout's reading.",
             "type": "object",
             "properties": {
               "do": {
+                "description": "jamo: one jamo of each syllable of the layout's reading.",
                 "const": "jamo"
               },
               "keep": {
+                "description": "Which jamo of each syllable: initials, vowels or finals.",
                 "enum": [
                   "initials",
                   "vowels",
@@ -393,16 +460,19 @@
             "required": [
               "do",
               "keep"
-            ]
+            ],
+            "title": "Jamo"
           }
         ]
       }
     },
     "particles": {
-      "description": "Particles and endings of this layout that may follow a word typed on a direct layout, in one staged run.",
+      "title": "Particles",
+      "description": "Particles and endings of this layout that may follow a word typed on a direct layout of the same profile, in one staged run: Claude에, GitHubで.",
       "type": "object",
       "properties": {
         "after": {
+          "description": "What a particle may follow. word: a known word of the direct layout. name: a capitalised word its lists don't have.",
           "type": "array",
           "items": {
             "enum": [
@@ -414,6 +484,7 @@
           "uniqueItems": true
         },
         "words": {
+          "description": "The particles and endings, as this layout types them.",
           "type": "array",
           "items": {
             "type": "string",
@@ -422,9 +493,11 @@
           "minItems": 1
         },
         "stack": {
+          "description": "When particles stack (client들에게): which may come first, and how many in all.",
           "type": "object",
           "properties": {
             "first": {
+              "description": "The particles that may come first in a stack.",
               "type": "array",
               "items": {
                 "type": "string",
@@ -432,6 +505,7 @@
               }
             },
             "max": {
+              "description": "How many particles in a stack, at most.",
               "type": "integer",
               "minimum": 2
             }
@@ -450,7 +524,8 @@
       ]
     },
     "words": {
-      "description": "The word lists that say which of its readings are known words, by buffer name.",
+      "title": "Word lists",
+      "description": "The word lists that say which of its readings are known words, by buffer name (ko-words, en-words, ja-words). The user's dictionary counts with them. A buffer the engine wasn't given is a warning (unknown-data), and that list is off.",
       "type": "array",
       "items": {
         "$ref": "#/$defs/data"
@@ -458,58 +533,76 @@
       "uniqueItems": true
     },
     "rank": {
-      "description": "The scores of its readings, before weights and key models.",
+      "title": "Rank",
+      "description": "The score of each kind of reading, before the profile's weights and the comparison between layouts. The menu lists readings by score, highest first. Leave a field out where the kind of reading can't occur in this layout; a kind with no score gets 50.",
       "type": "object",
       "properties": {
         "known": {
+          "description": "A reading that is a known word: in one of the word lists, or in the user's dictionary.",
           "type": "number"
         },
         "by_count": {
+          "description": "true: the natural logarithm of the word's count is added to known, so a more common word ranks higher.",
           "type": "boolean"
         },
         "rare": {
+          "description": "A reading in a word list's rare section.",
           "type": "number"
         },
         "letters": {
+          "description": "read direct: letters only, but no known word.",
           "type": "number"
         },
         "other": {
+          "description": "read direct: anything else (digits, symbols).",
           "type": "number"
         },
         "whole": {
+          "description": "Hangul in whole syllables, but no known word.",
           "type": "number"
         },
         "loose": {
+          "description": "Hangul with loose jamo left over.",
           "type": "number"
         },
         "unknown": {
+          "description": "Kana that is no known word. With kanji conversion its conversions rank just above it.",
           "type": "number"
         },
         "broken": {
+          "description": "Kana with a mark left over or Latin letters still pending.",
           "type": "number"
         },
         "after_text": {
+          "description": "read table: a reading with letters after a text slot that should have ended the word (text_ends_word).",
           "type": "number"
         },
         "query": {
+          "description": "read search: the search as typed.",
           "type": "number"
         },
         "found": {
+          "description": "read search: what the search finds; each result a little under the one before.",
           "type": "number"
         },
         "readings": {
+          "description": "read table, syllable form: how the other readings of the letters rank when one is a known word.",
           "type": "object",
           "properties": {
             "cost": {
+              "description": "Taken from known for each jamo the reading changes from the default one. Splitting the letters elsewhere changes no jamo.",
               "type": "number"
             },
             "max_cost": {
+              "description": "The most that is taken, however many jamo change.",
               "type": "number"
             },
             "floor": {
+              "description": "Such a reading never scores under this.",
               "type": "number"
             },
             "rows": {
+              "description": "How many of them are listed, at most.",
               "type": "integer",
               "minimum": 1
             }
@@ -523,15 +616,19 @@
           ]
         },
         "model": {
+          "description": "read table, syllable form: when no reading is a known word, a jamo model chooses among them.",
           "type": "object",
           "properties": {
             "data": {
+              "description": "The jamo model's buffer (ko-jamo-4gram).",
               "$ref": "#/$defs/data"
             },
             "cost": {
+              "description": "What each changed jamo costs the reading, as a base-10 logarithm.",
               "type": "number"
             },
             "margin": {
+              "description": "By how much the model's reading must beat the default to show first, as a base-10 logarithm.",
               "type": "number"
             }
           },
@@ -546,7 +643,8 @@
       "additionalProperties": false
     },
     "options": {
-      "description": "The options this layout has in the settings.",
+      "title": "Options",
+      "description": "The options this layout has in the settings, under options.<layout id> of a profile or of the defaults: a name → its type, default, title and hint. A part of this file that names an option (table.syllable.shortcuts.option, search.sources[].tones) must name one declared here.",
       "type": "object",
       "propertyNames": {
         "$ref": "#/$defs/option"
@@ -557,15 +655,19 @@
             "type": "object",
             "properties": {
               "type": {
+                "description": "boolean: on or off.",
                 "const": "boolean"
               },
               "default": {
+                "description": "Its value where the settings say nothing.",
                 "type": "boolean"
               },
               "title": {
+                "description": "What the settings page shows for the option, by language. en is required.",
                 "$ref": "#/$defs/texts"
               },
               "hint": {
+                "description": "A line under it, by language.",
                 "$ref": "#/$defs/texts"
               }
             },
@@ -574,15 +676,18 @@
               "type",
               "default",
               "title"
-            ]
+            ],
+            "title": "On or off"
           },
           {
             "type": "object",
             "properties": {
               "type": {
+                "description": "order: some of the values of `of`, in an order.",
                 "const": "order"
               },
               "of": {
+                "description": "The values it can hold.",
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -591,6 +696,7 @@
                 "uniqueItems": true
               },
               "default": {
+                "description": "The values and their order where the settings say nothing. A value left out is off.",
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -598,9 +704,11 @@
                 "uniqueItems": true
               },
               "title": {
+                "description": "What the settings page shows for the option, by language. en is required.",
                 "$ref": "#/$defs/texts"
               },
               "hint": {
+                "description": "A line under it, by language.",
                 "$ref": "#/$defs/texts"
               }
             },
@@ -610,17 +718,19 @@
               "of",
               "default",
               "title"
-            ]
+            ],
+            "title": "An order"
           }
         ]
       }
     },
     "direct": {
-      "description": "read direct: every key types its slot.",
+      "title": "Direct",
+      "description": "The tables of read direct, where every key types its slot.",
       "type": "object",
       "properties": {
         "variants": {
-          "description": "A character's variants, offered in a strip when its key is pressed with ⌥ in muhenkan.",
+          "description": "A character → its variants. In muhenkan, ⌥ + a key whose slot types that character (⌥⇧ for its ⇧ slot), and that has no alt slot of its own, shows the character with its variants as a strip to pick from.",
           "type": "object",
           "propertyNames": {
             "type": "string",
@@ -639,11 +749,12 @@
       "additionalProperties": false
     },
     "hangul": {
-      "description": "read hangul: jamo compose into syllables.",
+      "title": "Hangul",
+      "description": "The tables of read hangul, where jamo compose into syllables. The reading is precomposed syllables, and compatibility jamo for what makes no syllable.",
       "type": "object",
       "properties": {
         "vowels": {
-          "description": "Two vowels that join into one.",
+          "description": "Two vowels that join into one: \"ㅗㅏ\": \"ㅘ\". A vowel after a vowel with no final joins it when the pair is here.",
           "type": "object",
           "additionalProperties": {
             "type": "string",
@@ -651,7 +762,7 @@
           }
         },
         "finals": {
-          "description": "Two finals that cluster into one.",
+          "description": "Two finals that cluster into one: \"ㄱㅅ\": \"ㄳ\". A second final joins the first when the pair is here.",
           "type": "object",
           "additionalProperties": {
             "type": "string",
@@ -659,15 +770,15 @@
           }
         },
         "double_tense": {
-          "description": "The same initial twice, or the same final twice, is its tense form.",
+          "description": "true: the same initial twice before a vowel, or the same final twice, is its tense form (ㄱ ㄱ → ㄲ; as finals ㄲ and ㅆ only).",
           "type": "boolean"
         },
         "final_moves_on": {
-          "description": "A vowel after a final takes it as the next syllable's initial, when its key has an initial.",
+          "description": "true: a vowel after a final takes the last final as the initial of a new syllable, when the slot that typed it has an initial form (role c). A final-only slot (role f) never moves.",
           "type": "boolean"
         },
         "implied_ieung": {
-          "description": "A vowel with no initial before it starts a syllable on ㅇ. Default false.",
+          "description": "true: a vowel with no initial to join starts a syllable on ㅇ. Default false: it shows as a jamo.",
           "type": "boolean"
         }
       },
@@ -680,13 +791,14 @@
       ]
     },
     "table": {
-      "description": "read table: letters spell text, by one of two tables.",
+      "title": "Table",
+      "description": "The tables of read table, where the letter slots (role l) spell text. One of two forms: spellings, for text spelled a piece at a time (romaji), or syllable, for Hangul spelled an onset, a vowel and a coda at a time.",
       "oneOf": [
         {
           "type": "object",
           "properties": {
             "spellings": {
-              "description": "Letters → what they type.",
+              "description": "Letters → what they type: \"ka\": \"か\". Matched without regard to case.",
               "type": "object",
               "minProperties": 1,
               "propertyNames": {
@@ -698,25 +810,27 @@
               }
             },
             "rules": {
-              "description": "Spellings that keep letters or look ahead.",
+              "description": "Spellings that look ahead or keep letters. A rule with before comes ahead of a spelling of the same letters.",
               "type": "array",
               "items": {
                 "type": "object",
                 "properties": {
                   "in": {
+                    "description": "The letters.",
                     "type": "string",
                     "minLength": 1
                   },
                   "out": {
+                    "description": "What they type.",
                     "type": "string"
                   },
                   "before": {
-                    "description": "Applies only when the next letter is one of these; that letter isn't used up.",
+                    "description": "The rule applies only when the next letter is one of these; that letter isn't used up. (\"nn\" → ん before a, i, u, e, o.)",
                     "type": "string",
                     "minLength": 1
                   },
                   "keep": {
-                    "description": "How many of its last letters stay pending.",
+                    "description": "How many of its last letters stay pending: \"kk\" types っ and keeps one k.",
                     "type": "integer",
                     "minimum": 0
                   }
@@ -732,7 +846,9 @@
           "additionalProperties": false,
           "required": [
             "spellings"
-          ]
+          ],
+          "title": "Spellings",
+          "description": "Text spelled a piece at a time (romaji). The pending letters are read whenever one is added: while they begin a longer spelling they wait, and otherwise the longest spelling or rule that begins them is typed."
         },
         {
           "type": "object",
@@ -741,16 +857,19 @@
               "type": "object",
               "properties": {
                 "onsets": {
+                  "description": "Initial consonants: a spelling → the jamo it reads, the default first (\"ch\": [\"ㅊ\", \"ㅈ\"]). The longest spelling that matches is tried first.",
                   "$ref": "#/$defs/jamo_lists"
                 },
                 "vowels": {
+                  "description": "Vowels: a spelling → the jamo it reads, the default first.",
                   "$ref": "#/$defs/jamo_lists"
                 },
                 "codas": {
+                  "description": "Finals: a spelling → the jamo it reads, the default first.",
                   "$ref": "#/$defs/jamo_lists"
                 },
                 "empty_onset": {
-                  "description": "The initial of a syllable that starts with a vowel.",
+                  "description": "The initial of a syllable that starts with a vowel: [\"ㅇ\"].",
                   "type": "array",
                   "items": {
                     "type": "string"
@@ -758,7 +877,7 @@
                   "minItems": 1
                 },
                 "vowels_before_coda": {
-                  "description": "What a vowel spelling reads when a final follows.",
+                  "description": "What a vowel spelling reads instead when a final follows: \"yu\": [\"ㅕ\", \"ㅠ\"].",
                   "$ref": "#/$defs/jamo_lists"
                 },
                 "codas_before": {
@@ -768,12 +887,15 @@
                     "type": "object",
                     "properties": {
                       "coda": {
+                        "description": "The coda's spelling.",
                         "type": "string"
                       },
                       "next": {
+                        "description": "The letter that follows it.",
                         "type": "string"
                       },
                       "jamo": {
+                        "description": "What the coda also reads there.",
                         "type": "array",
                         "items": {
                           "type": "string"
@@ -790,7 +912,7 @@
                   }
                 },
                 "letter_after": {
-                  "description": "A text slot that is a letter when the letter before it is one of these.",
+                  "description": "A text slot that is a letter when the letter before it is one of these: \"-\": [\"e\"] makes e- a spelling.",
                   "type": "object",
                   "additionalProperties": {
                     "type": "array",
@@ -806,9 +928,11 @@
                   "type": "object",
                   "properties": {
                     "data": {
+                      "description": "The shortcuts' buffer.",
                       "$ref": "#/$defs/data"
                     },
                     "option": {
+                      "description": "The option of this layout that turns them on. It must be declared in options.",
                       "$ref": "#/$defs/option"
                     }
                   },
@@ -823,22 +947,26 @@
                 "onsets",
                 "vowels",
                 "codas"
-              ]
+              ],
+              "description": "The syllable pieces: each maps a spelling to the jamo it reads, the default first."
             }
           },
           "additionalProperties": false,
           "required": [
             "syllable"
-          ]
+          ],
+          "title": "Syllable",
+          "description": "Hangul spelled an onset, a vowel and a coda at a time (bada roman). A run of letters is read syllable by syllable, the default reading first and every other reading after it, for the ranking."
         }
       ]
     },
     "kana": {
-      "description": "read kana: one kana per key.",
+      "title": "Kana",
+      "description": "The tables of read kana: a k slot types its kana, and an m slot is a mark that changes the kana before it.",
       "type": "object",
       "properties": {
         "marks": {
-          "description": "Each mark, and what it makes of the kana before it.",
+          "description": "Each mark, and what it makes of the kana before it: \"゛\": {\"か\": \"が\"}. Where it makes nothing the mark stays as itself, and the reading is broken.",
           "type": "object",
           "additionalProperties": {
             "type": "object",
@@ -855,19 +983,22 @@
       ]
     },
     "search": {
-      "description": "read search: the keys spell a search, and the menu lists what it finds.",
+      "title": "Search",
+      "description": "The tables of read search: the staged keys spell a search (letters in lower case), and the menu lists the search as typed, then what it finds, each with a note.",
       "type": "object",
       "properties": {
         "sources": {
+          "description": "What is searched. A result must have, for every word of the search, a word that begins with it. Results of several sources are ordered by tier, then by source.",
           "type": "array",
           "items": {
             "type": "object",
             "properties": {
               "data": {
+                "description": "The buffer that is searched (unicode-names, symbols, emoji).",
                 "$ref": "#/$defs/data"
               },
               "match": {
-                "description": "The buffer's columns that are searched.",
+                "description": "The buffer's columns that are searched, by name.",
                 "type": "array",
                 "items": {
                   "type": "string"
@@ -875,7 +1006,7 @@
                 "minItems": 1
               },
               "tiers": {
-                "description": "How its matches rank, best first.",
+                "description": "How its matches rank, best first. exact: the search is the whole first column. whole: a search of one word is a whole word of a column. first: every word of the search begins a word of the first column. any: any other match. A tier left out isn't listed.",
                 "type": "array",
                 "items": {
                   "enum": [
@@ -889,14 +1020,14 @@
                 "uniqueItems": true
               },
               "order": {
-                "description": "Within a tier: the buffer's order, or shorter first.",
+                "description": "Within a tier. data: the buffer's order. shortest: the shorter first column first.",
                 "enum": [
                   "data",
                   "shortest"
                 ]
               },
               "note": {
-                "description": "The row's note: the entry's name, or U+XXXX and its name.",
+                "description": "The row's note. name: the entry's name. code: U+XXXX and its name.",
                 "enum": [
                   "name",
                   "code"
@@ -907,11 +1038,11 @@
                 "type": "string"
               },
               "forms": {
-                "description": "With single: a letter or digit that no entry lists offers its other forms.",
+                "description": "With single: a letter or digit that no entry lists offers its other forms: full-width and circled, and a digit's superscript, subscript and roman numeral.",
                 "type": "boolean"
               },
               "tones": {
-                "description": "The option that orders an emoji's skin tones.",
+                "description": "The option of this layout that orders an emoji's skin tones; a tone left out of it isn't offered. It must be declared in options.",
                 "$ref": "#/$defs/option"
               }
             },
@@ -925,23 +1056,24 @@
           "minItems": 1
         },
         "code": {
-          "description": "A character by its code.",
+          "description": "A character by its code point, in hex.",
           "type": "object",
           "properties": {
             "max_digits": {
+              "description": "The most hex digits a code has (1–6).",
               "type": "integer",
               "minimum": 1,
               "maximum": 6
             },
             "after": {
-              "description": "Prefixes after which any hex digits are a code.",
+              "description": "Prefixes after which any hex digits are a code: \"u+\" makes u+1f600 a code.",
               "type": "array",
               "items": {
                 "type": "string"
               }
             },
             "digit_first_after": {
-              "description": "Prefixes after which hex digits are a code only when the first is 0–9.",
+              "description": "Prefixes after which hex digits are a code only when the first is 0–9, so a word that starts with the prefix still searches names.",
               "type": "array",
               "items": {
                 "type": "string"
@@ -1181,20 +1313,24 @@
         "Slash",
         "IntlRo",
         "Space"
-      ]
+      ],
+      "description": "One of the 48 typing keys, or Space, by KeyboardEvent.code."
     },
     "layout_id": {
       "type": "string",
       "pattern": "^[a-z]{2,3}(-[a-z0-9]+)+$",
-      "maxLength": 48
+      "maxLength": 48,
+      "description": "<group>-<name>: two or three lowercase letters, then one or more parts of lowercase letters and digits, joined by hyphens. 48 characters at most."
     },
     "data": {
       "type": "string",
-      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "The name of a data buffer the harness gives the engine (lowercase letters, digits and hyphens)."
     },
     "option": {
       "type": "string",
-      "pattern": "^[a-z][a-z0-9_]*$"
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "description": "An option's name: a lowercase letter, then lowercase letters, digits and underscores."
     },
     "jamo_lists": {
       "type": "object",
@@ -1210,7 +1346,8 @@
           "minLength": 1
         },
         "minItems": 1
-      }
+      },
+      "description": "A spelling → the jamo it reads, the default first."
     },
     "slot_direct": {
       "oneOf": [
@@ -1221,11 +1358,12 @@
           "type": "object",
           "properties": {
             "t": {
-              "description": "What the key types, or its letter, jamo or kana.",
+              "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
               "type": "string",
               "minLength": 1
             },
             "r": {
+              "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
               "enum": [
                 "l",
                 "x"
@@ -1299,6 +1437,7 @@
         "type": "object",
         "properties": {
           "base": {
+            "description": "The slot with no modifier. Left out: the JIS table's legend for the key (nothing on Space). null: the key types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1307,11 +1446,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1327,6 +1467,7 @@
             ]
           },
           "shift": {
+            "description": "The slot with ⇧. Left out: the JIS table's shifted legend for the key (nothing on Space). null: the key types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1335,11 +1476,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1355,6 +1497,7 @@
             ]
           },
           "alt": {
+            "description": "The slot with ⌥ (Alt off the Mac). Left out: ⌥ + the key isn't the layout's, so what is staged is committed and the key goes to the app. null: the layout takes the key and types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1363,11 +1506,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1383,6 +1527,7 @@
             ]
           },
           "alt_shift": {
+            "description": "The slot with ⌥⇧. Left out: ⌥⇧ + the key isn't the layout's. null: the layout takes the key and types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1391,11 +1536,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1413,7 +1559,8 @@
         },
         "additionalProperties": false,
         "minProperties": 1
-      }
+      },
+      "description": "A key code → its layers. One layer at least."
     },
     "slot_hangul": {
       "oneOf": [
@@ -1424,11 +1571,12 @@
           "type": "object",
           "properties": {
             "t": {
-              "description": "What the key types, or its letter, jamo or kana.",
+              "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
               "type": "string",
               "minLength": 1
             },
             "r": {
+              "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
               "enum": [
                 "c",
                 "i",
@@ -1455,21 +1603,26 @@
         "type": "object",
         "properties": {
           "base": {
+            "description": "The slot with no modifier. Left out: the JIS table's legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_hangul"
           },
           "shift": {
+            "description": "The slot with ⇧. Left out: the JIS table's shifted legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_hangul"
           },
           "alt": {
+            "description": "The slot with ⌥ (Alt off the Mac). Left out: ⌥ + the key isn't the layout's, so what is staged is committed and the key goes to the app. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_hangul"
           },
           "alt_shift": {
+            "description": "The slot with ⌥⇧. Left out: ⌥⇧ + the key isn't the layout's. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_hangul"
           }
         },
         "additionalProperties": false,
         "minProperties": 1
-      }
+      },
+      "description": "A key code → its layers. One layer at least."
     },
     "slot_table": {
       "oneOf": [
@@ -1480,11 +1633,12 @@
           "type": "object",
           "properties": {
             "t": {
-              "description": "What the key types, or its letter, jamo or kana.",
+              "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
               "type": "string",
               "minLength": 1
             },
             "r": {
+              "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
               "enum": [
                 "l",
                 "b",
@@ -1509,21 +1663,26 @@
         "type": "object",
         "properties": {
           "base": {
+            "description": "The slot with no modifier. Left out: the JIS table's legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_table"
           },
           "shift": {
+            "description": "The slot with ⇧. Left out: the JIS table's shifted legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_table"
           },
           "alt": {
+            "description": "The slot with ⌥ (Alt off the Mac). Left out: ⌥ + the key isn't the layout's, so what is staged is committed and the key goes to the app. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_table"
           },
           "alt_shift": {
+            "description": "The slot with ⌥⇧. Left out: ⌥⇧ + the key isn't the layout's. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_table"
           }
         },
         "additionalProperties": false,
         "minProperties": 1
-      }
+      },
+      "description": "A key code → its layers. One layer at least."
     },
     "slot_kana": {
       "oneOf": [
@@ -1534,11 +1693,12 @@
           "type": "object",
           "properties": {
             "t": {
-              "description": "What the key types, or its letter, jamo or kana.",
+              "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
               "type": "string",
               "minLength": 1
             },
             "r": {
+              "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
               "enum": [
                 "k",
                 "m",
@@ -1563,21 +1723,26 @@
         "type": "object",
         "properties": {
           "base": {
+            "description": "The slot with no modifier. Left out: the JIS table's legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_kana"
           },
           "shift": {
+            "description": "The slot with ⇧. Left out: the JIS table's shifted legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_kana"
           },
           "alt": {
+            "description": "The slot with ⌥ (Alt off the Mac). Left out: ⌥ + the key isn't the layout's, so what is staged is committed and the key goes to the app. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_kana"
           },
           "alt_shift": {
+            "description": "The slot with ⌥⇧. Left out: ⌥⇧ + the key isn't the layout's. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_kana"
           }
         },
         "additionalProperties": false,
         "minProperties": 1
-      }
+      },
+      "description": "A key code → its layers. One layer at least."
     },
     "slot_search": {
       "oneOf": [
@@ -1588,11 +1753,12 @@
           "type": "object",
           "properties": {
             "t": {
-              "description": "What the key types, or its letter, jamo or kana.",
+              "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
               "type": "string",
               "minLength": 1
             },
             "r": {
+              "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
               "enum": [
                 "l",
                 "x"
@@ -1666,6 +1832,7 @@
         "type": "object",
         "properties": {
           "base": {
+            "description": "The slot with no modifier. Left out: the JIS table's legend for the key (nothing on Space). null: the key types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1674,11 +1841,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1694,6 +1862,7 @@
             ]
           },
           "shift": {
+            "description": "The slot with ⇧. Left out: the JIS table's shifted legend for the key (nothing on Space). null: the key types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1702,11 +1871,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1722,6 +1892,7 @@
             ]
           },
           "alt": {
+            "description": "The slot with ⌥ (Alt off the Mac). Left out: ⌥ + the key isn't the layout's, so what is staged is committed and the key goes to the app. null: the layout takes the key and types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1730,11 +1901,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1750,6 +1922,7 @@
             ]
           },
           "alt_shift": {
+            "description": "The slot with ⌥⇧. Left out: ⌥⇧ + the key isn't the layout's. null: the layout takes the key and types nothing.",
             "oneOf": [
               {
                 "type": "null"
@@ -1758,11 +1931,12 @@
                 "type": "object",
                 "properties": {
                   "t": {
-                    "description": "What the key types, or its letter, jamo or kana.",
+                    "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
                     "type": "string",
                     "minLength": 1
                   },
                   "r": {
+                    "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
                     "enum": [
                       "l",
                       "x"
@@ -1780,7 +1954,8 @@
         },
         "additionalProperties": false,
         "minProperties": 1
-      }
+      },
+      "description": "A key code → its layers. One layer at least."
     },
     "slot_any": {
       "oneOf": [
@@ -1791,11 +1966,12 @@
           "type": "object",
           "properties": {
             "t": {
-              "description": "What the key types, or its letter, jamo or kana.",
+              "description": "What the key types there: a character or more for text (x), or its one letter, jamo, kana or mark.",
               "type": "string",
               "minLength": 1
             },
             "r": {
+              "description": "The slot's role. x: text, typed as it is (every way of reading). l: a letter, of a word, a spelling or the search (direct, table, search). c: a consonant, both an initial and a final (hangul). i: an initial only. f: a final only. v: a vowel. b: a break between syllables, which types nothing (table). k: a kana. m: a mark that attaches to the kana before it (kana).",
               "enum": [
                 "l",
                 "x",
@@ -1826,21 +2002,26 @@
         "type": "object",
         "properties": {
           "base": {
+            "description": "The slot with no modifier. Left out: the JIS table's legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_any"
           },
           "shift": {
+            "description": "The slot with ⇧. Left out: the JIS table's shifted legend for the key (nothing on Space). null: the key types nothing.",
             "$ref": "#/$defs/slot_any"
           },
           "alt": {
+            "description": "The slot with ⌥ (Alt off the Mac). Left out: ⌥ + the key isn't the layout's, so what is staged is committed and the key goes to the app. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_any"
           },
           "alt_shift": {
+            "description": "The slot with ⌥⇧. Left out: ⌥⇧ + the key isn't the layout's. null: the layout takes the key and types nothing.",
             "$ref": "#/$defs/slot_any"
           }
         },
         "additionalProperties": false,
         "minProperties": 1
-      }
+      },
+      "description": "A key code → its layers. One layer at least."
     }
   }
 }

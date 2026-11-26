@@ -1,7 +1,7 @@
 [package]
 name = "bada-web"
 description = "bada's engine as WebAssembly for the web harness: the eight C functions, and a way to pass bytes in."
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 rust-version = "1.85"
 license = "MIT"

@@ -121,9 +121,16 @@ Windows warns about it.
 
 A new install has **no muhenkan layout and no henkan profile** (§8.3). Keys type as the system's
 layout has them, and a key that would enter henkan (変換, or whatever the key table binds) doesn't:
-bada shows a short notice and puts it in the state (`harness.notice`). The shared settings page will
-open there once it exists. Until then, write `%APPDATA%\bada\settings.json` by hand. The easy-mode
-minimum is a muhenkan layout and one profile:
+bada shows a short notice and puts it in the state (`harness.notice`).
+
+**bada settings**, in the Start menu, opens the shared [settings page](../../settings/README.md) in
+the browser, and its first screen asks for the two layouts to start with. It is `bada.exe settings`:
+the command line, installed beside the text service, serves the page on `127.0.0.1` and reads and
+writes `%APPDATA%\bada`. The installer opens it once at the end. `bada.exe` is a console program, so
+its window sits minimized in the taskbar while the page is open.
+
+The same by hand, in `%APPDATA%\bada\settings.json`: the easy-mode minimum is a muhenkan layout and
+one profile:
 
 ```json
 {"format": "bada-settings/2",

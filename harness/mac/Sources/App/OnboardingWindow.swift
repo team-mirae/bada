@@ -4,8 +4,7 @@ import Cocoa
 /// and a key that would enter henkan opens this instead. The easy mode: pick the muhenkan layout and
 /// one henkan layout; that writes `settings.json`, and the key works from then on.
 ///
-/// The full settings are the shared settings page's, which isn't written yet: until it is, "Open
-/// Settings Folder" shows the files themselves.
+/// The full settings are the settings window's (SettingsWindow), from the input menu.
 final class OnboardingWindow: NSObject, NSWindowDelegate {
     static let shared = OnboardingWindow()
 
@@ -40,7 +39,7 @@ final class OnboardingWindow: NSObject, NSWindowDelegate {
         heading.font = .boldSystemFont(ofSize: NSFont.systemFontSize + 2)
         let intro = NSTextField(wrappingLabelWithString:
             "Pick the layout that types directly (muhenkan) and one layout that composes (henkan). "
-            + "You can add more layouts and profiles later, in settings.json.")
+            + "You can add more layouts and profiles later, in Settings.")
         intro.preferredMaxLayoutWidth = 420
 
         func row(_ title: String, _ control: NSView) -> NSStackView {

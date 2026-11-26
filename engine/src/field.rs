@@ -12,7 +12,7 @@ use crate::data::Strength;
 use crate::hangul::decompose;
 use crate::keymodel::symbol;
 use crate::layout::{
-    Convert, Do, Form, Keep, Layer, Layout, Press, Read, Role, Script, Table, WidthName, jis, key_index,
+    Convert, Do, Form, Keep, Layer, Layout, Press, Read, Role, Script, Slot, Table, WidthName, jis, key_index,
 };
 use crate::read::{Reading, Shape, is_text, read};
 use crate::script::katakana;
@@ -573,20 +573,34 @@ impl Field {
     fn key_evidence(&self, candidates: &[Arc<Layout>]) -> Vec<Option<f64>> {
         let none = vec![None; candidates.len()];
         let Some(models) = &self.session.data.key_models else { return none };
-        // A press with ⌥ types the same in every layout that reads it: the models see the other keys.
-        let plain = self.presses.iter().filter(|p| matches!(p.layer, Layer::Base | Layer::Shift));
-        let Some(symbols) = plain.map(|&p| symbol(p)).collect::<Option<Vec<u8>>>() else { return none };
+        // The layouts compared: those that read every key and have a model.
+        let compared: Vec<bool> = candidates
+            .iter()
+            .map(|l| self.presses.iter().all(|&p| l.takes(p)) && models.score(l.id(), &[]).is_some())
+            .collect();
+        // A press with ⌥ types the same in every layout, and so may a digit or a symbol: a key that
+        // types the same text in each layout compared, in whatever width, says nothing about which
+        // was meant, so the models see the other keys.
+        let same = |p: Press| {
+            let mut slots = candidates.iter().zip(&compared).filter(|c| *c.1).filter_map(|c| c.0.slot(p));
+            let first = slots.next();
+            let half = |s: &Slot| (s.role == Role::Text).then(|| s.text.chars().map(half_width).collect::<String>());
+            first.and_then(half).is_some_and(|f| slots.all(|s| half(s).as_ref() == Some(&f)))
+        };
+        let plain = |p: &&Press| matches!(p.layer, Layer::Base | Layer::Shift);
+        // With nothing but such keys, the models see them all: a number alone stays as it was.
+        let told = self.presses.iter().filter(plain).any(|&p| !same(p));
+        let seen = self.presses.iter().filter(plain).filter(|&&p| !told || !same(p));
+        let Some(symbols) = seen.map(|&p| symbol(p)).collect::<Option<Vec<u8>>>() else { return none };
         if symbols.is_empty() {
             return none;
         }
+        // The keys as the start of a word, which ends at the last one or (counted less) goes on.
+        let whole = |(keys, end): (f64, f64)| keys + (end.exp() * (1.0 - KEY_GOES_ON) + KEY_GOES_ON).ln();
         let scores: Vec<Option<f64>> = candidates
             .iter()
-            .map(|layout| {
-                let reads = self.presses.iter().all(|&p| layout.takes(p));
-                // The keys as the start of a word, which ends at the last one or (counted less) goes on.
-                let whole = |(keys, end): (f64, f64)| keys + (end.exp() * (1.0 - KEY_GOES_ON) + KEY_GOES_ON).ln();
-                models.score(layout.id(), &symbols).filter(|_| reads).map(whole)
-            })
+            .zip(&compared)
+            .map(|(layout, compared)| models.score(layout.id(), &symbols).filter(|_| *compared).map(whole))
             .collect();
         if scores.iter().flatten().count() < 2 {
             return none;

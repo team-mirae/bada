@@ -24,6 +24,8 @@ on:
       - "engine/**"
       - "crates/**"
       - "harness/mac/**"
+      - "cli/**"
+      - "settings/**"
       - "VERSION"
       - ".github/workflows/mac.yml"
   pull_request:

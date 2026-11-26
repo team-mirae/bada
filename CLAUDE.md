@@ -4,9 +4,9 @@ A new input method by Mirae Research, the next generation of bada ime: one engin
 per platform (macOS, Windows, Linux, web) and a command line, in one repository, `team-mirae/bada`.
 The *engine* turns keys into text; a *harness* is the platform program around it. The repository
 holds the standard, its schemas, the stock layout files, the key-table cases, the contract layer
-(`crates/compat`), the engine, and the four harnesses. Not here yet: the command line (`cli/`) and
-the settings page (`settings/`). `docs/design.md` §13 has the order of work, and `README.md` says
-what each folder holds.
+(`crates/compat`), the engine, the four harnesses, the settings page (`settings/`) and the command
+line (`cli/`), which is the page's host and has only the first of its commands. `docs/design.md`
+§13 has the order of work, and `README.md` says what each folder holds.
 
 ## Read first
 
@@ -71,6 +71,8 @@ references; it runs no engine. For the code:
 cargo test --workspace
 cargo clippy --workspace --all-targets
 ```
+
+The settings page has its own tests, with no browser: `node settings/test/all.mjs`.
 
 `tools/conformance` replays transcripts on a built engine (its README has the command). Each
 harness's README has its own build and test commands. When the key table's rules change (the
