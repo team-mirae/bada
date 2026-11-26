@@ -51,10 +51,12 @@ line (`cli/`), which is the page's host and has only the first of its commands. 
   skips numbers; that is expected, not a mistake to correct.
 - A release is one GitHub release, tagged `v<version>`, with every platform's build attached:
   the Windows installer (`harness/windows/tools/package.ps1`), the Mac app (`make dist` in
-  `harness/mac`, or the zip CI builds) and the Linux build (`harness/linux/tools/package.sh`).
+  `harness/mac`) and the Linux build (`harness/linux/tools/package.sh`). CI builds all three
+  (`.github/workflows/`), and on a `v*` tag attaches each to the tag's draft release.
 - **A published release can't be changed**: the repository's releases are immutable. So the order
-  is: create the release as a draft, push the tag (CI attaches the Mac zip to the draft), attach
-  the other builds, and publish last.
+  is: create the release as a draft, push the tag (CI attaches the three builds to the draft),
+  check that all three are there, and publish last. A workflow run by hand with `tag` builds that
+  tag again and attaches to its draft.
 - The standard's version (bada-compatible 2.0) and the file formats' (`bada-settings/2`,
   `bada-layout/3`) are separate, and change only when the standard does.
 
