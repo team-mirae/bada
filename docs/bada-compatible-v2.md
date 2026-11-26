@@ -843,6 +843,10 @@ can't follow an edit:
   alone.
 - A layout used alone in a profile is unaffected either way.
 
+A key that types the same text in every layout compared, in whatever width, says nothing about which
+was meant: a digit beside Korean and English, or `3` beside `３`. The models don't see such a key
+unless no other key is staged, so in `2022년` and `３月` the keys after the number decide.
+
 So the two warnings of §7.6. **The settings page shows the warning before it saves a change to a
 layout's JSON**, where the JSON is edited, saying which of the two applies and what it costs; a
 changed stock layout carries a "modified" mark in every list from then on. The command line refuses

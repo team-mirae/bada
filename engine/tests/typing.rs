@@ -824,6 +824,7 @@ fn key_models_say_which_layout_was_meant() {
         {"id": "ko-en", "name": "x", "layouts": ["ko-2-set", "en-qwerty"]},
         {"id": "three", "name": "x", "layouts": ["en-qwerty", "ko-2-set", "ja-romaji"]},
         {"id": "roman", "name": "x", "layouts": ["ko-bada-roman", "ja-romaji"]},
+        {"id": "romaji-en", "name": "x", "layouts": ["ja-romaji", "en-qwerty"]},
         {"id": "alone", "name": "x", "layouts": ["ko-2-set"]}]}});
     let buffers: [(&str, &[u8]); 6] = [
         ("key-models", &models),
@@ -857,6 +858,22 @@ fn key_models_say_which_layout_was_meant() {
     // bada roman beside romaji, whose letters are the same keys.
     assert_eq!(top("roman", "hanguk"), "한국");
     assert_eq!(top("roman", "kareha"), "彼は");
+    // A digit types the same in each layout, so the keys after it say which was meant.
+    for (profile, keys, want) in [
+        ("ko-en", "2022sus", "2022년"),
+        ("ko-en", "3dnjf", "3월"),
+        ("ko-en", "1g", "1ㅎ"),
+        ("ko-en", "dlf1", "일1"),
+        ("ko-en", "2nd", "2nd"),
+        ("three", "10dnjf", "10월"),
+        ("romaji-en", "3gatu", "３月"),
+        ("romaji-en", "2kai", "２会"),
+        ("romaji-en", "3d", "3d"),
+        // A number alone is compared as it was.
+        ("romaji-en", "2022", "2022"),
+    ] {
+        assert_eq!(top(profile, keys), want, "{profile}: {keys}");
+    }
     // A layout alone is ranked as it always was.
     assert_eq!(top("alone", "the"), "솓");
 }
