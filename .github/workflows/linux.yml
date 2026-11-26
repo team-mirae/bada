@@ -1,0 +1,84 @@
+# Builds bada for Linux on GitHub, in an Arch Linux container: the harness's tests
+# (harness/linux/tools/test.sh: ctest, the core with ASan and UBSan, a staged install and a fresh
+# Fcitx5 on it over D-Bus), then the package (tools/package.sh), uploaded as the artifact
+# "bada-linux". A v* tag also attaches the package to its release while that is a draft (one is
+# created if there is none yet). A published release can't be changed, so the tag is pushed before
+# the release is published: CLAUDE.md has the order.
+#
+# Run by hand with `tag`, it builds that tag and attaches to its draft: for a tag that was pushed
+# before a fix to this file.
+#
+# The addon is built against the container's Fcitx5 and C++ library, which are Arch's of that day:
+# the package's INSTALL.txt says which.
+
+name: linux
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "engine/**"
+      - "crates/**"
+      - "harness/linux/**"
+      - "cli/**"
+      - "settings/**"
+      - "docs/cases/**"
+      - "tools/conformance/**"
+      - "VERSION"
+      - ".github/workflows/linux.yml"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "A v* tag to build and attach to its draft release (empty: this branch, no release)"
+        required: false
+
+concurrency:
+  group: linux-${{ inputs.tag || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Test and build
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    permissions:
+      contents: write   # the release, on a v* tag
+    steps:
+      - name: What the build needs
+        run: pacman -Syu --noconfirm --needed base-devel cmake rust fcitx5 dbus libibus python-dbus python-gobject git github-cli
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: Swatinem/rust-cache@v2
+      - name: Tests
+        run: harness/linux/tools/test.sh
+      - name: Package
+        run: harness/linux/tools/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bada-linux
+          path: harness/linux/build/dist/*.tar.gz
+          if-no-files-found: error
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          # The repository's releases are immutable: once one is published its files can't be
+          # replaced. So the package goes onto a draft, and a published release is left as it is.
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          file=$(ls harness/linux/build/dist/bada-*-linux-*.tar.gz)
+          draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || echo none)
+          case "$draft" in
+            true) gh release upload "$TAG" "$file" --clobber ;;
+            false) echo "::notice::Release $TAG is published already, so its files can't be replaced. This run's package is its artifact only." ;;
+            *) gh release create "$TAG" "$file" --draft --title "bada $(cat VERSION)" --generate-notes ;;
+          esac

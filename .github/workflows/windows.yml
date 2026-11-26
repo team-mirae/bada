@@ -1,0 +1,107 @@
+# Builds bada for Windows on GitHub: the harness's tests, then the installer from harness/windows
+# (tools\package.ps1: the text service for x64 and x86, the command line, the settings page, the
+# engine's data), uploaded as the artifact "bada-windows". A v* tag also attaches the installer to
+# its release while that is a draft (one is created if there is none yet). A published release
+# can't be changed, so the tag is pushed before the release is published: CLAUDE.md has the order.
+#
+# Run by hand with `tag`, it builds that tag and attaches to its draft: for a tag that was pushed
+# before a fix to this file.
+#
+# The installer is not signed. The text service's own test needs an interactive logon, which a
+# runner doesn't have: it is run on a real machine (harness/windows/README.md).
+
+name: windows
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "engine/**"
+      - "crates/**"
+      - "harness/windows/**"
+      - "cli/**"
+      - "settings/**"
+      - "docs/cases/**"
+      - "tools/conformance/**"
+      - "VERSION"
+      - ".github/workflows/windows.yml"
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "A v* tag to build and attach to its draft release (empty: this branch, no release)"
+        required: false
+
+concurrency:
+  group: windows-${{ inputs.tag || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Test and build
+    runs-on: windows-2022
+    permissions:
+      contents: write   # the release, on a v* tag
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc, i686-pc-windows-msvc
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            . -> harness/windows/build/x64/cargo
+            . -> harness/windows/build/x86/cargo
+      - name: Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup -y --no-progress }
+      - name: Build (x64)
+        shell: pwsh
+        run: harness\windows\tools\build.ps1
+      - name: Tests
+        shell: pwsh
+        run: |
+          # test.ps1 without its last test, the text service in TSF: that needs an interactive logon.
+          $build = "harness\windows\build\x64"
+          $failed = @()
+          function Run($name, $exe, $arguments) { Write-Host "== $name"; & $exe @arguments; if ($LASTEXITCODE) { $script:failed += $name } }
+          Run 'key table' "$build\bada_keytable_cases.exe" @("docs\cases\key-table.json")
+          Run 'transcripts' "$build\bada_transcript.exe" @("tools\conformance\transcripts\any-engine.jsonl", "tools\conformance\transcripts\bada.jsonl")
+          Run 'core' "$build\bada_core_tests.exe" @()
+          Run 'state' "$build\bada_state_tests.exe" @()
+          & "$build\bada.exe" version
+          if ($LASTEXITCODE) { $failed += 'bada version' }
+          if ($failed.Count) { Write-Host "FAILED: $($failed -join ', ')"; exit 1 }
+      - name: Package
+        shell: pwsh
+        run: harness\windows\tools\package.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bada-windows
+          path: harness/windows/build/dist/*-setup.exe
+          if-no-files-found: error
+      - name: Attach to the release
+        if: startsWith(github.ref, 'refs/tags/v') || inputs.tag != ''
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          # The repository's releases are immutable: once one is published its files can't be
+          # replaced. So the installer goes onto a draft, and a published release is left as it is.
+          file="harness/windows/build/dist/bada-$(cat VERSION)-setup.exe"
+          draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || echo none)
+          case "$draft" in
+            true) gh release upload "$TAG" "$file" --clobber ;;
+            false) echo "::notice::Release $TAG is published already, so its files can't be replaced. This run's installer is its artifact only." ;;
+            *) gh release create "$TAG" "$file" --draft --title "bada $(cat VERSION)" --generate-notes ;;
+          esac
