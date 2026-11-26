@@ -34,7 +34,9 @@ DATA       := $(addprefix $(ENGINE)/data/,ko-words.tsv en-words.txt ja-words.txt
 # The Keyboard Viewer's legends, one keylayout for each stock layout that types (tools/make-keylayout.swift).
 KEYLAYOUTS := $(BUILD)/keylayouts/.stamp
 SWIFTFLAGS := -O -swift-version 5 -import-objc-header $(HEADER)
-FRAMEWORKS := -framework Cocoa -framework InputMethodKit -framework Carbon -framework IOKit -framework CoreServices
+FRAMEWORKS := -framework Cocoa -framework InputMethodKit -framework Carbon -framework IOKit -framework CoreServices -framework WebKit
+# The settings page (settings/), and the command line that hosts it in the settings window.
+PAGE       := $(wildcard $(ROOT)/settings/src/*)
 TESTS      := $(BUILD)/test/key-table-cases $(BUILD)/test/transcript $(BUILD)/test/unit
 
 export MACOSX_DEPLOYMENT_TARGET := $(MIN_MACOS)
@@ -49,6 +51,15 @@ $(BUILD)/libbada.a: FORCE
 	cd $(ROOT) && $(CARGO) build --release -p bada-engine --target aarch64-apple-darwin --target-dir "$(abspath $(CARGO_DIR))"
 	cd $(ROOT) && $(CARGO) build --release -p bada-engine --target x86_64-apple-darwin --target-dir "$(abspath $(CARGO_DIR))"
 	lipo -create -output $@.new $(CARGO_DIR)/aarch64-apple-darwin/release/libbada.a $(CARGO_DIR)/x86_64-apple-darwin/release/libbada.a
+	@if cmp -s $@.new $@; then rm $@.new; else mv $@.new $@; fi
+
+# The command line, for both architectures: the settings window's host (SettingsWindow.swift). It
+# is kept apart from Bada, the app's own program: a Mac's disk doesn't tell bada from Bada.
+$(BUILD)/cli/bada: FORCE
+	@mkdir -p $(dir $@)
+	cd $(ROOT) && $(CARGO) build --release -p bada-cli --target aarch64-apple-darwin --target-dir "$(abspath $(CARGO_DIR))"
+	cd $(ROOT) && $(CARGO) build --release -p bada-cli --target x86_64-apple-darwin --target-dir "$(abspath $(CARGO_DIR))"
+	lipo -create -output $@.new $(CARGO_DIR)/aarch64-apple-darwin/release/bada $(CARGO_DIR)/x86_64-apple-darwin/release/bada
 	@if cmp -s $@.new $@; then rm $@.new; else mv $@.new $@; fi
 
 $(BUILD)/%/Bada: $(SOURCES) $(HEADER) $(BUILD)/libbada.a
@@ -80,12 +91,15 @@ $(BUILD)/%.tiff: Resources/icons/%.png Resources/icons/%@2x.png
 
 # The code-signing identifier must equal the bundle id, or macOS refuses the input method's
 # connection and nothing types (the standard, §12).
-$(APP): $(BUILD)/Bada $(ICONS) $(KEYLAYOUTS) $(BUILD)/Info.plist $(wildcard Resources/*.lproj/*) $(ROOT)/LICENSE $(DATA)
+$(APP): $(BUILD)/Bada $(BUILD)/cli/bada $(ICONS) $(KEYLAYOUTS) $(BUILD)/Info.plist $(wildcard Resources/*.lproj/*) $(ROOT)/LICENSE $(DATA) $(PAGE)
 	rm -rf $@
-	mkdir -p $@/Contents/MacOS $@/Contents/Resources/data
+	mkdir -p $@/Contents/MacOS $@/Contents/Helpers $@/Contents/Resources/data $@/Contents/Resources/settings
 	cp $(DATA) $@/Contents/Resources/data/
+	cp $(PAGE) $@/Contents/Resources/settings/
 	cp $(BUILD)/Info.plist $@/Contents/Info.plist
 	cp $(BUILD)/Bada $@/Contents/MacOS/Bada
+	cp $(BUILD)/cli/bada $@/Contents/Helpers/bada
+	codesign --force --sign "$(SIGN_IDENTITY)" --identifier com.teammirae.bada.cli $@/Contents/Helpers/bada
 	cp $(ICONS) $(BUILD)/keylayouts/*.keylayout $@/Contents/Resources/
 	cp -R Resources/en.lproj Resources/ko.lproj Resources/ja.lproj $@/Contents/Resources/
 	cp $(ROOT)/LICENSE $@/Contents/Resources/LICENSE.txt

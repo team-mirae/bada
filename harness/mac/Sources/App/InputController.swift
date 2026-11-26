@@ -321,6 +321,7 @@ final class BadaInputController: IMKInputController, TextTarget {
             menu.addItem(NSMenuItem(title: "Set Up bada…", action: #selector(setUp(_:)), keyEquivalent: ""))
         }
         menu.addItem(.separator())
+        menu.addItem(NSMenuItem(title: "Settings…", action: #selector(openSettings(_:)), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Open Settings Folder", action: #selector(openSettingsFolder(_:)), keyEquivalent: ""))
         if !AXIsProcessTrusted() || !HIDKeys.isAllowed {
             menu.addItem(NSMenuItem(title: "Allow Language Keys Everywhere…", action: #selector(allowKeys(_:)), keyEquivalent: ""))
@@ -349,6 +350,10 @@ final class BadaInputController: IMKInputController, TextTarget {
 
     @objc func setUp(_ sender: Any?) {
         OnboardingWindow.shared.show()
+    }
+
+    @objc func openSettings(_ sender: Any?) {
+        SettingsWindow.shared.show()
     }
 
     @objc func openSettingsFolder(_ sender: Any?) {

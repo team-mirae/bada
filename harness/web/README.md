@@ -42,7 +42,8 @@ No test opens a browser.
 | `src/settings.js` | The settings file and where things are kept in local storage |
 | `src/harness.js` | The harness without its page: `press` of §6.3, the key table carried out, settings, layouts and dictionary fed to the session, the published state |
 | `src/app.js`, `index.html`, `style.css` | The page: the browser's keys in, the model mirrored into a `<textarea>`, the marked text, the menu, the state panel |
-| `src/settings-ui.js` | The settings dialog (JSON editors) and the onboarding |
+| `src/settings-ui.js` | The settings dialog, which holds the shared [settings page](../../settings/README.md), and the onboarding |
+| `src/settings-host.js` | This harness as the page's host: the folder is local storage, and the engine is the page's own |
 | `src/keyboard.js`, `keyboards.js` | The keyboard drawn on the page, with the legends of the layouts in use |
 | `src/load.js`, `build.mjs` | Loading and building; `manifest.json` says which wasm, data and layout files a build has |
 
@@ -127,6 +128,6 @@ longer moves the focus back out of the text field.
 ## Not done
 
 - No data (above), and no borrowed buffer has been passed for real.
-- No settings UI beyond the JSON editors: the shared settings page doesn't exist yet.
+- The settings page keeps no history here: there is nothing to undo to.
 - `rtl` is not among the harness's features: a `<textarea>` can't draw one run right to left.
 - Not tried on a phone, in Safari or in Firefox.

@@ -22,6 +22,12 @@
 	<string>@VERSION@</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Mirae Research</string>
+	<!-- The settings window loads its page from the host on this Mac (SettingsWindow.swift). -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>InputMethodConnectionName</key>
 	<string>com.teammirae.inputmethod.Bada_Connection</string>
 	<key>InputMethodServerControllerClass</key>

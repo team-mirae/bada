@@ -37,6 +37,10 @@ rm -rf "$stage"
 DESTDIR=$stage cmake --install "$build" > /dev/null
 (cd "$stage" && find . -type f | sort)
 test -f "$stage/usr/share/bada/data/kanji.bin" || { echo "the engine's data isn't installed"; exit 1; }
+# The command line finds the settings page beside itself, and checks a new install's folder.
+test -f "$stage/usr/share/bada/settings/index.html" || { echo "the settings page isn't installed"; exit 1; }
+BADA_CONFIG_DIR="$build/no-settings" "$stage/usr/bin/bada" settings validate
+"$stage/usr/bin/bada" version
 
 echo "== a fresh fcitx5 on the staged install, over D-Bus"
 sh "$here/tools/e2e-dbus.sh" "$stage/usr"

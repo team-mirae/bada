@@ -692,7 +692,10 @@ running can still be set up, and nothing needs a socket.
   settings stay in effect, and the problems are in the state for the settings page to show.
 - `P_describe`'s `settings.schema` is a JSON Schema for the `engine` part, with titles in en / ko /
   ja; the standard has the schema for `keys`. **One settings page**, driven by the two, serves every
-  harness (WKWebView, WebView2, a browser on Linux, the simulator).
+  harness (WKWebView, WebView2, a browser on Linux, the simulator). As built (owner, 2026-11-26):
+  the page's host on macOS, Windows and Linux is the command line, `bada settings`, which serves
+  it on `127.0.0.1`; the Mac shows it in a WKWebView window, Windows and Linux in the browser.
+  Windows has no WebView2 program.
 
 ### 9.2 `bada`, the command line
 
@@ -854,6 +857,7 @@ Settled by the owner, 2026-11-24:
 | かな and 変換 in a profile that has its own key | Still the next entry (⇧: the previous one) when the menu has two rows or more; otherwise the key to their profile (owner, 2026-11-26; §8.4) |
 | Negative entries | A layout's `forms`, in its file: as many as it lists, the first −1, each made from the staged keys and the file alone (a script, the keys in a width, a jamo of each syllable), so the same keys give the same entries. One layout's, in a profile with `script_forms` on. v1 had two at most, hiragana and katakana (owner, 2026-11-26) |
 | ⇧Tab as the toggle | While no menu is open, ⇧Tab goes between muhenkan and henkan in the web harness, which has it built in for keyboards with no language key. Every other harness has it as a binding the user writes (`["menu.prev", "mode.toggle"]`), and no preset binds ⇧Tab (owner, 2026-11-26) |
+| The settings page's host | `bada settings`, the command line, on macOS, Windows and Linux: it serves the page on `127.0.0.1` and reads and writes the folder. The Mac shows it in a window of Bada.app; Windows and Linux in the browser, with no WebView2 program. On the web the harness is the host (owner, 2026-11-26; §9.1) |
 | Pairs of language keys | Two language keys held together (`KanaMode+Lang1`, `Convert+Lang1`, …) are a binding of their own, for any action; unbound by default (§8.2) |
 | ¥ in the Korean layouts | `ko-2-set` and `ko-bada-roman` type ₩ on the ¥ key (owner, 2026-11-24); ⇧¥ stays `\|` |
 

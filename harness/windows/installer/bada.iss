@@ -62,8 +62,8 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 WelcomeLabel2=This will install [name/ver] on your computer.%n%nYou don't need to close other apps. Apps that are open keep the old version, or none, until they restart.
 ConfirmUninstall=Remove bada from this PC and from your keyboards?
 FinishedHeadingLabel=bada is installed
-FinishedLabelNoIcons=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until bada has a settings file. The page that opens next says how to write one.
-FinishedLabel=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until bada has a settings file. The page that opens next says how to write one.
+FinishedLabelNoIcons=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until they are: bada Settings, which opens next, asks for the two to start with.
+FinishedLabel=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until they are: bada Settings, which opens next, asks for the two to start with.
 
 [Files]
 ; The engine is inside the DLL.
@@ -71,13 +71,20 @@ Source: "{#Build}\x64\bada-tsf.dll"; DestDir: "{app}\x64"; Flags: ignoreversion
 Source: "{#Build}\x86\bada-tsf.dll"; DestDir: "{app}\x86"; Flags: ignoreversion
 ; The engine's data, for both: each file is the buffer of its name, mapped by the text service.
 Source: "{#Build}\data\*"; DestDir: "{app}\data"; Flags: ignoreversion
+; The command line, and the settings page it serves: "bada settings" opens it in the browser.
+Source: "{#Build}\x64\bada.exe"; DestDir: "{app}"; Flags: ignoreversion
+Source: "{#Build}\settings\*"; DestDir: "{app}\settings"; Flags: ignoreversion
 Source: "{#Root}\LICENSE"; DestDir: "{app}"; DestName: "LICENSE.txt"; Flags: ignoreversion
 Source: "..\src\tip\bada.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; Run by Setup and the uninstaller as the user, to change their language list.
 Source: "keyboards.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
+[Icons]
+; Minimized: the command line is a console program, and its window has nothing to show.
+Name: "{autoprograms}\bada Settings"; Filename: "{app}\bada.exe"; Parameters: "settings"; IconFilename: "{app}\bada.ico"; Flags: runminimized; Comment: "The settings of the bada input method"
+
 [Run]
-Filename: "{#DocsUrl}/blob/dev-latest/harness/windows/README.md#first-run"; Description: "Open the first-run notes"; Flags: postinstall shellexec nowait skipifsilent runasoriginaluser
+Filename: "{app}\bada.exe"; Parameters: "settings"; Description: "Open bada Settings"; Flags: postinstall nowait skipifsilent runasoriginaluser runminimized
 
 [Code]
 const

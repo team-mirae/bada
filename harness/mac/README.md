@@ -64,7 +64,15 @@ installed, only one should have its key tap running, so allow Accessibility for 
 
 A new install has no muhenkan layout and no henkan profile. The first key that would enter henkan
 (かな) opens a small window: pick the muhenkan layout and one henkan layout. That writes
-`settings.json`. The input menu has "Set Up bada…" for the same, and "Open Settings Folder".
+`settings.json`. The input menu has "Set Up bada…" for the same, "Settings…" and "Open Settings
+Folder".
+
+**Settings…** opens the settings window: the shared [settings page](../../settings/README.md) in a
+web view. Its host is the command line inside the bundle (`Contents/Helpers/bada`, started as
+`bada settings --no-open --embedded` while the window is open), which serves the page on
+`127.0.0.1` and reads and writes the settings folder. `build/Bada.app/Contents/MacOS/Bada
+--settings` opens the window from a build, with no input method started; `BADA_HOME` names the
+folder it changes.
 
 ## Permissions
 
@@ -122,7 +130,8 @@ maps each and passes it; `make check` lists the ones that were passed.
 
 ## Not done
 
-- The shared settings page: until it exists, the onboarding has the easy mode only, and the rest is
-  the files.
+- The settings window has not been used from an installed copy yet: only from a build, with
+  `--settings`.
 - Right-to-left drawing: the harness doesn't have the `rtl` feature.
-- `history/`: the onboarding writes `settings.json` without keeping the one before.
+- `history/`: the onboarding window writes `settings.json` without keeping the one before. The
+  settings window keeps it.

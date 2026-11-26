@@ -102,6 +102,36 @@ if(WIN32)
     COMMENT "the engine's data, in ${BADA_DATA_OUT}"
     VERBATIM)
 
+  # The command line (cli/), with the static CRT as the text service has it: the settings page's
+  # host. And the page (settings/), beside the build folders as the data is: build\settings.
+  find_program(CARGO cargo HINTS "$ENV{USERPROFILE}/.cargo/bin" "$ENV{HOME}/.cargo/bin" REQUIRED)
+  if(NOT BADA_CARGO_DIR)
+    set(BADA_CARGO_DIR "${CMAKE_CURRENT_BINARY_DIR}/cargo")
+  endif()
+  if(NOT BADA_RUST_TARGET)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+      set(BADA_RUST_TARGET i686-pc-windows-msvc)
+    else()
+      set(BADA_RUST_TARGET x86_64-pc-windows-msvc)
+    endif()
+  endif()
+  set(BADA_CLI_BUILT "${BADA_CARGO_DIR}/${BADA_RUST_TARGET}/release/bada.exe")
+  get_filename_component(BADA_PAGE_OUT "${CMAKE_CURRENT_BINARY_DIR}/../settings" ABSOLUTE)
+  file(GLOB BADA_PAGE "${BADA_ROOT}/settings/src/*")
+  add_custom_target(bada_cli ALL
+    COMMAND ${CMAKE_COMMAND} -E env "RUSTFLAGS=-Ctarget-feature=+crt-static"
+      ${CARGO} build --release -p bada-cli --target ${BADA_RUST_TARGET} --target-dir "${BADA_CARGO_DIR}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${BADA_CLI_BUILT}" "${CMAKE_CURRENT_BINARY_DIR}/bada.exe"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${BADA_PAGE_OUT}"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BADA_PAGE} "${BADA_PAGE_OUT}"
+    WORKING_DIRECTORY "${BADA_ROOT}"
+    COMMENT "cargo build --release -p bada-cli, and the settings page in ${BADA_PAGE_OUT}"
+    VERBATIM)
+  # One cargo at a time in the build's target folder.
+  if(TARGET bada_engine_build)
+    add_dependencies(bada_cli bada_engine_build)
+  endif()
+
   # The text service: one DLL, the engine inside it.
   enable_language(RC)
   configure_file(src/tip/bada-tsf.rc.in "${CMAKE_CURRENT_BINARY_DIR}/bada-tsf.rc" @ONLY)

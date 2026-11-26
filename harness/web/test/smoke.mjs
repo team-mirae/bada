@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { Engine, HARNESS } from "../src/engine.js";
 import { Harness } from "../src/harness.js";
 import { PRESETS } from "../src/keytable.js";
+import { webHost } from "../src/settings-host.js";
 import * as S from "../src/settings.js";
 
 const here = fileURLToPath(new URL("..", import.meta.url));
@@ -505,6 +506,42 @@ await test("a custom layout from storage, one that replaces a stock layout, and 
   assert.ok(wrong.problems.some(p => p.level === "error"), JSON.stringify(wrong.problems));
   assert.equal(h.loadLayout("{").problems[0].code, "bad-json");
   assert.deepEqual(Object.keys(h.customLayouts), ["en-greek"]);
+});
+
+await test("the harness is a host of the settings page: the folder is storage", async () => {
+  const { h, storage } = await page();
+  const stock = Object.fromEntries(["en-qwerty", "ko-2-set", "ja-kana"].map(id => [id, JSON.parse(readFileSync(root + `engine/layouts/${id}.json`, "utf8"))]));
+  const host = webHost(() => h, () => stock);
+  assert.deepEqual(await host.info(), { platform: "web", harness: S.WEB, version, folder: "this browser's local storage", embedded: true });
+  assert.equal((await host.describe()).abi.major, 2);
+  assert.deepEqual((await host.stock()).map(l => [l.id, JSON.parse(l.text).id]), [["en-qwerty", "en-qwerty"], ["ko-2-set", "ko-2-set"], ["ja-kana", "ja-kana"]]);
+  assert.deepEqual(await host.files(), { settings: null, dictionary: null, layouts: [], history: [] }, "a new install: nothing kept");
+  // A check changes nothing; a write is taken, kept and in effect.
+  const checked = await host.check({ settings: two() });
+  assert.deepEqual([checked.ok, checked.problems, checked.layouts.length, h.profiles.length, storage.getItem(S.STORE.settings)], [true, [], 11, 0, null]);
+  const written = await host.write("settings.json", two());
+  assert.deepEqual([written.ok, written.files.settings.text, h.profiles.map(p => p.id)], [true, two(), ["main", "ja", "work"]]);
+  // What is wrong is refused, with where: nothing changes.
+  const wrong = JSON.parse(two());
+  wrong.keys = { bindings: [{ on: "Lang1", do: ["jump"] }] };
+  const refused = await host.write("settings.json", JSON.stringify(wrong));
+  assert.deepEqual([refused.ok, refused.problems.map(p => `${p.level} ${p.path} ${p.code}`), refused.files.settings.text], [false, ["error keys.bindings[0].do[0] unknown-action"], two()]);
+  assert.equal((await host.check({ settings: "{" })).problems[0].code, "bad-json");
+  // A layout of the user's: its file is named by its id.
+  const mine = { ...stock["ja-kana"], id: "ja-kana-five", name: { en: "Kana, five forms" } };
+  assert.equal((await host.write("layouts/ja-other.json", JSON.stringify(mine))).ok, false, "the name isn't the file's id");
+  const made = await host.write("layouts/ja-kana-five.json", JSON.stringify(mine));
+  assert.deepEqual([made.ok, made.files.layouts.map(l => l.id), made.layouts.length], [true, ["ja-kana-five"], 12]);
+  assert.equal((await host.check({ layout: JSON.stringify({ ...mine, format: "bada-layout/2" }) })).ok, false);
+  const gone = await host.remove("layouts/ja-kana-five.json");
+  assert.deepEqual([gone.ok, gone.files.layouts, h.layouts.length], [true, [], 11]);
+  // The dictionary, and what the page can't do here.
+  const dictionary = '{"format": "bada-dictionary", "version": 1, "positive": [{"word": "데이터센터"}], "negative": []}';
+  assert.deepEqual([(await host.write("dictionary.json", dictionary)).files.dictionary.text, h.dictionary], [dictionary, { positive: 1, negative: 0 }]);
+  assert.equal((await host.remove("dictionary.json")).files.dictionary, null);
+  assert.equal((await host.write("../settings.json", "{}")).ok, false);
+  assert.equal((await host.undo("settings-20261126-000000.json")).ok, false);
+  assert.equal((await host.state()).harness.keys.chords, true, "the published state, for the keys it sees");
 });
 
 await test("the user dictionary from storage", async () => {

@@ -1,0 +1,175 @@
+/* The settings page. Everything is under .bada-settings, so a page that hosts it (the web harness)
+   keeps its own styles. The look is bada ime's settings dialog: a tab strip over one scrolling page. */
+.bada-settings{
+  color-scheme:light;
+  --bg:#f4f6f8;--surface:#ffffff;--sunken:#eef1f4;--border:#d5dbe1;--text:#17202a;--muted:#5d6b78;
+  --accent:#1f6f9f;--accent-text:#ffffff;--accent-soft:#e3eff6;
+  --ok:#2e8b57;--warn-bg:#fff4d6;--warn-border:#e8c766;--warn-text:#6b5200;--danger:#b23b3b;
+  --cap:#fbfbfa;--cap-edge:#b9bec4;--shadow:0 18px 50px rgba(23,32,42,.16);
+  --ui:-apple-system,BlinkMacSystemFont,"Segoe UI","Apple SD Gothic Neo","Hiragino Sans","Noto Sans KR","Noto Sans JP",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color:var(--text);font:15px/1.5 var(--ui);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]) .bada-settings{
+    color-scheme:dark;
+    --bg:#12171c;--surface:#1a2128;--sunken:#151b21;--border:#2d3741;--text:#e6ebef;--muted:#9aa7b3;
+    --accent:#6fb3dc;--accent-text:#0d1318;--accent-soft:#1d3342;
+    --ok:#76c79a;--warn-bg:#3a3015;--warn-border:#7a6420;--warn-text:#f0d98a;--danger:#e88a8a;
+    --cap:#353c44;--cap-edge:#20262c;--shadow:0 18px 50px rgba(0,0,0,.5);
+  }
+}
+:root[data-theme="dark"] .bada-settings{
+  color-scheme:dark;
+  --bg:#12171c;--surface:#1a2128;--sunken:#151b21;--border:#2d3741;--text:#e6ebef;--muted:#9aa7b3;
+  --accent:#6fb3dc;--accent-text:#0d1318;--accent-soft:#1d3342;
+  --ok:#76c79a;--warn-bg:#3a3015;--warn-border:#7a6420;--warn-text:#f0d98a;--danger:#e88a8a;
+  --cap:#353c44;--cap-edge:#20262c;--shadow:0 18px 50px rgba(0,0,0,.5);
+}
+
+/* The page of its own, as `bada settings` serves it. */
+body.bada-page{margin:0;background:#f4f6f8;padding:0}
+@media (prefers-color-scheme: dark){body.bada-page{background:#12171c}}
+body.bada-page .bada-settings.window{min-height:100vh;background:var(--surface)}
+
+.bada-settings *,.bada-settings *::before,.bada-settings *::after{box-sizing:border-box}
+.bada-settings button,.bada-settings select,.bada-settings input,.bada-settings textarea{font:inherit;color:inherit}
+.bada-settings button,.bada-settings select{font-size:.9rem;border:1px solid var(--border);background:var(--surface);padding:5px 11px;border-radius:8px;cursor:pointer}
+.bada-settings button:hover,.bada-settings select:hover{border-color:color-mix(in srgb,var(--accent) 55%,var(--border))}
+.bada-settings button:disabled,.bada-settings select:disabled,.bada-settings input:disabled{opacity:.5;cursor:default}
+.bada-settings button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-text)}
+.bada-settings button.quiet{border-color:transparent;background:transparent;color:var(--muted);padding:3px 7px}
+.bada-settings button.quiet:hover{color:var(--text);background:var(--sunken)}
+.bada-settings button.quiet.start{justify-self:start;padding-left:0}
+.bada-settings button.danger{color:var(--danger)}
+.bada-settings button.link{border:0;background:transparent;padding:0;color:var(--accent);text-decoration:underline;font-size:inherit}
+.bada-settings button.recording{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 22%,transparent)}
+.bada-settings :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.bada-settings input[type=text],.bada-settings input[type=number],.bada-settings textarea{border:1px solid var(--border);background:var(--bg);border-radius:7px;padding:4px 8px}
+.bada-settings input[type=number]{width:70px;text-align:right;font-variant-numeric:tabular-nums}
+.bada-settings input[type=checkbox]{accent-color:var(--accent);width:15px;height:15px;flex:none}
+.bada-settings h2,.bada-settings h3,.bada-settings p{margin:0}
+.bada-settings h3{font-size:1rem;text-wrap:balance}
+.bada-settings a{color:var(--accent)}
+.bada-settings .muted{color:var(--muted)}
+.bada-settings .small{font-size:.85rem}
+.bada-settings .mono{font-family:var(--mono);font-size:.82em}
+.bada-settings .hint{color:var(--muted);font-size:.82rem;max-width:66ch}
+.bada-settings .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bada-settings .row.end{justify-content:flex-end}
+.bada-settings .row.top-aligned{align-items:flex-start;flex-wrap:nowrap}
+.bada-settings .check{display:flex;gap:8px;align-items:flex-start}
+.bada-settings .check input{margin-top:4px}
+.bada-settings .grow{flex:1;min-width:0}
+.bada-settings .right{text-align:right}
+.bada-settings .stack{display:grid;gap:10px;align-content:start;min-width:0}
+.bada-settings .stack.tight{gap:4px}
+
+.bada-settings .top{display:flex;align-items:center;gap:10px 14px;padding:11px 16px;border-bottom:1px solid var(--border);flex-wrap:wrap;background:var(--surface)}
+.bada-settings .brand{display:flex;align-items:center;gap:9px;font-size:1.05rem}
+.bada-settings .brand img{display:block}
+.bada-settings .top button[aria-pressed="true"]{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
+.bada-settings .status{display:flex;gap:8px 16px;align-items:center;flex-wrap:wrap;padding:7px 16px;border-bottom:1px solid var(--border);background:var(--sunken);font-size:.85rem;color:var(--muted)}
+.bada-settings .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--ok);margin-right:6px}
+.bada-settings .dot.warn{background:var(--warn-border)}
+.bada-settings .dot.bad{background:var(--danger)}
+.bada-settings .problems{display:grid;gap:4px;width:100%;margin:2px 0 4px;padding:8px 10px;border:1px solid var(--warn-border);background:var(--warn-bg);color:var(--warn-text);border-radius:9px}
+.bada-settings .tabs{display:flex;gap:2px;padding:8px 12px 0;border-bottom:1px solid var(--border);overflow-x:auto;background:var(--surface)}
+.bada-settings .tabs button{border:0;border-radius:8px 8px 0 0;background:transparent;padding:7px 13px;color:var(--muted);white-space:nowrap}
+.bada-settings .tabs button[aria-selected="true"]{color:var(--text);background:var(--bg);font-weight:600;box-shadow:inset 0 -2px 0 var(--accent)}
+.bada-settings .body{display:grid;grid-template-columns:minmax(0,1fr);background:var(--surface)}
+.bada-settings .body.with-json{grid-template-columns:minmax(0,1fr) minmax(260px,340px)}
+.bada-settings .page{padding:16px 20px 28px;display:grid;grid-template-columns:minmax(0,1fr);gap:14px;align-content:start;min-width:0;width:100%;max-width:1100px}
+.bada-settings .json{border-left:1px solid var(--border);background:var(--sunken);min-width:0}
+.bada-settings .json[hidden]{display:none}
+.bada-settings .json header{padding:8px 12px;border-bottom:1px solid var(--border);font-size:.82rem;color:var(--muted);display:flex;justify-content:space-between;gap:8px}
+.bada-settings .json pre{margin:0;padding:10px 12px;font:11.5px/1.5 var(--mono);overflow:auto;max-height:80vh;white-space:pre;tab-size:2;user-select:text;-webkit-user-select:text}
+
+.bada-settings .split{display:grid;grid-template-columns:230px minmax(0,1fr);gap:16px;align-items:start}
+.bada-settings .list{display:grid;gap:4px}
+.bada-settings .item{display:grid;gap:1px;text-align:left;width:100%;padding:8px 10px;border-radius:10px;border:1px solid transparent;background:transparent}
+.bada-settings .item:hover{background:var(--sunken)}
+.bada-settings .item[aria-current="true"]{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 40%,var(--border))}
+.bada-settings .item b{font-weight:600}
+.bada-settings .item small{color:var(--muted);font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.bada-settings .badge{display:inline-grid;place-items:center;min-width:22px;height:22px;padding:0 5px;border-radius:6px;background:var(--accent);color:var(--accent-text);font-size:.8rem;font-weight:600;margin-right:7px}
+.bada-settings .badge.plain{background:var(--sunken);color:var(--muted);border:1px solid var(--border)}
+.bada-settings .card{border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:grid;gap:9px;min-width:0}
+.bada-settings .card > h3{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.bada-settings .card > h3 small{font-weight:400;color:var(--muted);font-size:.8rem}
+.bada-settings .field{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px;align-items:center}
+.bada-settings .field > span:first-child{color:var(--muted);font-size:.88rem}
+.bada-settings .field select,.bada-settings .field input[type=text]{width:100%;min-width:0}
+.bada-settings .pill{display:inline-block;font-size:.72rem;line-height:1;padding:3px 7px;border-radius:999px;border:1px solid var(--border);color:var(--muted);white-space:nowrap;background:transparent}
+.bada-settings .pill.on{border-color:color-mix(in srgb,var(--accent) 50%,var(--border));color:var(--accent);background:var(--accent-soft)}
+.bada-settings .pill.warn{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
+.bada-settings button.pill{padding:5px 9px;font-size:.78rem}
+.bada-settings .cand{display:grid;grid-template-columns:auto minmax(0,1fr) auto auto auto;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--border)}
+.bada-settings .cand:first-of-type{border-top:0}
+.bada-settings .cand .name{min-width:0;overflow-wrap:anywhere}
+.bada-settings .order{display:flex;flex-direction:column}
+.bada-settings .order button{padding:0 5px;line-height:1.05;font-size:.7rem;border-radius:5px}
+.bada-settings .forms{display:grid;gap:3px;padding:8px 10px;background:var(--sunken);border-radius:9px;font-size:.88rem}
+.bada-settings .forms.off{opacity:.55}
+.bada-settings .forms div{display:flex;gap:10px}
+.bada-settings .forms i{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums;width:2.2em;text-align:right}
+
+.bada-settings kbd{font:inherit;font-size:.85rem;display:inline-block;min-width:26px;text-align:center;border:1px solid var(--cap-edge);border-bottom-width:2px;border-radius:6px;padding:1px 7px;background:var(--cap);color:var(--text);white-space:nowrap}
+.bada-settings .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:8px}
+.bada-settings .keytile{border:1px solid var(--border);border-radius:10px;padding:8px 9px;display:grid;gap:4px;align-content:start;background:var(--bg)}
+.bada-settings .keytile.off{opacity:.55;border-style:dashed}
+.bada-settings .keytile small{color:var(--muted);font-size:.74rem;line-height:1.3}
+.bada-settings .binding{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:6px 12px;align-items:start;padding:9px 0;border-top:1px solid var(--border)}
+.bada-settings .binding:first-of-type{border-top:0}
+.bada-settings .binding .on{grid-row:span 2}
+.bada-settings .binding.inactive .on,.bada-settings .binding.inactive .does{opacity:.5}
+.bada-settings .does{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.bada-settings .chip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--border);background:var(--bg);border-radius:8px;padding:2px 8px;font-size:.86rem}
+.bada-settings .chip.warn{border-color:var(--warn-border);background:var(--warn-bg);color:var(--warn-text)}
+.bada-settings .chip button{border:0;background:transparent;padding:0 0 0 3px;color:var(--muted);font-size:.9rem;line-height:1}
+.bada-settings .else{color:var(--muted);font-size:.74rem}
+.bada-settings .says{grid-column:2 / -1;color:var(--muted);font-size:.8rem}
+.bada-settings .says.editor{color:var(--text);font-size:.9rem;display:grid;gap:6px;padding:8px 10px;background:var(--sunken);border-radius:9px}
+.bada-settings select.small{font-size:.8rem;padding:2px 6px;border-radius:7px}
+
+.bada-settings table{border-collapse:collapse;width:100%;font-size:.9rem}
+.bada-settings th,.bada-settings td{text-align:left;padding:6px 8px;border-top:1px solid var(--border);vertical-align:middle}
+.bada-settings th{border-top:0;color:var(--muted);font-weight:500;font-size:.8rem}
+.bada-settings tr.pick{cursor:pointer}
+.bada-settings tr.pick:hover td{background:var(--sunken)}
+.bada-settings tr[aria-current="true"] td{background:var(--accent-soft)}
+.bada-settings tr[hidden]{display:none}
+.bada-settings .scroll{overflow-x:auto}
+.bada-settings .searchbar{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--bg);border-radius:10px;padding:3px 10px}
+.bada-settings .searchbar:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 20%,transparent)}
+.bada-settings .searchbar .glass{color:var(--muted);font-size:1.15rem;line-height:1}
+.bada-settings input.search{flex:1;min-width:0;border:0;background:transparent;padding:5px 0;outline:none;-webkit-appearance:none;appearance:none}
+.bada-settings input.search::-webkit-search-cancel-button{display:none}
+.bada-settings textarea.code{font:12px/1.45 var(--mono);width:100%;min-height:260px;resize:vertical;tab-size:2;white-space:pre}
+.bada-settings .banner{border:1px solid var(--warn-border);background:var(--warn-bg);color:var(--warn-text);border-radius:10px;padding:8px 12px;font-size:.88rem;width:100%}
+.bada-settings .okline{color:var(--ok)}
+.bada-settings .errline{color:var(--danger)}
+.bada-settings .warnline{color:var(--warn-text)}
+.bada-settings .about{display:grid;gap:8px;justify-items:start}
+.bada-settings .about h2{font-size:1.6rem}
+
+.bada-settings dialog.first{border:1px solid var(--border);border-radius:14px;padding:0;width:min(460px,94vw);background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.bada-settings dialog.first::backdrop{background:rgba(0,0,0,.35)}
+.bada-settings .dialog-head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border)}
+.bada-settings .dialog-body{padding:14px 16px 16px;display:grid;gap:12px}
+
+@media (max-width:860px){
+  .bada-settings .body.with-json{grid-template-columns:minmax(0,1fr)}
+  .bada-settings .json{border-left:0;border-top:1px solid var(--border)}
+  .bada-settings .json pre{max-height:320px}
+}
+@media (max-width:700px){
+  .bada-settings .split{grid-template-columns:minmax(0,1fr)}
+  .bada-settings .list{grid-auto-flow:column;grid-auto-columns:minmax(170px,1fr);overflow-x:auto;padding-bottom:4px}
+  .bada-settings .binding{grid-template-columns:minmax(0,1fr) auto}
+  .bada-settings .binding .on{grid-row:auto}
+  .bada-settings .binding .does,.bada-settings .says{grid-column:1 / -1}
+  .bada-settings .field{grid-template-columns:minmax(0,1fr)}
+  .bada-settings .page{padding:14px 14px 20px}
+}
+@media (prefers-reduced-motion: reduce){.bada-settings *{transition:none!important;scroll-behavior:auto!important}}

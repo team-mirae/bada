@@ -1159,7 +1159,14 @@ Every platform has the same folder (`~/Library/Application Support/bada`, `%APPD
   don't have is only a warning (`unknown-profile`): that action doesn't apply (§9.2), and the file
   is still taken. A file that isn't JSON is `bad-json`.
 - **One settings page** serves every harness, driven by two schemas: `P_describe`'s
-  `settings.schema` for the `engine` part, and this standard's for `keys`.
+  `settings.schema` for the `engine` part, and this standard's for `keys`. It reads and writes
+  nothing itself: a **host** does, with one interface on every platform. On macOS, Windows and
+  Linux the host is the command line (`bada settings`, §10.2), which serves the page on
+  `127.0.0.1` to a window of the input method's own (macOS) or to the browser; on the web it is
+  the harness, and the folder is the browser's storage.
+- **The host checks before it writes**: the `engine` part by a dry `settings` event (§6.6), `keys`
+  as a harness does (§9), and a file with an error-level problem isn't written. Every write of
+  `settings.json` keeps the file it replaced in `history/`.
 
 ### 10.2 `bada`, the command line
 
@@ -1170,6 +1177,7 @@ and writes the folder above, and installs releases. Everything the settings page
 |---|---|
 | `bada version` | The command line's, the engine's and the standard's versions, and the installed input method's |
 | `bada update` | Installs the newest release from `team-mirae/bada` on GitHub. `--check` only looks |
+| `bada settings` | Opens the settings page (§10.1): serves it on `127.0.0.1`, at an address that carries a token made for the run, and stops when the page is closed |
 | `bada settings show` \| `get <path>` \| `set <path> <json>` \| `validate` \| `import <file>` \| `export` \| `undo` | The whole file, or one value by path (`engine.henkan.profiles[0].layouts`) |
 | `bada profile list` \| `add <id> --layouts …` \| `remove <id>` \| `move <id> <n>` \| `set <id> …` | The profile list (§8) |
 | `bada keys list` \| `bind <key> <action>…` \| `unbind <key>` \| `available` | The key table (§9). `available` is what the harness detects now |

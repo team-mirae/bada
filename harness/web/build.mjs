@@ -33,6 +33,9 @@ execFileSync("cargo", ["build", "--release", "--target", "wasm32-unknown-unknown
 rmSync(out, { recursive: true, force: true });
 for (const dir of ["data", "layouts"]) mkdirSync(out + dir, { recursive: true });
 for (const f of readdirSync(web + "src")) copyFileSync(web + "src/" + f, out + f);
+// The shared settings page (settings/): the Settings dialog holds it, with this harness as its host.
+mkdirSync(out + "settings", { recursive: true });
+for (const f of readdirSync(root + "settings/src")) copyFileSync(root + "settings/src/" + f, out + "settings/" + f);
 copyFileSync(root + "docs/logo/bada-icon.svg", out + "icon.svg");
 copyFileSync(root + "LICENSE", out + "LICENSE.txt");
 
