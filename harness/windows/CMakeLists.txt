@@ -70,8 +70,9 @@ endif()
 set_target_properties(bada_engine PROPERTIES IMPORTED_LOCATION "${BADA_ENGINE_LIB}")
 target_include_directories(bada_engine INTERFACE "${BADA_ROOT}/engine/include")
 if(WIN32)
-  # What Rust's standard library asks of Windows (cargo rustc -- --print native-static-libs).
-  target_link_libraries(bada_engine INTERFACE kernel32 ntdll userenv ws2_32 dbghelp advapi32 bcrypt)
+  # What Rust's standard library asks of Windows (cargo rustc -- --print native-static-libs), and
+  # synchronization for WaitOnAddress and WakeByAddress*, which newer Rust's locks call.
+  target_link_libraries(bada_engine INTERFACE kernel32 ntdll userenv ws2_32 dbghelp advapi32 bcrypt synchronization)
 else()
   find_package(Threads REQUIRED)
   target_link_libraries(bada_engine INTERFACE Threads::Threads ${CMAKE_DL_LIBS} m)
