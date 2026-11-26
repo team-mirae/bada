@@ -91,7 +91,7 @@ it, since it has not been run.
 | `<prefix>/share/fcitx5/addon/bada.conf`, `…/inputmethod/bada.conf` | The addon, and its one input method |
 | `<prefix>/share/bada/data/` | The engine's data, for both frontends (about 50 MB) |
 | `<prefix>/bin/bada`, `<prefix>/share/bada/settings/` | The command line, and the settings page it serves (`-DBADA_CLI=OFF` leaves both out) |
-| `<prefix>/share/applications/com.teammirae.bada.settings.desktop` | bada Settings, in the applications menu |
+| `<prefix>/share/applications/com.teammirae.bada.settings.desktop` | bada settings, in the applications menu |
 | `<prefix>/libexec/ibus-engine-bada` | The IBus engine |
 | `<prefix>/share/ibus/component/com.teammirae.Bada.xml` | Its component |
 
@@ -110,7 +110,7 @@ has them, and a key that would enter henkan (変換, or whatever the key table b
 shows a notice in the input panel, writes a line in the log, and puts the notice in the state
 (`harness.notice`).
 
-**`bada settings`**, or bada Settings in the applications menu, opens the shared
+**`bada settings`**, or bada settings in the applications menu, opens the shared
 [settings page](../../settings/README.md) in the browser, and its first screen asks for the two
 layouts to start with. The command line (`<prefix>/bin/bada`) serves the page on `127.0.0.1` and
 reads and writes `~/.config/bada`.

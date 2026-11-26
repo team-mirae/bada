@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
-Name=bada Settings
+Name=bada settings
 Comment=The settings of the bada input method
 Exec=bada settings
 Icon=input-keyboard

@@ -36,7 +36,7 @@ Install:
 The engine's data (the word lists and the kanji dictionary) is in usr/share/bada/data, and the
 addon reads it from /usr/share/bada/data.
 
-"bada settings" (usr/bin/bada), or bada Settings in the applications menu, opens the settings page
+"bada settings" (usr/bin/bada), or bada settings in the applications menu, opens the settings page
 in the browser. The page is in usr/share/bada/settings.
 
 The addon is $addon. A distribution that keeps Fcitx5's addons elsewhere (Debian and Ubuntu:

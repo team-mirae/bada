@@ -28,7 +28,7 @@ final class SettingsWindow: NSObject, NSWindowDelegate, WKNavigationDelegate, WK
     private func build() {
         let window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1040, height: 760),
                               styleMask: [.titled, .closable, .miniaturizable, .resizable], backing: .buffered, defer: false)
-        window.title = "bada Settings"
+        window.title = "bada settings"
         window.isReleasedWhenClosed = false
         window.minSize = NSSize(width: 520, height: 420)
         window.delegate = self

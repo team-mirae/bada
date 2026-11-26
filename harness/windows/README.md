@@ -123,7 +123,7 @@ A new install has **no muhenkan layout and no henkan profile** (§8.3). Keys typ
 layout has them, and a key that would enter henkan (変換, or whatever the key table binds) doesn't:
 bada shows a short notice and puts it in the state (`harness.notice`).
 
-**bada Settings**, in the Start menu, opens the shared [settings page](../../settings/README.md) in
+**bada settings**, in the Start menu, opens the shared [settings page](../../settings/README.md) in
 the browser, and its first screen asks for the two layouts to start with. It is `bada.exe settings`:
 the command line, installed beside the text service, serves the page on `127.0.0.1` and reads and
 writes `%APPDATA%\bada`. The installer opens it once at the end. `bada.exe` is a console program, so

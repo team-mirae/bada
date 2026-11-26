@@ -62,8 +62,8 @@ Name: "en"; MessagesFile: "compiler:Default.isl"
 WelcomeLabel2=This will install [name/ver] on your computer.%n%nYou don't need to close other apps. Apps that are open keep the old version, or none, until they restart.
 ConfirmUninstall=Remove bada from this PC and from your keyboards?
 FinishedHeadingLabel=bada is installed
-FinishedLabelNoIcons=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until they are: bada Settings, which opens next, asks for the two to start with.
-FinishedLabel=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until they are: bada Settings, which opens next, asks for the two to start with.
+FinishedLabelNoIcons=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until they are: bada settings, which opens next, asks for the two to start with.
+FinishedLabel=Restart the apps that were open: they keep the old version, or none, until they restart.%n%nPress Win+Space and pick bada, under Japanese.%n%nA new install has no layouts chosen, so keys type as Windows has them until they are: bada settings, which opens next, asks for the two to start with.
 
 [Files]
 ; The engine is inside the DLL.
@@ -79,12 +79,17 @@ Source: "..\src\tip\bada.ico"; DestDir: "{app}"; Flags: ignoreversion
 ; Run by Setup and the uninstaller as the user, to change their language list.
 Source: "keyboards.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
+[InstallDelete]
+; The shortcut was "bada Settings" in 0.2.1's first builds. A file name's case doesn't change when
+; it is written over, so the old one goes first.
+Type: files; Name: "{autoprograms}\bada Settings.lnk"
+
 [Icons]
 ; Minimized: the command line is a console program, and its window has nothing to show.
-Name: "{autoprograms}\bada Settings"; Filename: "{app}\bada.exe"; Parameters: "settings"; IconFilename: "{app}\bada.ico"; Flags: runminimized; Comment: "The settings of the bada input method"
+Name: "{autoprograms}\bada settings"; Filename: "{app}\bada.exe"; Parameters: "settings"; IconFilename: "{app}\bada.ico"; Flags: runminimized; Comment: "The settings of the bada input method"
 
 [Run]
-Filename: "{app}\bada.exe"; Parameters: "settings"; Description: "Open bada Settings"; Flags: postinstall nowait skipifsilent runasoriginaluser runminimized
+Filename: "{app}\bada.exe"; Parameters: "settings"; Description: "Open bada settings"; Flags: postinstall nowait skipifsilent runasoriginaluser runminimized
 
 [Code]
 const
@@ -214,6 +219,10 @@ begin
       RenameAside(ExpandConstant('{app}\' + Arch + '\bada-tsf.dll'));
     end;
     MoveDataAside(False);
+    { The command line is running while its settings page is open: it is moved aside too, and
+      that page goes on with the old one until it is closed. }
+    DeleteOldCopies(ExpandConstant('{app}'), False);
+    RenameAside(ExpandConstant('{app}\bada.exe'));
   end else if CurStep = ssPostInstall then begin
     if not RegSvr('x64', '/s') or not RegSvr('x86', '/s') then
       MsgBox('bada couldn''t be registered with Windows. Run Setup again; if it keeps failing, ' +
@@ -300,6 +309,13 @@ begin
       if LeftForRestart then DeleteAtRestart(Dir, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
     end;
     if MoveDataAside(True) then LeftForRestart := True;
+    { The command line, while its settings page is open. }
+    if DeleteOldCopies(ExpandConstant('{app}'), True) then LeftForRestart := True;
+    Aside := RenameAside(ExpandConstant('{app}\bada.exe'));
+    if Aside <> '' then begin
+      DeleteAtRestart(Aside, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
+      LeftForRestart := True;
+    end;
   end else if CurUninstallStep = usPostUninstall then begin
     if LeftForRestart then
       DeleteAtRestart(ExpandConstant('{app}'), 0, MOVEFILE_DELAY_UNTIL_REBOOT);
