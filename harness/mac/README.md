@@ -130,11 +130,12 @@ This harness's own settings:
 - `log`: diagnostics in `~/Library/Logs/Bada.log`. Nothing typed is written.
 - `apps`: per app, by bundle id. `menu: false` draws no candidate menu in that app, which shows the
   preedit itself; composition and keys are unchanged (a row can still be moved to and picked by
-  key). For EVE Online, whose client draws its own composition box (issue #11; every client is
-  `com.ccpgames.eveonline`):
+  key). EVE Online, whose client draws its own composition box (issue #11; every client is
+  `com.ccpgames.eveonline`), is listed with `menu: false` by default. An entry replaces the default
+  for its app only; this brings the menu back in EVE:
 
   ```json
-  "harness": {"com.teammirae.bada.mac": {"apps": {"com.ccpgames.eveonline": {"menu": false}}}}
+  "harness": {"com.teammirae.bada.mac": {"apps": {"com.ccpgames.eveonline": {"menu": true}}}}
   ```
 
   `bada settings set 'harness.com.teammirae.bada.mac.apps' …` can't name it, since the harness id has
