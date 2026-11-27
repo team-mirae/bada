@@ -18,7 +18,7 @@ pub const REPO: &str = "team-mirae/bada";
 
 /// The release signing key's public half (`bada-sign keygen`), 64 hex digits. Empty: this build
 /// can look for releases but not install one.
-pub const PUBLIC_KEY: &str = "";
+pub const PUBLIC_KEY: &str = "51509bf7c4ccc3db428707a6ca492a858f4eadf853c8b23f936d6c83cd7c27e9";
 
 /// This platform's release file for `version`.
 pub fn asset_name(version: &str) -> String {
