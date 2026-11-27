@@ -1,0 +1,12 @@
+# bada-tide (docs/bada-tide-v1.md): the user at the seat may open the hidraw node of a keyboard one
+# of bada's translators (tide/ in the repository) names, so the harness can hold its lease. Only the
+# keyboard's own interfaces, only for the user logged in at the seat (uaccess); nothing else is
+# opened to anyone. A keyboard project's own translator may need a rule of its own here.
+
+# ikarosu: HHKB Professional HYBRID Type-S (JIS), PFU's vendor id and product id, USB and Bluetooth.
+SUBSYSTEM=="hidraw", KERNELS=="0003:04FE:0022.*", TAG+="uaccess"
+SUBSYSTEM=="hidraw", KERNELS=="0005:04FE:0022.*", TAG+="uaccess"
+
+# dmk on the HHKB Professional HYBRID (HHKB_TIDE=1).
+SUBSYSTEM=="hidraw", KERNELS=="0003:CAFE:4014.*", TAG+="uaccess"
+SUBSYSTEM=="hidraw", KERNELS=="0005:CAFE:4014.*", TAG+="uaccess"

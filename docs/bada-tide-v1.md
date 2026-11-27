@@ -163,7 +163,8 @@ it.
   process, or where the input method runs in many processes, the harness holds the link in a helper
   process. bada's macOS harness does: an input method is an NSApplication, and there macOS mostly
   doesn't deliver them (its README). So does bada's Windows harness: its text service runs in every
-  app, and a keyboard has one link (its README, "bada-tide").
+  app, and a keyboard has one link (its README, "bada-tide"). bada's Linux harness doesn't: Fcitx5
+  and IBus each hold every text field in one process, which holds the link (its README, "bada-tide").
 - **`retry_ms`**: how long to wait after `blocked` before the next `hello` (default 10000).
 - **`conflicts`**: §5. Each has an `id`, a `name`, a `reason`, and per platform what identifies it:
   `macos.bundle_id`, `windows.process` (executable file names), `linux.process`.

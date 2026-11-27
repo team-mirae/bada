@@ -11,6 +11,7 @@
 #include <fcitx-utils/event.h>
 #include <fcitx-utils/key.h>
 #include <fcitx-utils/log.h>
+#include <fcitx-utils/trackableobject.h>
 #include <fcitx/action.h>
 #include <fcitx/addonfactory.h>
 #include <fcitx/addoninstance.h>
@@ -33,6 +34,7 @@
 
 #include "harness.h"
 #include "publish.h"
+#include "tide_hub.h"
 
 #ifndef BADA_VERSION
 #define BADA_VERSION "0.0.0"
@@ -250,6 +252,7 @@ public:
         options.data_dir = bada::Session::DataDir();
         options.sink = &publisher_;
         options.log = [](const std::string& line) { BADA_INFO() << line; };
+        options.tide = [this] { return tide_ ? tide_->Status() : std::string(); };
         std::string error;
         session_ = bada::Session::Create(std::move(options), &error);
         if (!session_) {
@@ -266,6 +269,7 @@ public:
                         return true;
                     });
             }
+            StartTide();
         }
         instance_->inputContextManager().registerProperty("badaState", &factory_);
         mode_action_.setMenu(&menu_);
@@ -284,6 +288,7 @@ public:
         if (!ctx) return;
         State* state = ic->propertyFor(&factory_);
         bada::RawKey key = KeyOf(event);
+        caps_ = key.caps;
         const auto before = session_->generation();
         bool eaten;
         {
@@ -298,6 +303,7 @@ public:
         }
         if (eaten) event.filterAndAccept();
         if (session_->generation() != before) ModeChanged(ic);
+        SyncTide();
     }
 
     void activate(const fcitx::InputMethodEntry&, fcitx::InputContextEvent& event) override {
@@ -308,10 +314,16 @@ public:
             ctx->FocusIn(field, InfoOf(ic));
         }
         UpdateAction(ic);
+        tide_ic_ = ic->watch();
+        SyncTide();
     }
 
     void deactivate(const fcitx::InputMethodEntry&, fcitx::InputContextEvent& event) override {
         auto* ic = event.inputContext();
+        if (tide_ic_.get() == ic) {
+            tide_ic_.unwatch();
+            SyncTide();
+        }
         State* state = ic->propertyFor(&factory_);
         state->down.clear();
         if (!state->context) return;
@@ -443,9 +455,11 @@ private:
         UpdateAction(ic);
         ic->updateUserInterface(fcitx::UserInterfaceComponent::StatusArea);
         instance_->showInputMethodInformation(ic);
+        SyncTide();
     }
 
     void SettingsChanged() {
+        if (tide_) tide_->Reload();
         BuildMenu();
         auto* ic = instance_->mostRecentInputContext();
         State* state = ic ? ic->propertyFor(&factory_) : nullptr;
@@ -459,6 +473,102 @@ private:
         } else {
             session_->PublishIdle();
         }
+        SyncTide();
+    }
+
+    // --- bada-tide (docs/bada-tide-v1.md; src/common/tide_hub.h)
+
+    void StartTide() {
+        bada::TideHub::Options options;
+        options.settings_dir = session_->folder().dir();
+        options.log = [](const std::string& line) { BADA_INFO() << line; };
+        options.key = [this](const bada::tide::Link::Key& key) { TideKey(key); };
+        options.changed = [this] { TideStatusChanged(); };
+        tide_ = std::make_unique<bada::TideHub>(std::move(options));
+        if (tide_->fd() < 0) {
+            tide_.reset();
+            return;
+        }
+        tide_io_ = instance_->eventLoop().addIOEvent(tide_->fd(), fcitx::IOEventFlag::In,
+                                                     [this](fcitx::EventSourceIO*, int, fcitx::IOEventFlags) {
+                                                         tide_->Dispatch();
+                                                         return true;
+                                                     });
+        SyncTide();
+    }
+
+    // The text field bada has in focus, or nullptr: bada takes keys only while it has one, so the
+    // keys are the system's otherwise (as on macOS and Windows).
+    fcitx::InputContext* TideField() {
+        fcitx::InputContext* ic = tide_ic_.get();
+        if (!ic || !ic->hasFocus() || instance_->inputMethod(ic) != "bada") return nullptr;
+        return ic;
+    }
+
+    // Tells the hub the harness's state (bada-tide §2); a change is sent at once. It takes the
+    // language keys the key table binds, never Caps Lock, whose lock is the system's.
+    void SyncTide() {
+        if (!tide_ || !session_) return;
+        bada::tide::Host host;
+        host.mode = session_->mode();
+        const std::vector<std::string>& cycle = session_->table().cycle;
+        const auto it = std::find(cycle.begin(), cycle.end(), session_->profile());
+        host.profile = session_->profile().empty() || it == cycle.end() ? -1 : static_cast<int>(it - cycle.begin());
+        host.caps = caps_;
+        if (TideField()) {
+            for (const bada::Binding& b : session_->table().bindings) {
+                for (const std::string& k : {b.key, b.key2}) {
+                    if (k != "CapsLock" && bada::IsLanguageKey(k)) host.take.insert(k);
+                }
+            }
+        }
+        tide_->SetHost(host);
+    }
+
+    // A key the keyboard reported over bada-tide, that bada took: the system never saw it. It runs
+    // through the key table as the key itself would have, in the field bada has in focus. A press
+    // the harness doesn't eat goes to the app as a key; so does one with no field of bada's in
+    // focus (focus moved in between).
+    void TideKey(const bada::tide::Link::Key& event) {
+        bada::RawKey key;
+        if (!bada::tide::EvdevOf(event.code, &key.code, &key.sym)) return;
+        key.mods = event.mods;
+        key.caps = caps_;
+        fcitx::InputContext* ic = TideField();
+        bada::Context* ctx = ic ? ContextFor(ic) : nullptr;
+        if (!ctx) {
+            fcitx::InputContext* target = ic ? ic : instance_->mostRecentInputContext();
+            if (target && event.down) Field(this, target).ForwardKey(key);
+            return;
+        }
+        const auto before = session_->generation();
+        bool eaten = true;
+        {
+            Field field(this, ic);
+            if (event.down) {
+                eaten = ctx->KeyDown(key, field, InfoOf(ic));
+                if (!eaten) field.ForwardKey(key);
+            } else {
+                ctx->KeyUp(key, field, InfoOf(ic));
+            }
+        }
+        BADA_INFO() << "tide key " << event.code << (event.down ? " down" : " up")
+                    << (event.down ? (eaten ? ", eaten" : ", handed to the app") : "") << " -> "
+                    << session_->ModeText();
+        if (session_->generation() != before) ModeChanged(ic);
+        SyncTide();
+    }
+
+    // The links changed: the state says so (`harness.tide`).
+    void TideStatusChanged() {
+        if (!session_) return;
+        fcitx::InputContext* ic = TideField();
+        State* state = ic ? ic->propertyFor(&factory_) : nullptr;
+        if (state && state->context) {
+            state->context->Publish(InfoOf(ic));
+        } else {
+            session_->PublishIdle();
+        }
     }
 
     fcitx::Instance* instance_;
@@ -469,6 +579,10 @@ private:
     fcitx::Menu menu_;
     std::vector<std::unique_ptr<fcitx::SimpleAction>> profile_actions_;
     std::vector<std::pair<bada::Mode, std::string>> action_targets_;
+    std::unique_ptr<bada::TideHub> tide_;
+    std::unique_ptr<fcitx::EventSourceIO> tide_io_;
+    fcitx::TrackableObjectReference<fcitx::InputContext> tide_ic_;
+    bool caps_ = false;  // the lock, as the last key had it
     // After session_: destroyed first, so every Context goes before its Session.
     fcitx::FactoryFor<State> factory_;
 };
