@@ -1152,6 +1152,51 @@ void TestStateBlock() {
           "an empty text publishes nothing");
 }
 
+// bada-tide's status, as the helper published it, in the state (bada-tide §8): `harness.tide` and
+// the translators' problems. A session with no tide hook has no `tide` at all.
+void TestTideState() {
+    {
+        Rig rig("tide-none");
+        rig.session->PublishIdle();
+        const json::Value state = rig.State();
+        const json::Value* h = state.Get("harness");
+        Check(h && !h->Get("tide"), "no tide hook: no harness.tide");
+    }
+    const fs::path dir = TempDir("tide-state");
+    WriteFile(dir / "settings.json", kSettings);
+    Sink sink;
+    std::string status;
+    Session::Options options;
+    options.config_dir = dir;
+    options.version = "0.1.0";
+    options.sink = &sink;
+    options.tide = [&status] { return status; };
+    std::string error;
+    {
+        auto session = Session::Create(std::move(options), &error);
+        Check(session != nullptr, "a session with a tide hook starts: " + error);
+        session->PublishIdle();
+        auto state = json::Parse(sink.published.back());
+        const json::Value* tide = state->Get("harness")->Get("tide");
+        Check(tide && tide->IsArray() && tide->array.empty(), "no helper: harness.tide is an empty list");
+        status = R"({"links":[{"translator":"ikarosu","state":"held","version":"1.0","features":["keys","take"],)"
+                 R"("take":["Lang1"],"conflict":null}],"problems":[{"file":"tide/bad.json","path":"","code":"bad-value",)"
+                 R"("message":"not a JSON object","level":"error"}]})";
+        session->PublishIdle();
+        state = json::Parse(sink.published.back());
+        tide = state->Get("harness")->Get("tide");
+        Check(tide && tide->array.size() == 1 && tide->array[0].GetString("state") == "held" &&
+                  tide->array[0].GetString("translator") == "ikarosu",
+              "a held link is published");
+        const json::Value* problems = state->Get("harness")->Get("problems");
+        Check(problems && std::any_of(problems->array.begin(), problems->array.end(),
+                                      [](const json::Value& p) { return p.GetString("file") == "tide/bad.json"; }),
+              "a translator's problem is published");
+    }
+    std::error_code ec;
+    fs::remove_all(dir, ec);
+}
+
 }  // namespace
 
 int main() {
@@ -1169,5 +1214,6 @@ int main() {
     TestCapsLock();
     TestShared();
     TestStateBlock();
+    TestTideState();
     return test::Finish("core");
 }

@@ -82,7 +82,8 @@ endif()
 # session and the context. It builds on any system, where its tests run too.
 add_library(bada_core STATIC
   src/core/engine.cpp src/core/harness.cpp src/core/json.cpp src/core/keys.cpp
-  src/core/keytable.cpp src/core/reply.cpp src/core/settings.cpp src/core/state_block.cpp)
+  src/core/keytable.cpp src/core/reply.cpp src/core/settings.cpp src/core/state_block.cpp src/core/tide.cpp
+  src/core/tide_ipc.cpp)
 target_include_directories(bada_core PUBLIC src/core)
 target_link_libraries(bada_core PUBLIC bada_engine)
 
@@ -143,6 +144,12 @@ if(WIN32)
     src/tip/bada-tsf.def "${CMAKE_CURRENT_BINARY_DIR}/bada-tsf.rc")
   target_include_directories(bada-tsf PRIVATE src/tip)
   target_link_libraries(bada-tsf PRIVATE bada_core ole32 oleaut32 user32 gdi32 advapi32 shell32 uuid)
+
+  # bada-tide's helper (docs/bada-tide-v1.md): holds the keyboards' links, one per logon session.
+  # The text service starts it while the settings folder has a translator.
+  add_executable(bada-tide WIN32 src/tide/main.cpp)
+  target_link_libraries(bada-tide PRIVATE bada_core hid setupapi user32 shell32 ole32)
+  add_dependencies(bada-tsf bada-tide)
 endif()
 
 if(BADA_TESTS)
@@ -165,6 +172,12 @@ if(BADA_TESTS)
   target_link_libraries(bada_core_tests PRIVATE bada_core)
   target_compile_definitions(bada_core_tests PRIVATE BADA_ROOT="${BADA_ROOT}")
   add_test(NAME core COMMAND bada_core_tests)
+
+  # bada-tide's core: translators, templates, the deny list and the lease, with no device.
+  add_executable(bada_tide_tests tests/tide_tests.cpp)
+  target_link_libraries(bada_tide_tests PRIVATE bada_core)
+  target_compile_definitions(bada_tide_tests PRIVATE BADA_ROOT="${BADA_ROOT}")
+  add_test(NAME tide COMMAND bada_tide_tests)
 
   if(WIN32)
     # The state's shared memory, written and read as the text service and a script do.

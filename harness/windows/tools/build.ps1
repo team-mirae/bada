@@ -28,11 +28,16 @@ $ErrorActionPreference = 'Continue'
 # A registered DLL is open in every app that loaded it, so the linker can't write over it. Windows
 # lets an open file be renamed: it is moved aside, and a later build removes it once no app has it.
 # Apps that were running keep the old one until they restart.
-Get-ChildItem $build -Filter 'bada-tsf.old-*.dll' -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
-$dll = Join-Path $build 'bada-tsf.dll'
-if (Test-Path $dll) {
-    try { [IO.File]::Open($dll, 'Open', 'ReadWrite', 'None').Close() }
-    catch { Rename-Item $dll ('bada-tsf.old-{0}.dll' -f (Get-Date -Format 'yyyyMMddHHmmss')) }
+# bada-tide's helper (bada-tide.exe) is the same while it runs.
+foreach ($name in 'bada-tsf.dll', 'bada-tide.exe') {
+    $base = [IO.Path]::GetFileNameWithoutExtension($name)
+    $ext = [IO.Path]::GetExtension($name)
+    Get-ChildItem $build -Filter "$base.old-*$ext" -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue
+    $file = Join-Path $build $name
+    if (Test-Path $file) {
+        try { [IO.File]::Open($file, 'Open', 'ReadWrite', 'None').Close() }
+        catch { Rename-Item $file ('{0}.old-{1}{2}' -f $base, (Get-Date -Format 'yyyyMMddHHmmss'), $ext) }
+    }
 }
 cmake -S $here -B $build -G Ninja -DCMAKE_BUILD_TYPE=Release
 if ($LASTEXITCODE) { exit $LASTEXITCODE }

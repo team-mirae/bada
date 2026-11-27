@@ -468,6 +468,17 @@ std::string Session::State(const Reply* last, const ContextInfo* info) const {
         item.Set("message", json::Str(p.message)).Set("level", json::Str(p.level));
         list.Push(std::move(item));
     }
+    // bada-tide (its §8): the keyboards linked now, and the translators that weren't used.
+    if (options_.tide) {
+        json::Value links = json::Array();
+        if (const auto status = json::Parse(options_.tide())) {
+            if (const json::Value* l = status->Get("links"); l && l->IsArray()) links = *l;
+            if (const json::Value* p = status->Get("problems"); p && p->IsArray()) {
+                for (const json::Value& item : p->array) list.Push(item);
+            }
+        }
+        h.Set("tide", std::move(links));
+    }
     h.Set("problems", std::move(list));
     h.Set("notice", json::Str(notice_));
     v.Set("harness", std::move(h));
