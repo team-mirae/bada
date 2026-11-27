@@ -889,7 +889,12 @@ Around TextService::ReadAround(ITfContext* context, size_t before, size_t after)
 }
 
 void TextService::ShowList() {
-    if (!menu_.rows.empty()) {
+    // An app listed with `menu: false` (harness settings, `apps`) gets no menu drawn: it shows the
+    // preedit itself, like EVE Online. Keys and composition are as everywhere else.
+    Process& process = GetProcess();
+    std::lock_guard<std::recursive_mutex> lock(process.mutex);
+    const bool menu = !process.session || process.session->harness().ShowsMenu(Utf8(ExeName()));
+    if (!menu_.rows.empty() && menu) {
         list_.Show(menu_, anchor_);
     } else if (!notice_.empty()) {
         list_.ShowNotice(notice_, CaretRect());
@@ -1280,8 +1285,11 @@ HRESULT TextService::EditText(TfEditCookie ec, ITfContext* context, ITfCompositi
         selection.style.fInterimChar = FALSE;
         return context->SetSelection(ec, 1, &selection);
     };
+    // An interim character is one character to the IMM layer: of a longer preedit it hands the app
+    // only the first (GCS_COMPSTR and wParam alike; measured in an IMM window, as EVE Online has).
+    const bool one = preedit.size() == 1 || (preedit.size() == 2 && IS_HIGH_SURROGATE(preedit[0]));
     auto show = [&](ITfRange* range) -> HRESULT {
-        if (!transitory) return caret(range);
+        if (!transitory || !one) return caret(range);
         TF_SELECTION selection = {};
         selection.range = range;
         selection.style.ase = TF_AE_NONE;

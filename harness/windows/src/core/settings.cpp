@@ -89,7 +89,20 @@ std::optional<json::Value> ReadObject(const fs::path& path) {
 
 constexpr const char* kNotJson = "not a JSON object (the file is UTF-8 text)";
 
+// ASCII lower case: program file names are compared without case, as Windows does.
+std::string Lower(std::string s) {
+    for (char& c : s) {
+        if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    return s;
+}
+
 }  // namespace
+
+bool HarnessSettings::ShowsMenu(const std::string& exe) const {
+    const auto found = apps.find(Lower(exe));
+    return found == apps.end() || found->second.menu;
+}
 
 bool ReadFile(const fs::path& path, std::string* out) {
     std::ifstream in(path, std::ios::binary);
@@ -278,6 +291,36 @@ bool SettingsFolder::ReloadSettings(EngineSession& session, bool layouts_changed
                         } else {
                             problems.push_back(Error(kSettingsFile, at + "." + name, "bad-value", name + " is true or false"));
                             ok = false;
+                        }
+                    } else if (name == "apps") {
+                        if (!value.IsObject()) {
+                            problems.push_back(Error(kSettingsFile, at + ".apps", "bad-value",
+                                                     "apps is an object, by the program's file name"));
+                            ok = false;
+                            continue;
+                        }
+                        for (const auto& [app, entry] : value.object) {
+                            const std::string app_at = at + ".apps." + app;
+                            if (!entry.IsObject()) {
+                                problems.push_back(Error(kSettingsFile, app_at, "bad-value", "an app's settings are an object"));
+                                ok = false;
+                                continue;
+                            }
+                            HarnessSettings::App one;
+                            for (const auto& [field, v] : entry.object) {
+                                if (field == "menu") {
+                                    if (v.IsBool()) {
+                                        one.menu = v.boolean;
+                                    } else {
+                                        problems.push_back(Error(kSettingsFile, app_at + ".menu", "bad-value", "menu is true or false"));
+                                        ok = false;
+                                    }
+                                } else {
+                                    problems.push_back(Warning(kSettingsFile, app_at + "." + field, "unknown-field",
+                                                               "an app has no setting named " + field));
+                                }
+                            }
+                            harness.apps[Lower(app)] = one;
                         }
                     } else {
                         problems.push_back(Warning(kSettingsFile, at + "." + name, "unknown-field",

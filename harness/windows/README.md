@@ -185,6 +185,12 @@ The harness's own settings, under `harness["com.teammirae.bada.windows"]`:
 | `keyboard` | `"auto"` | Which preset a file with no `keys.bindings` gets (§9.5): `auto` (`jis-pc` when Windows reports a Japanese keyboard, `none` otherwise), `jis-pc` (無変換, 変換), `jis-mac` (an Apple JIS keyboard's 英数, かな) or `none` (Caps Lock toggles) |
 | `publish_state` | `true` | Publish the state for other programs (§6.7) |
 | `log` | `false` | Write `%LOCALAPPDATA%\bada\bada.log`: activations, focus and errors, never typed text |
+| `apps` | EVE Online: `{"exefile.exe": {"menu": false}}` | Per app, by the program's file name (any case). `menu: false` draws no candidate menu in that app, which shows the preedit itself; composition and keys are unchanged (a row can still be moved to and picked by key). An entry replaces the default for its app only: `{"exefile.exe": {"menu": true}}` brings the menu back in EVE |
+
+EVE Online's client (`exefile.exe`) draws its own composition box from the text bada composes, so
+it gets no menu drawn by default. `bada settings set 'harness.com.teammirae.bada.windows.apps' …`
+can't name the part, since the harness id has dots: set the whole part with
+`bada settings set harness '{"com.teammirae.bada.windows": {…}}'`, or edit the file.
 
 ## Keys
 

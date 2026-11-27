@@ -27,8 +27,11 @@ struct HarnessSettings: Equatable {
     /// Diagnostics in ~/Library/Logs/Bada.log.
     var log = false
     /// Per app, by bundle id: how bada behaves there. `menu: false` draws no candidate menu (the app
-    /// shows the preedit itself, e.g. a game that draws its own composition box: EVE Online).
-    var apps: [String: AppSettings] = [:]
+    /// shows the preedit itself, e.g. a game that draws its own composition box). An entry in the file
+    /// replaces the default for its app; the defaults list EVE Online.
+    var apps: [String: AppSettings] = HarnessSettings.defaultApps
+
+    static let defaultApps: [String: AppSettings] = ["com.ccpgames.eveonline": AppSettings(menu: false)]
 
     struct AppSettings: Equatable {
         var menu = true

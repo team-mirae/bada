@@ -32,6 +32,20 @@ struct HarnessSettings {
     bool publish_state = true;
     // Write the diagnostic log: activations, focus and errors, never typed text.
     bool log = false;
+
+    // One app's settings. `menu: false` draws no candidate menu: the app shows the preedit itself.
+    struct App {
+        bool menu = true;
+        bool operator==(const App& o) const { return menu == o.menu; }
+    };
+    // Per app, by the program's file name in lower case (`exefile.exe`). An entry in the file
+    // replaces the default for its app; the defaults list EVE Online, which draws its own
+    // composition box.
+    std::map<std::string, App> apps = DefaultApps();
+    static std::map<std::string, App> DefaultApps() { return {{"exefile.exe", App{false}}}; }
+
+    // Whether the candidate menu is drawn in the program with this file name (any case).
+    bool ShowsMenu(const std::string& exe) const;
 };
 
 // What is in effect.

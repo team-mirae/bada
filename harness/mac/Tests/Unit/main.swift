@@ -556,6 +556,11 @@ do {
     let unknown = HarnessSettings.read(["apps": ["a.b": ["colour": 1]]], path: "harness.x")
     check(unknown.flaws.isEmpty && unknown.warnings.map(\.path) == ["harness.x.apps.a.b.colour"], "apps: an unknown field is a warning")
     check(HarnessSettings.read(["apps": 1], path: "harness.x").flaws.first?.path == "harness.x.apps", "apps: not an object is an error")
+    check(!HarnessSettings.read(nil, path: "harness.x").settings.showsMenu(in: "com.ccpgames.eveonline")
+          && !HarnessSettings.read(["apps": ["a.b": ["menu": true]]], path: "harness.x").settings.showsMenu(in: "com.ccpgames.eveonline"),
+          "apps: EVE Online draws no menu by default, and another app's entry keeps that")
+    check(HarnessSettings.read(["apps": ["com.ccpgames.eveonline": ["menu": true]]], path: "harness.x").settings.showsMenu(in: "com.ccpgames.eveonline"),
+          "apps: an entry replaces the default for its app")
 }
 
 try? FileManager.default.removeItem(at: temporary)

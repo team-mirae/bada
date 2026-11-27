@@ -395,6 +395,36 @@ void TestSettingsFolder() {
     Check(folder.loaded().profiles.size() == 3 && !folder.problems().empty() &&
               folder.problems()[0].path == "harness.com.teammirae.bada.windows.keyboard",
           "a keyboard the harness doesn't know is an error");
+    // apps: by the program's file name, any case. EVE Online draws no menu by default, and an entry
+    // replaces the default for its app only.
+    Check(!HarnessSettings().ShowsMenu("exefile.exe") && !HarnessSettings().ShowsMenu("ExeFile.EXE") &&
+              HarnessSettings().ShowsMenu("notepad.exe"),
+          "apps: EVE Online draws no menu by default, every other app does");
+    WriteFile(dir / "settings.json", R"({"format": "bada-settings/2",
+        "harness": {"com.teammirae.bada.windows": {"apps": {"Notepad.exe": {"menu": false}, "code.exe": {"menu": true}}}}})");
+    folder.Reload(*session);
+    Check(folder.problems().empty() && !folder.loaded().harness.ShowsMenu("notepad.exe") &&
+              folder.loaded().harness.ShowsMenu("code.exe") && !folder.loaded().harness.ShowsMenu("exefile.exe"),
+          "apps: the file's entries are read, and the default stays for an app they don't name");
+    WriteFile(dir / "settings.json", R"({"format": "bada-settings/2",
+        "harness": {"com.teammirae.bada.windows": {"apps": {"exefile.exe": {"menu": true, "colour": 1}}}}})");
+    folder.Reload(*session);
+    Check(folder.loaded().harness.ShowsMenu("exefile.exe") && folder.problems().size() == 1 &&
+              folder.problems()[0].path == "harness.com.teammirae.bada.windows.apps.exefile.exe.colour" &&
+              folder.problems()[0].level == "warning",
+          "apps: an entry replaces the default; an unknown field is a warning");
+    WriteFile(dir / "settings.json", R"({"format": "bada-settings/2",
+        "harness": {"com.teammirae.bada.windows": {"apps": {"a.exe": {"menu": "no"}, "b.exe": 3}}}})");
+    folder.Reload(*session);
+    Check(folder.loaded().harness.ShowsMenu("exefile.exe") && folder.problems().size() == 2 &&
+              folder.problems()[0].path == "harness.com.teammirae.bada.windows.apps.a.exe.menu" &&
+              folder.problems()[1].path == "harness.com.teammirae.bada.windows.apps.b.exe",
+          "apps: a wrong value is an error, with its path, and changes nothing");
+    WriteFile(dir / "settings.json", R"({"format": "bada-settings/2",
+        "harness": {"com.teammirae.bada.windows": {"apps": 1}}})");
+    folder.Reload(*session);
+    Check(folder.problems().size() == 1 && folder.problems()[0].path == "harness.com.teammirae.bada.windows.apps",
+          "apps: not an object is an error");
     // A profile the table names that isn't there is a warning: the file is taken.
     WriteFile(dir / "settings.json", R"({"format": "bada-settings/2",
         "engine": {"henkan": {"profiles": [{"id": "ko", "name": "ko", "layouts": ["ko-2-set"]}]}},
