@@ -17,6 +17,7 @@
 
 #include "harness.h"
 #include "publish.h"
+#include "tide_hub.h"
 
 #ifndef BADA_VERSION
 #define BADA_VERSION "0.0.0"
@@ -28,6 +29,8 @@ constexpr const char* kComponent = "com.teammirae.Bada";
 constexpr const char* kEngineName = "bada";
 
 bada::Session* g_session = nullptr;
+bada::TideHub* g_tide = nullptr;
+bool g_caps = false;  // the lock, as the last key had it
 
 // --- the engine object
 
@@ -48,6 +51,10 @@ GType bada_engine_get_type();
 #define BADA_ENGINE(o) (reinterpret_cast<BadaEngine*>(o))
 
 G_DEFINE_TYPE(BadaEngine, bada_engine, IBUS_TYPE_ENGINE)
+
+// The engine whose input context has focus, or nullptr: bada-tide takes keys only while there is one.
+BadaEngine* g_focused = nullptr;
+void SyncTide();
 
 bada::ContextInfo InfoOf(BadaEngine* e) {
     bada::ContextInfo info;
@@ -199,6 +206,7 @@ gboolean ProcessKey(IBusEngine* engine, guint keyval, guint keycode, guint state
     key.mods.alt = state & IBUS_MOD1_MASK;
     key.mods.meta = state & (IBUS_SUPER_MASK | IBUS_MOD4_MASK);
     key.caps = state & IBUS_LOCK_MASK;
+    g_caps = key.caps;
     // What the app's own layout types for this key, if the key is let through (§6.4).
     if (const gunichar c = ibus_keyval_to_unicode(keyval)) {
         char utf8[8] = {};
@@ -216,6 +224,7 @@ gboolean ProcessKey(IBusEngine* engine, guint keyval, guint keycode, guint state
         eaten = e->context->KeyDown(key, field, InfoOf(e));
     }
     if (g_session->generation() != before) ShowMode(e);
+    SyncTide();
     return eaten;
 }
 
@@ -231,6 +240,8 @@ void FocusIn(IBusEngine* engine) {
     Field field(engine);
     e->context->FocusIn(field, InfoOf(e));
     ShowMode(e);
+    g_focused = e;
+    SyncTide();
     IBUS_ENGINE_CLASS(bada_engine_parent_class)->focus_in(engine);
 }
 
@@ -242,6 +253,8 @@ void FocusOut(IBusEngine* engine) {
     e->down->clear();
     Field field(engine, true);
     e->context->FocusOut(field);
+    if (g_focused == e) g_focused = nullptr;
+    SyncTide();
     IBUS_ENGINE_CLASS(bada_engine_parent_class)->focus_out(engine);
 }
 
@@ -263,6 +276,8 @@ void Reset(IBusEngine* engine) {
 
 void Disable(IBusEngine* engine) {
     Commit(engine, "harness");
+    if (g_focused == BADA_ENGINE(engine)) g_focused = nullptr;
+    SyncTide();
     IBUS_ENGINE_CLASS(bada_engine_parent_class)->disable(engine);
 }
 
@@ -285,6 +300,7 @@ void PropertyActivate(IBusEngine* engine, const gchar* name, guint) {
     Field field(engine);
     e->context->Toggle(field, InfoOf(e));
     ShowMode(e);
+    SyncTide();
 }
 
 // A click on a row of the menu: move to it, then commit.
@@ -310,6 +326,10 @@ void bada_engine_init(BadaEngine* e) {
 
 void Destroy(IBusObject* object) {
     BadaEngine* e = BADA_ENGINE(object);
+    if (g_focused == e) {
+        g_focused = nullptr;
+        SyncTide();
+    }
     delete e->context;
     e->context = nullptr;
     delete e->down;
@@ -334,7 +354,67 @@ void bada_engine_class_init(BadaEngineClass* klass) {
 
 // The settings folder changed (§10.1): read it again. Each context follows at its next event.
 gboolean SettingsChanged(gint, GIOCondition, gpointer) {
-    if (g_session->WatchFired()) g_session->PublishIdle();
+    if (g_session->WatchFired()) {
+        if (g_tide) g_tide->Reload();
+        g_session->PublishIdle();
+        SyncTide();
+    }
+    return G_SOURCE_CONTINUE;
+}
+
+// --- bada-tide (docs/bada-tide-v1.md; src/common/tide_hub.h)
+
+// Tells the hub the harness's state (bada-tide §2). It takes the language keys the key table binds,
+// never Caps Lock, whose lock is the system's, and only while bada has a field in focus.
+void SyncTide() {
+    if (!g_tide || !g_session) return;
+    bada::tide::Host host;
+    host.mode = g_session->mode();
+    const std::vector<std::string>& cycle = g_session->table().cycle;
+    const auto it = std::find(cycle.begin(), cycle.end(), g_session->profile());
+    host.profile = g_session->profile().empty() || it == cycle.end() ? -1 : static_cast<int>(it - cycle.begin());
+    host.caps = g_caps;
+    if (g_focused) {
+        for (const bada::Binding& b : g_session->table().bindings) {
+            for (const std::string& k : {b.key, b.key2}) {
+                if (k != "CapsLock" && bada::IsLanguageKey(k)) host.take.insert(k);
+            }
+        }
+    }
+    g_tide->SetHost(host);
+}
+
+// A key the keyboard reported over bada-tide, that bada took: it runs through the key table as the
+// key itself would have, in the field in focus. A press the harness doesn't eat goes to the app.
+void TideKey(const bada::tide::Link::Key& event) {
+    BadaEngine* e = g_focused;
+    bada::RawKey key;
+    if (!e || !bada::tide::EvdevOf(event.code, &key.code, &key.sym)) return;
+    key.mods = event.mods;
+    key.caps = g_caps;
+    IBusEngine* engine = IBUS_ENGINE(e);
+    const auto before = g_session->generation();
+    {
+        Field field(engine);
+        if (event.down) {
+            if (!e->context->KeyDown(key, field, InfoOf(e))) field.ForwardKey(key);
+        } else {
+            e->context->KeyUp(key, field, InfoOf(e));
+        }
+    }
+    if (g_session->generation() != before) ShowMode(e);
+    SyncTide();
+}
+
+// The links changed: the state says so (`harness.tide`).
+void TideStatusChanged() {
+    if (!g_session) return;
+    if (g_focused) g_focused->context->Publish(InfoOf(g_focused));
+    else g_session->PublishIdle();
+}
+
+gboolean TideReady(gint, GIOCondition, gpointer) {
+    if (g_tide) g_tide->Dispatch();
     return G_SOURCE_CONTINUE;
 }
 
@@ -362,6 +442,7 @@ int main(int argc, char** argv) {
     options.data_dir = bada::Session::DataDir();
     options.sink = &publisher;
     options.log = [](const std::string& line) { std::fprintf(stderr, "ibus-engine-bada: %s\n", line.c_str()); };
+    options.tide = [] { return g_tide ? g_tide->Status() : std::string(); };
     std::string error;
     const std::unique_ptr<bada::Session> session = bada::Session::Create(std::move(options), &error);
     if (!session) {
@@ -370,6 +451,17 @@ int main(int argc, char** argv) {
     }
     g_session = session.get();
     session->PublishIdle();
+
+    bada::TideHub::Options tide_options;
+    tide_options.settings_dir = session->folder().dir();
+    tide_options.log = [](const std::string& line) { std::fprintf(stderr, "ibus-engine-bada: %s\n", line.c_str()); };
+    tide_options.key = TideKey;
+    tide_options.changed = TideStatusChanged;
+    std::unique_ptr<bada::TideHub> tide = std::make_unique<bada::TideHub>(std::move(tide_options));
+    if (tide->fd() >= 0) {
+        g_tide = tide.get();
+        g_unix_fd_add(tide->fd(), G_IO_IN, TideReady, nullptr);
+    }
 
     ibus_init();
     IBusBus* bus = ibus_bus_new();
@@ -392,6 +484,8 @@ int main(int argc, char** argv) {
         ibus_bus_register_component(bus, component);
     }
     ibus_main();
+    g_tide = nullptr;
+    tide.reset();
     g_session = nullptr;
     return 0;
 }

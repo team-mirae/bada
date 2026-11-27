@@ -6,5 +6,6 @@ the firmware it was written for. Copy one to the settings folder's `tide/` to tu
 | File | Keyboard | Firmware |
 |---|---|---|
 | `dmk-hhkb-hybrid.json` | HHKB Professional HYBRID (Type-S), ANSI or JIS | dmk built with `HHKB_TIDE=1`, team-mirae/dmk `a1c4868a` (`feat/hhkb-pfu-channel`) |
+| `ikarosu.json` | HHKB Professional HYBRID Type-S, JIS | team-mirae/ikarosu `667d968c` (main build, `IKAROSU_TIDE`); its own copy is ikarosu's `tide/ikarosu.json` |
 
 A keyboard project may publish its own translator instead.

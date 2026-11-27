@@ -221,6 +221,47 @@ jq -r '.mode, .profile' "$XDG_RUNTIME_DIR/bada/state.json"
   `chords`: true; `missing`: none), `problems` and `notice`.
 - With `publish_state: false` the file is removed and one `{}` signal sent.
 
+## bada-tide
+
+[bada-tide](../../docs/bada-tide-v1.md) links bada to a keyboard that reports its language keys
+itself, such as ikarosu on the HHKB Professional HYBRID Type-S (JIS). It is off until a translator
+is in the settings folder: `~/.config/bada/tide/<id>.json` (bada-tide §9). ikarosu publishes its
+own; this repository's are in [tide/](../../tide/). Removing the file turns it off.
+
+- **In the frontend's process.** Fcitx5 and ibus-engine-bada each hold every text field in one
+  process, so the link needs no helper: `src/common/tide_hub.h` runs in their event loop (one epoll
+  descriptor: the keyboards and a timer, four times a second while one is linked, every two seconds
+  otherwise). `src/core/tide.h` decides the lease, as on Windows.
+- **Finding the keyboard.** `/sys/class/hidraw/*`: the HID device's `HID_ID` (vendor and product
+  id), its `report_descriptor` (usage page and usage, the report sizes; numbered reports never
+  match) and the USB device's `bcdDevice` for `version_min`/`version_max` (unknown over Bluetooth: a
+  translator with version limits then doesn't match). Looked at every two seconds, and again when the
+  translators change. `/dev/hidrawN` is opened non-exclusively, as hidraw always is; reads never
+  block, and a send goes on the keyboard's own thread, so a keyboard that doesn't take it holds up
+  nothing.
+- **Access.** hidraw nodes are root's. `udev/70-bada-tide.rules` (installed to
+  `lib/udev/rules.d`) tags the keyboards of this repository's translators `uaccess`, so the user at
+  the seat may open them; then `sudo udevadm control --reload && sudo udevadm trigger` or replug. A
+  keyboard that matches and can't be opened is a `tide-no-access` warning in `harness.problems`.
+- **The lease.** `hello` after every connect, then `state` every third of the lease and at once on
+  every change of mode, profile, Caps Lock or take. A keyboard silent for two seconds is let go.
+- **What it takes.** The language keys the key table binds, never Caps Lock, and only while a field
+  has bada in focus. Anywhere else bada takes nothing, and the keys are the system's.
+- **The keys.** A taken key runs through the key table in the field in focus as the key itself
+  would, with the evdev code and keysym the jp layout gives it (`tide::EvdevOf`); a press the table
+  doesn't eat is forwarded to the app.
+- **Conflicts** (bada-tide §5): each translator's `linux.process`, matched against every process's
+  `comm`, the file name of its first argument and of its executable, four times a second. PFU's
+  Keymap Tool has no Linux version, so ikarosu's lists none here.
+- **The state** has `harness.tide` (bada-tide §8) and the translators' problems.
+- **Tests**: `bada_tide_tests` runs the core and the hub on a `/sys` and `/dev` of its own, where the
+  keyboard is a pseudo-terminal.
+
+**Tested** on Arch Linux (Fcitx5, sway) with ikarosu on an HHKB Professional HYBRID Type-S (JIS),
+over USB, its keymap sending かな and 英数 (`Lang1`, `Lang2`): the lease held, `harness.tide` shows
+what is taken, and the taken keys switch mode and profile in a field. The IBus side builds and isn't
+run.
+
 ## Not done
 
 - The IBus engine has not been run.
