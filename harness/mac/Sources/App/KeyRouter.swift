@@ -193,6 +193,19 @@ enum KeyRouter {
         }
     }
 
+    // MARK: From bada-tide
+
+    /// A language key the keyboard reported over bada-tide (Tide), one bada takes: macOS never sees it,
+    /// so there is no key event to wait for or keep.
+    static func tide(_ code: String, down isDown: Bool, mods: Mods) {
+        settle()
+        if !isDown {
+            for press in sequencer.up(code) { run(press) }
+            return
+        }
+        _ = pressed(code, mods: mods)
+    }
+
     /// Caps Lock went down (CapsLock reads it at the HID level): another key, to the keys that wait.
     static func otherKeyPressed(_ code: String) {
         settle()

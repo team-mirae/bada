@@ -32,8 +32,9 @@ enum StatePublisher {
 
     /// The state as it is now.
     static func current() -> [String: Any] {
-        let keys = PublishedState.keys(accessibility: LanguageKeyTap.isOn, inputMonitoring: HIDKeys.isListening)
-        var problems = Bada.store?.problems ?? []
+        let keys = PublishedState.keys(accessibility: LanguageKeyTap.isOn, inputMonitoring: HIDKeys.isListening,
+                                       tide: Tide.availableKeys)
+        var problems = (Bada.store?.problems ?? []) + Tide.problems
         if let refusal = Bada.refusal {
             problems.insert(Problem(file: "", path: "", code: "no-engine", message: refusal, level: "error"), at: 0)
         }
@@ -41,13 +42,15 @@ enum StatePublisher {
             id: Bada.harnessID, version: Bada.version, app: app,
             secure: IsSecureEventInputEnabled(), active: Modes.isOurs,
             capsLockOn: CapsLock.isOn(NSEvent.modifierFlags), capsLockSetting: CapsLock.setting, capsRule: CapsLock.rule,
-            available: keys.available, chords: keys.chords, missing: keys.missing, problems: problems)
+            available: keys.available, chords: keys.chords, missing: keys.missing, problems: problems,
+            tide: Tide.published)
         return PublishedState.build(mode: Modes.current, profile: Modes.profile, reply: reply, harness: harness)
     }
 
     /// Publishes again with the harness's fields as they are now (mode, profile, Caps Lock, input
     /// source, permissions, problems). Only when the JSON changed.
     static func refresh() {
+        Tide.changed()   // mode, profile, Caps Lock or the table may have changed: renew the lease now
         guard let json = JSON.text(current()), json != published else { return }
         published = json
         try? AtomicFile.write(Data(json.utf8), to: url)
