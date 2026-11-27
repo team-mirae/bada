@@ -22,3 +22,4 @@ bada-engine = { path = "../engine" }
 bada-compat = { path = "../crates/compat" }
 serde.workspace = true
 serde_json.workspace = true
+ed25519-dalek.workspace = true

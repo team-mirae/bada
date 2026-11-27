@@ -2,14 +2,21 @@
 //! engine to check what it writes, reads and writes the settings folder, and serves the settings
 //! page (`settings/README.md`) on this machine.
 //!
-//! What is here now: `version`, `settings` (the page's host), `settings validate` and `state`.
+//! Every command of §10.2: `version`, `update`, `settings` (the page's host, and the file),
+//! `profile`, `keys`, `layout`, `dict`, `type`, `state` and `schema`.
 
 pub mod check;
+pub mod commands;
+pub mod edit;
 pub mod folder;
 pub mod keys;
+pub mod layouts;
 pub mod page;
+pub mod path;
 pub mod server;
 pub mod state;
+pub mod typing;
+pub mod update;
 
 /// bada's one version (the repository's `VERSION`).
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

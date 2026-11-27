@@ -13,16 +13,41 @@ cargo test -p bada-cli
 It has no dependencies beyond the engine, the contract layer and `serde_json`: the HTTP server is
 its own, on the standard library.
 
-## What it does now
+## What it does
+
+Every command of §10.2. Every command takes `--json`: one JSON object on stdout with `ok` and
+`problems` (exit code 1 when an error-level problem stopped it, 2 for a usage error). Nothing asks a
+question. A change is checked as the page's host checks it and written only when it has no error;
+`settings.json` keeps the file it replaced in `history/`.
 
 | Command | Does |
 |---|---|
-| `bada version [--json]` | The command line's version, the engine's, the standard's, and the running input method's (from the state it publishes) |
-| `bada settings` | Serves the settings page on `127.0.0.1` and opens it in the default browser. It stops when the page is closed, or hasn't been heard from for a minute |
-| `bada settings validate [--json]` | Checks the folder's `settings.json` as the page's host does, and prints what is wrong. No file is a new install: nothing is wrong. Exit code 1 with an error-level problem |
-| `bada state` | The published state (§6.7), or `null` when nothing is published |
+| `bada version` | The command line's version, the engine's, the standard's, and the running input method's |
+| `bada update [--check]` | Installs the newest release from GitHub, **only when run**: the download is used only if its `.sig` checks against the key in this build (below). `--check` only looks |
+| `bada settings` | Serves the settings page on `127.0.0.1` and opens it (flags below) |
+| `bada settings show` \| `export` | The whole file (a new install's when there is none) |
+| `bada settings get <path>` \| `set <path> <json>` | One value, by path: `engine.henkan.profiles[0].layouts`. A string is JSON too: `'"en-qwerty"'` |
+| `bada settings validate` \| `import <file>` \| `undo` | Check the file; replace it with another (checked); go back to the one the last write replaced (a second `undo` goes forward again) |
+| `bada profile list` \| `add <id> --layouts a,b [--name N]` \| `remove <id>` \| `move <id> <n>` \| `set <id> <field> <json>` | The henkan profiles (§8). `move` counts from 0; `set` with `null` removes a field |
+| `bada keys list` \| `bind <key> <action>… [--when henkan\|muhenkan]` \| `unbind <key> [--when …]` \| `available` | The key table (§9). `bind` replaces the binding on that key and `when`. `available` is what the running harness detects |
+| `bada layout list` \| `show <id>` \| `add <file>` \| `set <id> <path> <json>` \| `remove <id>` \| `reset <id>` \| `copy <id> <new-id>` \| `validate <file>` \| `missing <id>` | Layouts (§7). A change to a stock layout needs `--modify-stock`, and says why without it (§7.7) |
+| `bada dict show` \| `add <word> [--negative] [--language …]` \| `remove <word>` \| `import <file>` | The user dictionary (§11). A word is on one side: adding it to one takes it off the other |
+| `bada type [--profile <id>] "<keys>"` | Types on the engine with no text field, with the folder's settings, layouts and dictionary, and prints the text, what is staged (`[…]`) and the menu. Without `--profile`, in muhenkan |
+| `bada state` | The published state (§6.7), or `null` |
+| `bada schema settings` \| `layout` \| `keys` | The JSON Schemas |
 
-Anything else prints the usage, with exit code 2.
+**`type`'s keys**: each character is typed as on a JIS keyboard (`a`, `A` with ⇧, `!` as ⇧1, a space
+as Space, a newline as Enter); `{Code}` sends a key by its code (`{Backspace}`, `{F7}`), with
+modifiers as `{shift+Code}`; `{action:menu.next}` runs an action, `{pick:2}` picks a menu row; `{{` and
+`}}` type a brace. The engine's data comes from `$BADA_DATA`, a `data` folder beside the binary (the
+Mac bundle's `Resources/data`, `share/bada/data`), or the repository's `engine/data`.
+
+**`update`**: each release file has a `<file>.sig` beside it, its Ed25519 signature, made in CI by
+[`tools/sign`](../tools/sign) with the secret `BADA_UPDATE_SIGNING_KEY`. The public key is
+`PUBLIC_KEY` in `src/update.rs`; a build without one can check for a release but not install it.
+On macOS it replaces `~/Library/Input Methods/Bada.app` and restarts the input method; on Windows it
+runs the installer silently; on Linux, where the package goes under `/usr`, it checks the download and
+prints the `sudo` command.
 
 `bada settings` takes:
 

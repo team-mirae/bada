@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/compat", "engine", "tools/conformance", "cli"]
+members = ["crates/compat", "engine", "tools/conformance", "tools/sign", "cli"]
 
 [workspace.package]
 # One version for everything in the repository: it is the VERSION file's (crates/compat checks).
@@ -15,3 +15,4 @@ publish = false
 [workspace.dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+ed25519-dalek = { version = "2", default-features = false, features = ["std"] }

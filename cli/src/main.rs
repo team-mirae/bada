@@ -6,20 +6,35 @@ use std::process::ExitCode;
 
 use bada_cli::folder::Folder;
 use bada_cli::server::{Options, Server, open_browser};
-use bada_cli::{VERSION, check, page, state};
+use bada_cli::edit::Answer;
+use bada_cli::{VERSION, check, commands, layouts, page, state, typing, update};
 use bada_compat::Level;
 use serde_json::{Value, json};
 
 const USAGE: &str = "\
-bada, the command line
+bada, the command line (every command takes --json: one JSON object on stdout, exit code 1 on error)
 
-  bada version [--json]             the command line's, the engine's and the standard's versions
-  bada settings                     open the settings page
-      [--no-open]                   only print its address
-      [--port N] [--page DIR]       the port to serve on, and the folder of the page's files
-      [--embedded]                  the page is in the input method's own window
-  bada settings validate [--json]   check settings.json, and say what is wrong with it
-  bada state                        the input method's published state, or null
+  bada version                                  the command line's, the engine's, the standard's and the input method's versions
+  bada update [--check]                         install the newest release (only when asked); --check only looks
+  bada settings                                 open the settings page [--no-open] [--port N] [--page DIR] [--embedded]
+  bada settings show | export                   the whole file
+  bada settings get <path>                      one value: engine.henkan.profiles[0].layouts
+  bada settings set <path> <json>               change one value (checked before it is written)
+  bada settings validate | import <file> | undo
+  bada profile list | remove <id>
+  bada profile add <id> --layouts a,b [--name N]
+  bada profile move <id> <n> | set <id> <field> <json>
+  bada keys list | available
+  bada keys bind <key> <action>... [--when henkan|muhenkan]
+  bada keys unbind <key> [--when henkan|muhenkan]
+  bada layout list | show <id> | remove <id> | reset <id> | missing <id>
+  bada layout add <file> | set <id> <path> <json>   [--modify-stock]
+  bada layout copy <id> <new-id> | validate <file>
+  bada dict show | remove <word> | import <file>
+  bada dict add <word> [--negative] [--language korean|english|japanese]
+  bada type [--profile <id>] \"<keys>\"          type on the engine with no text field
+  bada state                                    the input method's published state
+  bada schema settings | layout | keys
 ";
 
 fn usage() -> ExitCode {
@@ -127,25 +142,126 @@ fn settings(args: &[String]) -> ExitCode {
     }
 }
 
-fn main() -> ExitCode {
-    let args: Vec<String> = std::env::args().skip(1).collect();
-    let rest = args.get(1..).unwrap_or(&[]);
-    let only_json = |rest: &[String]| match rest {
-        [] => Some(false),
-        [flag] if flag == "--json" => Some(true),
-        _ => None,
-    };
-    match args.first().map(String::as_str) {
-        Some("version") => only_json(rest).map_or_else(usage, version),
-        Some("settings") if rest.first().is_some_and(|a| a == "validate") => {
-            only_json(&rest[1..]).map_or_else(usage, validate)
+/// The arguments, with the flags taken out: `--json`, and the ones a command reads.
+struct Args {
+    words: Vec<String>,
+    json: bool,
+    flags: Vec<(String, Option<String>)>,
+}
+
+/// Flags that take a value.
+const VALUED: [&str; 6] = ["--when", "--layouts", "--name", "--language", "--profile", "--port"];
+
+impl Args {
+    fn parse(raw: Vec<String>) -> Args {
+        let (mut words, mut json, mut flags) = (Vec::new(), false, Vec::new());
+        let mut it = raw.into_iter();
+        while let Some(a) = it.next() {
+            if a == "--json" {
+                json = true;
+            } else if VALUED.contains(&a.as_str()) {
+                let v = it.next();
+                flags.push((a, v));
+            } else if a.starts_with("--") {
+                flags.push((a, None));
+            } else {
+                words.push(a);
+            }
         }
-        Some("settings") => settings(rest),
-        Some("state") if rest.is_empty() => {
-            let state = state::read(&Folder::from_env());
-            println!("{}", serde_json::to_string_pretty(&state).unwrap_or_else(|_| "null".into()));
-            ExitCode::SUCCESS
-        }
-        _ => usage(),
+        Args { words, json, flags }
     }
+
+    fn flag(&self, name: &str) -> bool {
+        self.flags.iter().any(|(f, _)| f == name)
+    }
+
+    fn value(&self, name: &str) -> Option<&str> {
+        self.flags.iter().find(|(f, _)| f == name).and_then(|(_, v)| v.as_deref())
+    }
+
+    fn word(&self, i: usize) -> Option<&str> {
+        self.words.get(i).map(String::as_str)
+    }
+
+    /// The flags a command may have; anything else is a usage error.
+    fn only(&self, allowed: &[&str]) -> bool {
+        self.flags.iter().all(|(f, v)| allowed.contains(&f.as_str()) && (!VALUED.contains(&f.as_str()) || v.is_some()))
+    }
+}
+
+fn print(answer: Answer, json_out: bool) -> ExitCode {
+    if json_out {
+        println!("{}", answer.json());
+    } else {
+        let text = answer.render();
+        if !text.is_empty() {
+            if answer.ok { println!("{text}") } else { eprintln!("{text}") }
+        }
+    }
+    if answer.ok { ExitCode::SUCCESS } else { ExitCode::from(1) }
+}
+
+fn main() -> ExitCode {
+    let raw: Vec<String> = std::env::args().skip(1).collect();
+    // `bada settings` (the page) has flags of its own, read as before.
+    if raw.first().is_some_and(|a| a == "settings")
+        && raw.get(1).is_none_or(|a| a.starts_with("--") && a != "--json")
+    {
+        return settings(&raw[1..]);
+    }
+    let a = Args::parse(raw);
+    let folder = Folder::from_env();
+    let w = |i| a.word(i);
+    let answer = match (w(0), w(1)) {
+        (Some("version"), None) if a.only(&[]) => return version(a.json),
+        (Some("update"), None) if a.only(&["--check"]) => update::run(a.flag("--check")),
+        (Some("state"), None) if a.only(&[]) => {
+            let state = state::read(&folder);
+            if a.json {
+                println!("{state}");
+            } else {
+                println!("{}", serde_json::to_string_pretty(&state).unwrap_or_else(|_| "null".into()));
+            }
+            return ExitCode::SUCCESS;
+        }
+        (Some("schema"), Some(which)) if a.words.len() == 2 && a.only(&[]) => commands::schema(which),
+        (Some("schema"), None) if a.only(&[]) => commands::schema("settings"),
+        (Some("settings"), Some("validate")) if a.words.len() == 2 && a.only(&[]) => return validate(a.json),
+        (Some("settings"), Some("show" | "export")) if a.words.len() == 2 && a.only(&[]) => commands::settings_show(&folder),
+        (Some("settings"), Some("get")) if a.words.len() == 3 && a.only(&[]) => commands::settings_get(&folder, w(2).unwrap()),
+        (Some("settings"), Some("set")) if a.words.len() == 4 && a.only(&[]) => commands::settings_set(&folder, w(2).unwrap(), w(3).unwrap()),
+        (Some("settings"), Some("import")) if a.words.len() == 3 && a.only(&[]) => commands::settings_import(&folder, w(2).unwrap()),
+        (Some("settings"), Some("undo")) if a.words.len() == 2 && a.only(&[]) => commands::settings_undo(&folder),
+        (Some("profile"), Some("list")) if a.words.len() == 2 && a.only(&[]) => commands::profile_list(&folder),
+        (Some("profile"), Some("add")) if a.words.len() == 3 && a.only(&["--layouts", "--name"]) => {
+            let layouts: Vec<String> = a.value("--layouts").unwrap_or("").split(',').filter(|s| !s.is_empty()).map(String::from).collect();
+            commands::profile_add(&folder, w(2).unwrap(), &layouts, a.value("--name"))
+        }
+        (Some("profile"), Some("remove")) if a.words.len() == 3 && a.only(&[]) => commands::profile_remove(&folder, w(2).unwrap()),
+        (Some("profile"), Some("move")) if a.words.len() == 4 && a.only(&[]) => match w(3).unwrap().parse() {
+            Ok(n) => commands::profile_move(&folder, w(2).unwrap(), n),
+            Err(_) => return usage(),
+        },
+        (Some("profile"), Some("set")) if a.words.len() == 5 && a.only(&[]) => commands::profile_set(&folder, w(2).unwrap(), w(3).unwrap(), w(4).unwrap()),
+        (Some("keys"), Some("list")) if a.words.len() == 2 && a.only(&[]) => commands::keys_list(&folder),
+        (Some("keys"), Some("available")) if a.words.len() == 2 && a.only(&[]) => commands::keys_available(&folder),
+        (Some("keys"), Some("bind")) if a.words.len() >= 4 && a.only(&["--when"]) => commands::keys_bind(&folder, w(2).unwrap(), &a.words[3..], a.value("--when")),
+        (Some("keys"), Some("unbind")) if a.words.len() == 3 && a.only(&["--when"]) => commands::keys_unbind(&folder, w(2).unwrap(), a.value("--when")),
+        (Some("layout"), Some("list")) if a.words.len() == 2 && a.only(&[]) => layouts::list(&folder),
+        (Some("layout"), Some("show")) if a.words.len() == 3 && a.only(&[]) => layouts::show(&folder, w(2).unwrap()),
+        (Some("layout"), Some("add")) if a.words.len() == 3 && a.only(&["--modify-stock"]) => layouts::add(&folder, w(2).unwrap(), a.flag("--modify-stock")),
+        (Some("layout"), Some("set")) if a.words.len() == 5 && a.only(&["--modify-stock"]) => layouts::set(&folder, w(2).unwrap(), w(3).unwrap(), w(4).unwrap(), a.flag("--modify-stock")),
+        (Some("layout"), Some("remove")) if a.words.len() == 3 && a.only(&[]) => layouts::remove(&folder, w(2).unwrap()),
+        (Some("layout"), Some("reset")) if a.words.len() == 3 && a.only(&[]) => layouts::reset(&folder, w(2).unwrap()),
+        (Some("layout"), Some("copy")) if a.words.len() == 4 && a.only(&[]) => layouts::copy(&folder, w(2).unwrap(), w(3).unwrap()),
+        (Some("layout"), Some("validate")) if a.words.len() == 3 && a.only(&[]) => layouts::validate(&folder, w(2).unwrap()),
+        (Some("layout"), Some("missing")) if a.words.len() == 3 && a.only(&[]) => layouts::missing(&folder, w(2).unwrap()),
+        (Some("dict"), Some("show")) if a.words.len() == 2 && a.only(&[]) => commands::dict_show(&folder),
+        (Some("dict"), Some("add")) if a.words.len() == 3 && a.only(&["--negative", "--language"]) => commands::dict_add(&folder, w(2).unwrap(), a.flag("--negative"), a.value("--language")),
+        (Some("dict"), Some("remove")) if a.words.len() == 3 && a.only(&[]) => commands::dict_remove(&folder, w(2).unwrap()),
+        (Some("dict"), Some("import")) if a.words.len() == 3 && a.only(&[]) => commands::dict_import(&folder, w(2).unwrap()),
+        (Some("type"), Some(keys)) if a.words.len() == 2 && a.only(&["--profile"]) => typing::run(&folder, a.value("--profile"), keys),
+        _ => return usage(),
+    };
+    print(answer, a.json)
 }
