@@ -279,7 +279,9 @@ final class BadaInputController: IMKInputController, TextTarget {
     func show(_ menu: Menu, rtl: Bool) {
         menuGeneration += 1
         let generation = menuGeneration
-        guard !menu.rows.isEmpty, let client = target else {
+        // An app listed with `menu: false` (harness settings, `apps`) gets no menu drawn: it shows the
+        // preedit itself. Keys and composition are as everywhere else.
+        guard !menu.rows.isEmpty, let client = target, Bada.store?.harness.showsMenu(in: client.bundleIdentifier()) ?? true else {
             SuggestionWindow.shared.hide()
             return
         }
