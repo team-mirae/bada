@@ -9,6 +9,7 @@
 #include "dll.h"
 #include "log.h"
 #include "state_shared.h"
+#include "tide_ipc.h"
 
 namespace bada::tip {
 namespace {
@@ -101,6 +102,18 @@ Process& GetProcess() {
     options.detected = DetectKeyboard();
     options.sink = &StateSinkOfProcess();
     options.log = [](const std::string& line) { log::Write(L"%s", Wide(line).c_str()); };
+    // bada-tide: what the helper (src/tide/) published, read when the state is.
+    options.tide = []() -> std::string {
+        const HANDLE mapping = OpenFileMappingW(FILE_MAP_READ, FALSE, tide::ipc::kStatusMapping);
+        if (!mapping) return {};
+        std::string text;
+        if (const void* view = MapViewOfFile(mapping, FILE_MAP_READ, 0, 0, 0)) {
+            text = tide::ipc::ReadStatus(view).value_or(std::string());
+            UnmapViewOfFile(view);
+        }
+        CloseHandle(mapping);
+        return text;
+    };
     const ULONGLONG start = GetTickCount64();
     process->session = Session::Create(std::move(options), &process->error);
     if (process->session) {

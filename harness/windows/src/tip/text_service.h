@@ -24,6 +24,7 @@
 #include "harness.h"
 #include "lang_bar.h"
 #include "shared_session.h"
+#include "tide_ipc.h"
 
 namespace bada::tip {
 
@@ -150,6 +151,16 @@ private:
     // The lock, set to what the harness decided (the standard, §9.4).
     void ReconcileLock();
 
+    // bada-tide (src/tide/): the keys a keyboard reported, that the helper hands this thread, and
+    // what the helper is told of the harness's state. The thread's message-only window takes the
+    // helper's messages (src/core/tide_ipc.h).
+    void OpenTideWindow();
+    void CloseTideWindow();
+    void TideKey(const tide::ipc::KeyEvent& key);
+    void SendTideHost(bool force);
+    void TideStatusChanged();
+    static LRESULT CALLBACK TideWindowProc(HWND window, UINT message, WPARAM wparam, LPARAM lparam);
+
     void InitMenu(ITfMenu* menu);
     void OnMenu(UINT id);
 
@@ -195,6 +206,10 @@ private:
     // What the lock must be, until the next key that isn't Caps Lock.
     std::optional<bool> lock_target_;
     ULONGLONG lock_injected_tick_ = 0;
+    HWND tide_window_ = nullptr;
+    HWND tide_helper_ = nullptr;   // the helper's window, when it was last found
+    std::uint32_t tide_sent_ = 0;  // the host word it was last sent
+    bool tide_sent_valid_ = false;
 };
 
 }  // namespace bada::tip
