@@ -94,14 +94,24 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          BADA_UPDATE_SIGNING_KEY: ${{ secrets.BADA_UPDATE_SIGNING_KEY }}
           TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           # The repository's releases are immutable: once one is published its files can't be
           # replaced. So the installer goes onto a draft, and a published release is left as it is.
           file="harness/windows/build/dist/bada-$(cat VERSION)-setup.exe"
+          # bada update installs a file only if its signature checks against the key in the build
+          # (cli/src/update.rs): sign it here, with the secret half (tools/sign).
+          if [ -n "$BADA_UPDATE_SIGNING_KEY" ]; then
+            cargo run -q --release -p bada-sign -- sign "$file"
+            files="$file $file.sig"
+          else
+            echo "::warning::No BADA_UPDATE_SIGNING_KEY secret: $file is unsigned, and bada update won't install it."
+            files="$file"
+          fi
           draft=$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null || echo none)
           case "$draft" in
-            true) gh release upload "$TAG" "$file" --clobber ;;
+            true) gh release upload "$TAG" $files --clobber ;;
             false) echo "::notice::Release $TAG is published already, so its files can't be replaced. This run's installer is its artifact only." ;;
-            *) gh release create "$TAG" "$file" --draft --title "bada $(cat VERSION)" --generate-notes ;;
+            *) gh release create "$TAG" $files --draft --title "bada $(cat VERSION)" --generate-notes ;;
           esac

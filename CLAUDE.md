@@ -53,6 +53,9 @@ line (`cli/`), which is the page's host and has only the first of its commands. 
   the Windows installer (`harness/windows/tools/package.ps1`), the Mac app (`make dist` in
   `harness/mac`) and the Linux build (`harness/linux/tools/package.sh`). CI builds all three
   (`.github/workflows/`), and on a `v*` tag attaches each to the tag's draft release.
+- **Each release file is signed** for `bada update`: CI writes `<file>.sig` with `tools/sign` and the
+  secret `BADA_UPDATE_SIGNING_KEY`; its public half is `PUBLIC_KEY` in `cli/src/update.rs`. Without
+  the secret a file goes up unsigned, and `bada update` won't install it.
 - **A published release can't be changed**: the repository's releases are immutable. So the order
   is: create the release as a draft, push the tag (CI attaches the three builds to the draft),
   check that all three are there, and publish last. A workflow run by hand with `tag` builds that

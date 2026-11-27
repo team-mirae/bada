@@ -1204,7 +1204,10 @@ and writes the folder above, and installs releases. Everything the settings page
   state stays read-only from outside.
 - **`bada update` replaces a program that sees every key, so: only when asked.** The input method
   never contacts GitHub by itself, not even to look: `bada update` and `bada update --check` are the
-  only ways. The download is checked against a signature whose key is in the installed build.
+  only ways. The download is checked against a signature whose key is in the installed build: each
+  release file has `<file>.sig` beside it, its Ed25519 signature (64 bytes).
+- **`bada type`'s keys** are characters typed as on a JIS keyboard (with ⇧ where the character is
+  shifted), `{Code}` and `{shift+Code}` for any key, `{action:<name>}` and `{pick:<row>}`.
 
 ## 11. Data and dictionary
 

@@ -112,13 +112,24 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/v')
         env:
           GH_TOKEN: ${{ github.token }}
+          BADA_UPDATE_SIGNING_KEY: ${{ secrets.BADA_UPDATE_SIGNING_KEY }}
         run: |
           # The repository's releases are immutable: once one is published its files can't be
           # replaced. So the zip goes onto a draft, and a published release is left as it is.
           tag="${GITHUB_REF#refs/tags/}"
+          file=$(ls harness/mac/build/*.zip)
+          # bada update installs a file only if its signature checks against the key in the build
+          # (cli/src/update.rs): sign it here, with the secret half (tools/sign).
+          if [ -n "$BADA_UPDATE_SIGNING_KEY" ]; then
+            cargo run -q --release -p bada-sign -- sign "$file"
+            files="$file $file.sig"
+          else
+            echo "::warning::No BADA_UPDATE_SIGNING_KEY secret: $file is unsigned, and bada update won't install it."
+            files="$file"
+          fi
           draft=$(gh release view "$tag" --json isDraft --jq .isDraft 2>/dev/null || echo none)
           case "$draft" in
-            true) gh release upload "$tag" harness/mac/build/*.zip --clobber ;;
+            true) gh release upload "$tag" $files --clobber ;;
             false) echo "::notice::Release $tag is published already, so its files can't be replaced. This run's zip is its artifact only." ;;
-            *) gh release create "$tag" harness/mac/build/*.zip --draft --title "bada $(cat VERSION)" --generate-notes ;;
+            *) gh release create "$tag" $files --draft --title "bada $(cat VERSION)" --generate-notes ;;
           esac
