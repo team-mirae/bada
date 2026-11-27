@@ -26,6 +26,19 @@ struct HarnessSettings: Equatable {
     var keyboard: KeyTable.Preset?
     /// Diagnostics in ~/Library/Logs/Bada.log.
     var log = false
+    /// Per app, by bundle id: how bada behaves there. `menu: false` draws no candidate menu (the app
+    /// shows the preedit itself, e.g. a game that draws its own composition box: EVE Online).
+    var apps: [String: AppSettings] = [:]
+
+    struct AppSettings: Equatable {
+        var menu = true
+    }
+
+    /// Whether bada draws its candidate menu in the app with this bundle id.
+    func showsMenu(in app: String?) -> Bool {
+        guard let app else { return true }
+        return apps[app]?.menu ?? true
+    }
 
     static func read(_ value: Any?, path: String) -> (settings: HarnessSettings, flaws: [KeyTable.Flaw], warnings: [KeyTable.Flaw]) {
         var settings = HarnessSettings()
@@ -48,6 +61,29 @@ struct HarnessSettings: Equatable {
             case "log":
                 if let on = raw as? Bool { settings.log = on } else {
                     flaws.append(KeyTable.Flaw(path: path + ".log", code: "bad-value", message: "log must be true or false"))
+                }
+            case "apps":
+                guard let byApp = raw as? [String: Any] else {
+                    flaws.append(KeyTable.Flaw(path: path + ".apps", code: "bad-value", message: "apps is an object, by bundle id"))
+                    continue
+                }
+                for (app, entry) in byApp.sorted(by: { $0.key < $1.key }) {
+                    let at = path + ".apps." + app
+                    guard let fields = entry as? [String: Any] else {
+                        flaws.append(KeyTable.Flaw(path: at, code: "bad-value", message: "an app's settings are an object"))
+                        continue
+                    }
+                    var one = HarnessSettings.AppSettings()
+                    for (field, value) in fields.sorted(by: { $0.key < $1.key }) {
+                        if field == "menu" {
+                            if let on = value as? Bool { one.menu = on } else {
+                                flaws.append(KeyTable.Flaw(path: at + ".menu", code: "bad-value", message: "menu must be true or false"))
+                            }
+                        } else {
+                            warnings.append(KeyTable.Flaw(path: at + "." + field, code: "unknown-field", message: "an app has no setting \(field)"))
+                        }
+                    }
+                    settings.apps[app] = one
                 }
             default:
                 warnings.append(KeyTable.Flaw(path: path + "." + name, code: "unknown-field", message: "this harness has no setting \(name)"))

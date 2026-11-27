@@ -543,6 +543,21 @@ do {
           "tide: templates: unknown widths and bad bytes refused, big-endian fields")
 }
 
+// MARK: harness settings: apps (issue #11)
+
+do {
+    let (settings, flaws, warnings) = HarnessSettings.read(["apps": ["com.ccpgames.eveonline": ["menu": false], "com.apple.TextEdit": ["menu": true]]], path: "harness.x")
+    check(flaws.isEmpty && warnings.isEmpty, "apps: a valid list reads with no problem")
+    check(!settings.showsMenu(in: "com.ccpgames.eveonline"), "apps: menu false draws no menu in that app")
+    check(settings.showsMenu(in: "com.apple.TextEdit") && settings.showsMenu(in: "com.other.app") && settings.showsMenu(in: nil),
+          "apps: every other app, and an unknown one, gets the menu")
+    let bad = HarnessSettings.read(["apps": ["a.b": ["menu": "no"], "c.d": 3]], path: "harness.x")
+    check(bad.flaws.map(\.path) == ["harness.x.apps.a.b.menu", "harness.x.apps.c.d"], "apps: a wrong value is an error, with its path")
+    let unknown = HarnessSettings.read(["apps": ["a.b": ["colour": 1]]], path: "harness.x")
+    check(unknown.flaws.isEmpty && unknown.warnings.map(\.path) == ["harness.x.apps.a.b.colour"], "apps: an unknown field is a warning")
+    check(HarnessSettings.read(["apps": 1], path: "harness.x").flaws.first?.path == "harness.x.apps", "apps: not an object is an error")
+}
+
 try? FileManager.default.removeItem(at: temporary)
 print("unit: \(checks) checks, \(failures) failed")
 exit(failures == 0 ? 0 : 1)

@@ -128,6 +128,18 @@ This harness's own settings:
   (no language keys: Caps Lock toggles), or `auto`: `jis-mac` when macOS reports a JIS keyboard,
   else `none`. macOS can't tell a PC's JIS board from Apple's, so `jis-pc` is yours to set.
 - `log`: diagnostics in `~/Library/Logs/Bada.log`. Nothing typed is written.
+- `apps`: per app, by bundle id. `menu: false` draws no candidate menu in that app, which shows the
+  preedit itself; composition and keys are unchanged (a row can still be moved to and picked by
+  key). For EVE Online, whose client draws its own composition box (issue #11; every client is
+  `com.ccpgames.eveonline`):
+
+  ```json
+  "harness": {"com.teammirae.bada.mac": {"apps": {"com.ccpgames.eveonline": {"menu": false}}}}
+  ```
+
+  `bada settings set 'harness.com.teammirae.bada.mac.apps' …` can't name it, since the harness id has
+  dots: set the whole part with `bada settings set harness '{"com.teammirae.bada.mac": {…}}'`, or edit
+  the file.
 
 ## The sources
 

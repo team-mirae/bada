@@ -889,6 +889,11 @@ id). Schema: [schemas/settings.schema.json](schemas/settings.schema.json). The s
 below is bada's; another engine publishes its own in `P_describe.settings.schema`, and keeps
 `henkan.profiles[].id` and `.name`, which the harness reads.
 
+A harness's own part is the harness's to define (its README). Per-app behaviour belongs there, as
+`apps`, keyed by how its platform names an app: bada's macOS harness keys it by bundle id and has
+`menu: false`, which draws no candidate menu in that app (one that shows the preedit itself, like a
+game drawing its own composition box). The other harnesses have no `apps` yet.
+
 ### 8.1 The fields
 
 | Field | Meaning |

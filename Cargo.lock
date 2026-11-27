@@ -4,7 +4,7 @@ version = 4
 
 [[package]]
 name = "bada-cli"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "bada-compat",
  "bada-engine",
@@ -15,7 +15,7 @@ dependencies = [
 
 [[package]]
 name = "bada-compat"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -23,7 +23,7 @@ dependencies = [
 
 [[package]]
 name = "bada-conformance"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "libloading",
  "serde_json",
@@ -31,7 +31,7 @@ dependencies = [
 
 [[package]]
 name = "bada-engine"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "bada-compat",
  "serde",
@@ -40,7 +40,7 @@ dependencies = [
 
 [[package]]
 name = "bada-sign"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "ed25519-dalek",
  "rand_core",
