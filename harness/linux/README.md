@@ -18,8 +18,10 @@ side: no id, file or folder is shared (§12).
 | State, file | `$XDG_RUNTIME_DIR/bada/state.json` |
 
 **Tested**: on Arch Linux (x86_64), Fcitx5 5.1.23, with no desktop: the tests below drive a real
-Fcitx5, in the test's process and as a daemon over D-Bus. **Not tested**: on a desktop, with a real
-keyboard and real apps; and the IBus engine, which builds (libibus 1.5.34) but has never been run.
+Fcitx5, in the test's process and as a daemon over D-Bus. **Tested by hand**, on a desktop (Arch
+Linux, sway 1.12, Fcitx5 5.1.23, a JIS keyboard, bada 0.3.1): script forms, the negative menu entries,
+in a profile of `ja-kana` with `"script_forms": true`. **Not tested**: the rest on a desktop, with a
+real keyboard and real apps; and the IBus engine, which builds (libibus 1.5.34) but has never been run.
 
 ## Layout
 
