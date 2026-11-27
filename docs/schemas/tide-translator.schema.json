@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://team-mirae.github.io/bada/schemas/tide-translator.schema.json",
+  "title": "bada-tide-translator/1",
+  "description": "One keyboard's bada-tide protocol (docs/bada-tide-v1.md §6).",
+  "type": "object",
+  "required": ["format", "id", "name", "match", "version", "hello", "state", "key", "values"],
+  "additionalProperties": false,
+  "properties": {
+    "format": {"const": "bada-tide-translator/1"},
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+    "name": {"type": "string", "minLength": 1},
+    "match": {
+      "type": "object",
+      "required": ["vendor_id", "product_id", "usage_page", "usage", "report_size"],
+      "additionalProperties": false,
+      "properties": {
+        "vendor_id": {"$ref": "#/$defs/u16"},
+        "product_id": {"$ref": "#/$defs/u16"},
+        "usage_page": {"$ref": "#/$defs/u16"},
+        "usage": {"$ref": "#/$defs/u16"},
+        "report_size": {"type": "integer", "minimum": 8, "maximum": 1024},
+        "version_min": {"$ref": "#/$defs/u16"},
+        "version_max": {"$ref": "#/$defs/u16"}
+      }
+    },
+    "version": {
+      "type": "object",
+      "required": ["major", "minor"],
+      "additionalProperties": false,
+      "properties": {"major": {"const": 1}, "minor": {"type": "integer", "minimum": 0, "maximum": 255}}
+    },
+    "hello": {
+      "type": "object", "required": ["send", "reply"], "additionalProperties": false,
+      "properties": {"send": {"$ref": "#/$defs/template"}, "reply": {"$ref": "#/$defs/template"}}
+    },
+    "state": {
+      "type": "object", "required": ["send", "reply"], "additionalProperties": false,
+      "properties": {"send": {"$ref": "#/$defs/template"}, "reply": {"$ref": "#/$defs/template"}}
+    },
+    "key": {
+      "type": "object", "required": ["recv"], "additionalProperties": false,
+      "properties": {"recv": {"$ref": "#/$defs/template"}}
+    },
+    "values": {
+      "type": "object",
+      "required": ["status", "mode", "profile_none", "features", "usage", "take", "edge", "mods"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "object", "required": ["ok", "unsupported", "no-lease", "bad-value", "blocked"],
+          "additionalProperties": false,
+          "properties": {
+            "ok": {"$ref": "#/$defs/u8"}, "unsupported": {"$ref": "#/$defs/u8"}, "no-lease": {"$ref": "#/$defs/u8"},
+            "bad-value": {"$ref": "#/$defs/u8"}, "blocked": {"$ref": "#/$defs/u8"}
+          }
+        },
+        "mode": {
+          "type": "object", "required": ["muhenkan", "henkan"], "additionalProperties": false,
+          "properties": {"muhenkan": {"$ref": "#/$defs/u8"}, "henkan": {"$ref": "#/$defs/u8"}}
+        },
+        "profile_none": {"$ref": "#/$defs/u8"},
+        "features": {
+          "type": "object", "additionalProperties": false,
+          "properties": {"keys": {"$ref": "#/$defs/bit"}, "take": {"$ref": "#/$defs/bit"}}
+        },
+        "usage": {"$ref": "#/$defs/byKey"},
+        "take": {"$ref": "#/$defs/byKey"},
+        "edge": {
+          "type": "object", "required": ["up", "down"], "additionalProperties": false,
+          "properties": {"up": {"$ref": "#/$defs/u8"}, "down": {"$ref": "#/$defs/u8"}}
+        },
+        "mods": {"const": "hid"},
+        "flags": {
+          "type": "object", "additionalProperties": false,
+          "properties": {"dropped": {"$ref": "#/$defs/bit"}}
+        }
+      }
+    },
+    "retry_ms": {"type": "integer", "minimum": 1000, "maximum": 600000},
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "reason", "match"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"},
+          "name": {"type": "string", "minLength": 1},
+          "reason": {"type": "string", "minLength": 1},
+          "match": {
+            "type": "object", "minProperties": 1, "additionalProperties": false,
+            "properties": {
+              "macos": {"type": "object", "required": ["bundle_id"], "additionalProperties": false,
+                        "properties": {"bundle_id": {"$ref": "#/$defs/names"}}},
+              "windows": {"type": "object", "required": ["process"], "additionalProperties": false,
+                          "properties": {"process": {"$ref": "#/$defs/names"}}},
+              "linux": {"type": "object", "required": ["process"], "additionalProperties": false,
+                        "properties": {"process": {"$ref": "#/$defs/names"}}}
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "u8": {"type": "integer", "minimum": 0, "maximum": 255},
+    "u16": {"type": "integer", "minimum": 0, "maximum": 65535},
+    "bit": {"enum": [1, 2, 4, 8, 16, 32, 64, 128]},
+    "names": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "template": {
+      "type": "string",
+      "description": "Space-separated hex bytes and {field} or {field:le16|le32|be16|be32} tokens.",
+      "pattern": "^([0-9A-Fa-f]{2}|\\{[a-z_]+(:(le16|le32|be16|be32))?\\})( ([0-9A-Fa-f]{2}|\\{[a-z_]+(:(le16|le32|be16|be32))?\\}))*$"
+    },
+    "byKey": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "propertyNames": {"enum": ["Backquote", "NonConvert", "Convert", "KanaMode", "Lang2", "Lang1", "CapsLock"]},
+      "patternProperties": {".*": {"$ref": "#/$defs/u8"}}
+    }
+  }
+}

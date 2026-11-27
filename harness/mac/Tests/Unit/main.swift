@@ -499,6 +499,50 @@ do {
           && !FolderWatcher.isNotSettings("/x/bada/layouts/mine.json") && !FolderWatcher.isNotSettings("/x/bada/dictionary.json"), "which files are settings")
 }
 
+// MARK: bada-tide (docs/bada-tide-v1.md): the translator, its templates and the deny list
+
+do {
+    let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().appendingPathComponent("../../../../docs/schemas/examples/tide-translator.json").standardized
+    let example = try! Data(contentsOf: root)
+    let t = try! TideTranslator(json: example)
+    check(t.id == "ikarosu" && t.match.reportSize == 64 && t.conflicts.first?.bundleIDs == ["jp.co.pfu.hhkb-keymap-tool"], "tide: the example translator reads")
+    let hello = t.hello(size: 64)!
+    check(hello.count == 64 && Array(hello[0..<7]) == [0xAA, 0xAA, 0xF1, 0x01, 0x02, 1, 0] && hello[7...].allSatisfy { $0 == 0 }, "tide: hello is the template, padded")
+    let state = t.state(mode: .henkan, profile: 1, caps: true, take: ["KanaMode", "Lang1"], size: 64)!
+    check(Array(state[0..<9]) == [0xAA, 0xAA, 0xF1, 0x02, 0x04, 1, 1, 1, 0x28], "tide: state carries mode, profile, caps and the take mask")
+    check(t.state(mode: .muhenkan, profile: nil, caps: false, take: [], size: 64)![6] == 255, "tide: no profile is profile_none")
+    var reply = [UInt8](repeating: 0, count: 64)
+    reply[0...10] = [0x55, 0x55, 0xF1, 0, 0x01, 0x06, 1, 0, 0x11, 0xB8, 0x0B]
+    check(t.read(reply) == .hello(status: "ok", features: ["keys", "take"], leaseMs: 3000), "tide: hello reply: status, features, lease")
+    reply[3] = 4
+    if case .hello(let status, _, _) = t.read(reply) { check(status == "blocked", "tide: hello reply status 4 is blocked") } else { check(false, "tide: hello reply status 4 is blocked") }
+    var st = [UInt8](repeating: 0, count: 64)
+    st[0...5] = [0x55, 0x55, 0xF1, 2, 0x02, 0x06]
+    check(t.read(st) == .state(status: "no-lease"), "tide: state reply no-lease")
+    var ev = [UInt8](repeating: 0, count: 64)
+    ev[0...14] = [0x55, 0x55, 0xF1, 0, 0x10, 0x09, 0x88, 1, 0x22, 7, 1, 0, 0, 0, 1]
+    check(t.read(ev) == .key(code: "KanaMode", down: true, mods: [.shift], seq: 7, dropped: true), "tide: a key event: code, edge, both shifts as shift, seq, dropped")
+    ev[6] = 0x04
+    check(t.read(ev) == .other, "tide: an event for a key that is no language key is ignored")
+    check(t.read([UInt8](repeating: 0, count: 64)) == .other, "tide: an unrelated report is ignored")
+    func with(_ edit: (inout [String: Any]) -> Void) -> Data {
+        var o = try! JSONSerialization.jsonObject(with: example) as! [String: Any]
+        edit(&o)
+        return try! JSONSerialization.data(withJSONObject: o)
+    }
+    let denied = with { o in var s = o["state"] as! [String: Any]; s["send"] = "AA AA E0 {mode}"; o["state"] = s }
+    check((try? TideTranslator(json: denied)) == nil && { do { _ = try TideTranslator(json: denied); return false } catch TideTranslator.Problem.denied("state") { return true } catch { return false } }(),
+          "tide: a state template that begins like the PFU update request is denied")
+    let via = with { o in var m = o["match"] as! [String: Any]; m["report_size"] = 32; o["match"] = m
+                           var h = o["hello"] as! [String: Any]; h["send"] = "0B {major}"; o["hello"] = h }
+    check({ do { _ = try TideTranslator(json: via); return false } catch TideTranslator.Problem.denied("hello") { return true } catch { return false } }(),
+          "tide: a 32-byte hello starting 0B (VIA bootloader jump) is denied")
+    let major2 = with { o in o["version"] = ["major": 2, "minor": 0] }
+    check((try? TideTranslator(json: major2)) == nil, "tide: another tide major is not read")
+    check(TideTemplate("AA {x:le24}") == nil && TideTemplate("AAA") == nil && TideTemplate("{x:be16} 01")?.encode(["x": 0x1234], size: 4) == [0x12, 0x34, 1, 0],
+          "tide: templates: unknown widths and bad bytes refused, big-endian fields")
+}
+
 try? FileManager.default.removeItem(at: temporary)
 print("unit: \(checks) checks, \(failures) failed")
 exit(failures == 0 ? 0 : 1)

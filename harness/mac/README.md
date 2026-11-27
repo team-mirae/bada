@@ -74,6 +74,19 @@ web view. Its host is the command line inside the bundle (`Contents/Helpers/bada
 --settings` opens the window from a build, with no input method started; `BADA_HOME` names the
 folder it changes.
 
+## bada-tide
+
+With a translator in the settings folder's `tide/` ([bada-tide](../../docs/bada-tide-v1.md) §9), the
+input method starts `Bada --tide-helper`, which holds the link: it opens the keyboard's interface
+(non-exclusively), keeps the lease and passes key events up a pipe; the input method tells it its
+mode, profile, Caps Lock and the keys to take. A helper because in the input method's own process
+(an NSApplication) macOS mostly doesn't deliver the keyboard's input reports, while sends go out. The
+helper exits when the input method does, and is started again if it stops; nothing is saved.
+
+`BADA_HOME=<folder> build/Bada.app/Contents/MacOS/Bada --tide-probe` runs the helper from a terminal
+with its notes on stderr; a `{"state": {"mode": "henkan", "profile": 0, "caps": false, "take":
+["Lang1"]}}` line on stdin takes keys.
+
 ## Permissions
 
 bada asks for nothing by itself. The input menu's **Allow Language Keys Everywhere…** asks for both,

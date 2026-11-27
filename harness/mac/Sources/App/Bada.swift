@@ -78,6 +78,7 @@ enum Bada {
                 // The folder is there from the first run on: other programs write into it.
                 try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
                 watcher = FolderWatcher(folder, ignoring: FolderWatcher.isNotSettings) { reload() }
+                Tide.reload()
             }
         } catch EngineDescription.Refusal.abi(let name, let major) {
             // The standard, §1: a harness must refuse an engine with another major version.
@@ -90,6 +91,7 @@ enum Bada {
 
     /// The folder changed: read it again, and let everything that depends on the settings follow.
     static func reload() {
+        Tide.reload()   // tide/*.json (bada-tide §9)
         guard let store else { return }
         store.autoPreset = Keyboards.preset()
         guard store.reload() else { return }

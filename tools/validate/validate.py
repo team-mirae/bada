@@ -115,7 +115,8 @@ for path in sorted(SCHEMAS.glob("*.schema.json")):
 
 print("examples")
 for name, file, many in [("event", "events.json", True), ("reply", "replies.json", True), ("settings", "settings.json", False),
-                         ("layout", "layout.json", False), ("describe", "describe.json", False)]:
+                         ("layout", "layout.json", False), ("describe", "describe.json", False),
+                         ("tide-translator", "tide-translator.json", False)]:
     value = load(EXAMPLES / file)
     for i, item in enumerate(value if many else [value]):
         label = "%s[%d] %s" % (file, i, item.get("type", "")) if many else file
@@ -126,6 +127,40 @@ for i, item in enumerate(load(EXAMPLES / "invalid.json")):
         ok(what + " (refused)")
     else:
         fail(what, "was accepted")
+
+# bada-tide §7: a translator's send templates must not begin like a known dangerous request.
+TIDE_DENY_PFU = ["AA AA E%X" % i for i in range(8)] + ["AA AA 86", "AA AA 04", "AA AA 07", "AA AA 08", "AA AA D0"]
+TIDE_DENY_VIA = ["05", "07", "0B", "0C", "12", "13"]
+
+
+def tide_refused(translator):
+    """The send template that bada-tide §7 refuses, or None."""
+    for msg in ("hello", "state"):
+        send = translator[msg]["send"].upper()
+        if any(send.startswith(p) for p in TIDE_DENY_PFU):
+            return msg
+        if translator["match"]["report_size"] == 32 and send.split(" ")[0] in TIDE_DENY_VIA:
+            return msg
+    return None
+
+
+print("tide")
+tide_example = load(EXAMPLES / "tide-translator.json")
+if tide_refused(tide_example):
+    fail("tide-translator.json", "a send template is on the deny list")
+else:
+    ok("tide-translator.json passes the deny list")
+for path in sorted((ROOT / "tide").glob("*.json")):
+    translator = load(path)
+    if check(validators["tide-translator"], translator, "tide/" + path.name):
+        if tide_refused(translator):
+            fail("tide/" + path.name, "a send template is on the deny list")
+denied = json.loads(json.dumps(tide_example))
+denied["state"]["send"] = "AA AA E0 00 00"
+if tide_refused(denied) == "state":
+    ok("a state template starting AA AA E0 is refused")
+else:
+    fail("deny list", "AA AA E0 was not refused")
 
 print("layouts")
 layouts = {}

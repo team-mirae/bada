@@ -423,5 +423,276 @@
         }
       ]
     }
+  },
+  {
+    "schema": "tide-translator",
+    "why": "a template field with an unknown width",
+    "value": {
+      "format": "bada-tide-translator/1",
+      "id": "ikarosu",
+      "name": "ikarosu (HHKB Professional HYBRID Type-S, JIS)",
+      "match": {
+        "vendor_id": 1278,
+        "product_id": 34,
+        "usage_page": 65280,
+        "usage": 1,
+        "report_size": 64
+      },
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "hello": {
+        "send": "AA AA F1 {mode:le24}",
+        "reply": "55 55 F1 {status} 01 06 {major} {minor} {features} {lease_ms:le16}"
+      },
+      "state": {
+        "send": "AA AA F1 02 04 {mode} {profile} {caps} {take}",
+        "reply": "55 55 F1 {status} 02 06"
+      },
+      "key": {
+        "recv": "55 55 F1 00 10 09 {usage} {edge} {mods} {seq} {time_ms:le32} {flags}"
+      },
+      "values": {
+        "status": {
+          "ok": 0,
+          "unsupported": 1,
+          "no-lease": 2,
+          "bad-value": 3,
+          "blocked": 4
+        },
+        "mode": {
+          "muhenkan": 0,
+          "henkan": 1
+        },
+        "profile_none": 255,
+        "features": {
+          "keys": 1,
+          "take": 16
+        },
+        "usage": {
+          "Backquote": 53,
+          "NonConvert": 139,
+          "Convert": 138,
+          "KanaMode": 136,
+          "Lang2": 145,
+          "Lang1": 144,
+          "CapsLock": 57
+        },
+        "take": {
+          "Backquote": 1,
+          "NonConvert": 2,
+          "Convert": 4,
+          "KanaMode": 8,
+          "Lang2": 16,
+          "Lang1": 32,
+          "CapsLock": 64
+        },
+        "edge": {
+          "up": 0,
+          "down": 1
+        },
+        "mods": "hid",
+        "flags": {
+          "dropped": 1
+        }
+      },
+      "retry_ms": 10000,
+      "conflicts": [
+        {
+          "id": "pfu-hhkb-keymap-tool",
+          "name": "HHKB Keymap Tool",
+          "reason": "uses the same vendor channel",
+          "match": {
+            "macos": {
+              "bundle_id": [
+                "jp.co.pfu.hhkb-keymap-tool"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "schema": "tide-translator",
+    "why": "usage for a key that is no language key",
+    "value": {
+      "format": "bada-tide-translator/1",
+      "id": "ikarosu",
+      "name": "ikarosu (HHKB Professional HYBRID Type-S, JIS)",
+      "match": {
+        "vendor_id": 1278,
+        "product_id": 34,
+        "usage_page": 65280,
+        "usage": 1,
+        "report_size": 64
+      },
+      "version": {
+        "major": 1,
+        "minor": 0
+      },
+      "hello": {
+        "send": "AA AA F1 01 02 {major} {minor}",
+        "reply": "55 55 F1 {status} 01 06 {major} {minor} {features} {lease_ms:le16}"
+      },
+      "state": {
+        "send": "AA AA F1 02 04 {mode} {profile} {caps} {take}",
+        "reply": "55 55 F1 {status} 02 06"
+      },
+      "key": {
+        "recv": "55 55 F1 00 10 09 {usage} {edge} {mods} {seq} {time_ms:le32} {flags}"
+      },
+      "values": {
+        "status": {
+          "ok": 0,
+          "unsupported": 1,
+          "no-lease": 2,
+          "bad-value": 3,
+          "blocked": 4
+        },
+        "mode": {
+          "muhenkan": 0,
+          "henkan": 1
+        },
+        "profile_none": 255,
+        "features": {
+          "keys": 1,
+          "take": 16
+        },
+        "usage": {
+          "Backquote": 53,
+          "NonConvert": 139,
+          "Convert": 138,
+          "KanaMode": 136,
+          "Lang2": 145,
+          "Lang1": 144,
+          "CapsLock": 57,
+          "KeyA": 4
+        },
+        "take": {
+          "Backquote": 1,
+          "NonConvert": 2,
+          "Convert": 4,
+          "KanaMode": 8,
+          "Lang2": 16,
+          "Lang1": 32,
+          "CapsLock": 64
+        },
+        "edge": {
+          "up": 0,
+          "down": 1
+        },
+        "mods": "hid",
+        "flags": {
+          "dropped": 1
+        }
+      },
+      "retry_ms": 10000,
+      "conflicts": [
+        {
+          "id": "pfu-hhkb-keymap-tool",
+          "name": "HHKB Keymap Tool",
+          "reason": "uses the same vendor channel",
+          "match": {
+            "macos": {
+              "bundle_id": [
+                "jp.co.pfu.hhkb-keymap-tool"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  },
+  {
+    "schema": "tide-translator",
+    "why": "tide major 2 is not this format",
+    "value": {
+      "format": "bada-tide-translator/1",
+      "id": "ikarosu",
+      "name": "ikarosu (HHKB Professional HYBRID Type-S, JIS)",
+      "match": {
+        "vendor_id": 1278,
+        "product_id": 34,
+        "usage_page": 65280,
+        "usage": 1,
+        "report_size": 64
+      },
+      "version": {
+        "major": 2,
+        "minor": 0
+      },
+      "hello": {
+        "send": "AA AA F1 01 02 {major} {minor}",
+        "reply": "55 55 F1 {status} 01 06 {major} {minor} {features} {lease_ms:le16}"
+      },
+      "state": {
+        "send": "AA AA F1 02 04 {mode} {profile} {caps} {take}",
+        "reply": "55 55 F1 {status} 02 06"
+      },
+      "key": {
+        "recv": "55 55 F1 00 10 09 {usage} {edge} {mods} {seq} {time_ms:le32} {flags}"
+      },
+      "values": {
+        "status": {
+          "ok": 0,
+          "unsupported": 1,
+          "no-lease": 2,
+          "bad-value": 3,
+          "blocked": 4
+        },
+        "mode": {
+          "muhenkan": 0,
+          "henkan": 1
+        },
+        "profile_none": 255,
+        "features": {
+          "keys": 1,
+          "take": 16
+        },
+        "usage": {
+          "Backquote": 53,
+          "NonConvert": 139,
+          "Convert": 138,
+          "KanaMode": 136,
+          "Lang2": 145,
+          "Lang1": 144,
+          "CapsLock": 57
+        },
+        "take": {
+          "Backquote": 1,
+          "NonConvert": 2,
+          "Convert": 4,
+          "KanaMode": 8,
+          "Lang2": 16,
+          "Lang1": 32,
+          "CapsLock": 64
+        },
+        "edge": {
+          "up": 0,
+          "down": 1
+        },
+        "mods": "hid",
+        "flags": {
+          "dropped": 1
+        }
+      },
+      "retry_ms": 10000,
+      "conflicts": [
+        {
+          "id": "pfu-hhkb-keymap-tool",
+          "name": "HHKB Keymap Tool",
+          "reason": "uses the same vendor channel",
+          "match": {
+            "macos": {
+              "bundle_id": [
+                "jp.co.pfu.hhkb-keymap-tool"
+              ]
+            }
+          }
+        }
+      ]
+    }
   }
 ]

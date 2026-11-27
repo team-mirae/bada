@@ -43,8 +43,11 @@ examples; `uv run tools/validate/validate.py` checks them, the stock layouts and
   the command line, every harness), in the `VERSION` file at its root; a platform that is released
   less often skips numbers.
 - **File formats carry their own names**: `bada-settings/2` (§8, §9, §10.1), `bada-layout/3` (§7.5),
-  `bada-compatible-state/2` (§6.7), `bada-key-cases/1` (§9.6). The user dictionary is still
-  `bada-dictionary`, version 1 (§11).
+  `bada-compatible-state/2` (§6.7), `bada-key-cases/1` (§9.6), `bada-tide-translator/1`
+  ([bada-tide v1](bada-tide-v1.md)). The user dictionary is still `bada-dictionary`, version 1 (§11).
+- **bada-tide** is optional: a link between a harness and a keyboard, so the keyboard reports its
+  language keys directly ([bada-tide v1](bada-tide-v1.md)). It adds nothing to the engine; a harness
+  that has it says so in `harness.tide` (§6.7).
 
 ## 2. Shape
 
@@ -448,6 +451,8 @@ Under v1's rules (§12.1), which stand:
   engine's problems (§6.6) and the harness's own for `keys`, each with its file and with `path` into
   that file (`{file, path, code, message, level}`; `file` is `settings.json`, `layouts/<name>.json`
   or `dictionary.json`).
+- A harness with [bada-tide](bada-tide-v1.md) adds `harness.tide`, the keyboards it links to
+  (bada-tide §8).
 - The channel is the harness's, one the platform's scripting tools can read without a plugin; bada's
   are named in §12.
 
@@ -1153,6 +1158,7 @@ Every platform has the same folder (`~/Library/Application Support/bada`, `%APPD
 | `layouts/*.json` | The user's layouts: new ones, and changed copies of stock ones, which replace them (§7.6) |
 | `dictionary.json` | The user dictionary (§11) |
 | `history/` | The last few `settings.json`, for undo |
+| `tide/*.json` | bada-tide translators the user turned on ([bada-tide v1](bada-tide-v1.md) §9) |
 
 - **The running input method watches the folder and reloads.** The settings page and the command
   line write files (a temporary file, then a rename) and never talk to it directly. So an input

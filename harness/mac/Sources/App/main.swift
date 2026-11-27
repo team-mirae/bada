@@ -39,6 +39,19 @@ if CommandLine.arguments.contains("--check") {
     exit(0)
 }
 
+if CommandLine.arguments.contains("--tide-helper") {
+    // bada-tide's device side (TideHelper), started by the input method: a plain run loop, no
+    // NSApplication. Runs until its stdin closes.
+    TideHelper.run()
+}
+
+if CommandLine.arguments.contains("--tide-probe") {
+    // The helper with its notes on stderr, for finding why a link fails: run it from a terminal
+    // (`BADA_HOME` names the settings folder), and type state lines on stdin if needed.
+    TideHelper.verbose = true
+    TideHelper.run()
+}
+
 if CommandLine.arguments.contains("--settings") {
     // The settings window alone, with no input method started: a way to see it from a build.
     // `BADA_HOME` names the folder it changes, as for `--check`. It leaves when the window closes.
