@@ -55,7 +55,7 @@ target_link_libraries(bada_engine INTERFACE Threads::Threads ${CMAKE_DL_LIBS} m)
 # and the session and context every frontend shares.
 add_library(bada_core STATIC
   src/core/engine.cpp src/core/harness.cpp src/core/json.cpp src/core/keys.cpp
-  src/core/keytable.cpp src/core/reply.cpp src/core/settings.cpp)
+  src/core/keytable.cpp src/core/reply.cpp src/core/settings.cpp src/core/tide.cpp)
 target_include_directories(bada_core PUBLIC src/core)
 target_link_libraries(bada_core PUBLIC bada_engine)
 
@@ -94,10 +94,15 @@ if(BADA_CLI)
   install(FILES src/com.teammirae.bada.settings.desktop DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
 endif()
 
-# What both frontends share beyond the core: the published state.
-add_library(bada_common STATIC src/common/publish.cpp)
+# What both frontends share beyond the core: the published state, and bada-tide's keyboards.
+add_library(bada_common STATIC src/common/publish.cpp src/common/tide_hub.cpp)
 target_include_directories(bada_common PUBLIC src/common)
-target_link_libraries(bada_common PUBLIC bada_core PkgConfig::DBUS)
+target_link_libraries(bada_common PUBLIC bada_core PkgConfig::DBUS Threads::Threads)
+
+# bada-tide (docs/bada-tide-v1.md): the user at the seat may open the hidraw nodes of the keyboards
+# bada's translators name (tide/), as udev's uaccess tag gives them.
+set(BADA_UDEV_RULESDIR "${CMAKE_INSTALL_PREFIX}/lib/udev/rules.d" CACHE STRING "Where udev reads rules from")
+install(FILES udev/70-bada-tide.rules DESTINATION ${BADA_UDEV_RULESDIR})
 
 if(BADA_FCITX5)
   find_package(Fcitx5Core 5.0 REQUIRED)
@@ -146,6 +151,13 @@ if(BADA_TESTS)
   target_link_libraries(bada_core_tests PRIVATE bada_common)
   target_compile_definitions(bada_core_tests PRIVATE BADA_ROOT="${BADA_ROOT}")
   add_test(NAME core COMMAND bada_core_tests)
+
+  # bada-tide: translators, templates, the deny list, the lease, the report descriptor, and the hub
+  # on a /sys and /dev of its own.
+  add_executable(bada_tide_tests tests/tide_tests.cpp)
+  target_link_libraries(bada_tide_tests PRIVATE bada_common)
+  target_compile_definitions(bada_tide_tests PRIVATE BADA_ROOT="${BADA_ROOT}")
+  add_test(NAME tide COMMAND bada_tide_tests)
 
   if(BADA_FCITX5)
     # The addon in a headless Fcitx5, driven through its test frontend.

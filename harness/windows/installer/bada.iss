@@ -69,6 +69,9 @@ FinishedLabel=Restart the apps that were open: they keep the old version, or non
 ; The engine is inside the DLL.
 Source: "{#Build}\x64\bada-tsf.dll"; DestDir: "{app}\x64"; Flags: ignoreversion
 Source: "{#Build}\x86\bada-tsf.dll"; DestDir: "{app}\x86"; Flags: ignoreversion
+; bada-tide's helper (docs/bada-tide-v1.md), started by the text service while the settings folder
+; has a translator in tide\. One for both: the 32-bit text service starts the 64-bit one.
+Source: "{#Build}\x64\bada-tide.exe"; DestDir: "{app}\x64"; Flags: ignoreversion
 ; The engine's data, for both: each file is the buffer of its name, mapped by the text service.
 Source: "{#Build}\data\*"; DestDir: "{app}\data"; Flags: ignoreversion
 ; The command line, and the settings page it serves: "bada settings" opens it in the browser.
@@ -124,6 +127,15 @@ begin
   else
     Result := ExecAsOriginalUser(Exe, PowerShell(Params), '', SW_HIDE, ewWaitUntilTerminated, Code);
   Result := Result and (Code = 0);
+end;
+
+{ Stops bada-tide's helper: its leases run out by themselves, and the keyboard gives the keys back
+  to Windows within a few seconds. A text service starts the new one when it needs it. }
+procedure StopTideHelper;
+var
+  Code: Integer;
+begin
+  Exec(ExpandConstant('{sys}\taskkill.exe'), '/F /IM bada-tide.exe', '', SW_HIDE, ewWaitUntilTerminated, Code);
 end;
 
 function RegSvr(Arch, Params: String): Boolean;
@@ -213,6 +225,9 @@ var
   I: Integer;
 begin
   if CurStep = ssInstall then begin
+    { Another user's helper can't be stopped: its file is moved aside like a DLL in use. }
+    StopTideHelper;
+    RenameAside(ExpandConstant('{app}\x64\bada-tide.exe'));
     for I := 0 to 1 do begin
       if I = 0 then Arch := 'x64' else Arch := 'x86';
       DeleteOldCopies(ExpandConstant('{app}\' + Arch), False);
@@ -287,6 +302,7 @@ begin
   if CurUninstallStep = usUninstall then begin
     if not UninstallSilent then AskAboutUserData;
     RunKeyboards('-Remove');
+    StopTideHelper;
     for I := 0 to 1 do begin
       if I = 0 then Arch := 'x64' else Arch := 'x86';
       if FileExists(ExpandConstant('{app}\' + Arch + '\bada-tsf.dll')) then RegSvr(Arch, '/s /u');
@@ -302,6 +318,11 @@ begin
       Dir := ExpandConstant('{app}\' + Arch);
       if DeleteOldCopies(Dir, True) then LeftForRestart := True;
       Aside := RenameAside(Dir + '\bada-tsf.dll');
+      if Aside <> '' then begin
+        DeleteAtRestart(Aside, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
+        LeftForRestart := True;
+      end;
+      Aside := RenameAside(Dir + '\bada-tide.exe');
       if Aside <> '' then begin
         DeleteAtRestart(Aside, 0, MOVEFILE_DELAY_UNTIL_REBOOT);
         LeftForRestart := True;

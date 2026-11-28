@@ -5,8 +5,10 @@
 
 #include <algorithm>
 #include <cwchar>
+#include <filesystem>
 #include <iterator>
 #include <new>
+#include <string>
 
 #include "display_attribute.h"
 #include "dll.h"
@@ -19,6 +21,10 @@
 using Microsoft::WRL::ComPtr;
 
 namespace bada::tip {
+
+// bada-tide: starts the helper (src/tide/) if it should run and doesn't (the end of this file).
+void EnsureTideHelper(const std::filesystem::path& settings_dir);
+
 namespace {
 
 // In an app that refuses a composition, or ends it right after each update, the marked text stays
@@ -305,6 +311,11 @@ STDMETHODIMP TextService::ActivateEx(ITfThreadMgr* thread_mgr, TfClientId client
     if (process.session) {
         SetOpen(process.session->mode() == Mode::kHenkan);
         process.session->PublishIdle();
+        // bada-tide: this thread takes the helper's messages, and the helper runs while the
+        // settings folder has a translator.
+        OpenTideWindow();
+        EnsureTideHelper(process.session->folder().dir());
+        SendTideHost(true);
     }
     UpdateIndicator();
     return S_OK;
@@ -322,6 +333,7 @@ STDMETHODIMP TextService::Deactivate() {
     orphan_context_.Reset();
     list_.Hide();
     list_.OnPick(nullptr);
+    CloseTideWindow();
     AdviseCompartments(false);
     if (thread_mgr_) {
         ComPtr<ITfLangBarItemMgr> items;
@@ -603,7 +615,10 @@ bool TextService::KeyDown(ITfContext* context, WPARAM wparam, LPARAM lparam) {
         return false;
     }
     // The settings folder is looked at with a key, a few times a second at most.
-    if (!key.repeat && session.Poll(GetTickCount64())) log::Enable(session.harness().log);
+    if (!key.repeat && session.Poll(GetTickCount64())) {
+        log::Enable(session.harness().log);
+        EnsureTideHelper(session.folder().dir());  // a translator may have come
+    }
     Settle();
     CheckOrphan();
     if (!Composing() && !harness_key) private_ = PrivateField(target);
@@ -665,6 +680,7 @@ void TextService::AfterHarness() {
     ReconcileLock();
     UpdateIndicator();
     ShowList();
+    SendTideHost(false);
 }
 
 void TextService::ReconcileLock() {
@@ -715,6 +731,8 @@ STDMETHODIMP TextService::OnSetFocus(BOOL foreground) {
     if (foreground) {
         // The keys come here again: the settings, the session's mode, and the state.
         FollowSession();
+        // A helper that stopped is started again (no more than once in ten seconds).
+        EnsureTideHelper(process.session->folder().dir());
         ComPtr<ITfContext> focus = FocusContext();
         if (!Composing()) private_ = focus ? PrivateField(focus.Get()) : false;
         if (Context* field_context = focus ? FieldFor(focus.Get()) : nullptr) {
@@ -1450,6 +1468,254 @@ HRESULT TextService::EditText(TfEditCookie ec, ITfContext* context, ITfCompositi
     }
     refused_ = true;
     return plain ? CaretToEnd(ec, context, plain.Get()) : InsertAtSelection(ec, context, preedit);
+}
+
+// --- bada-tide
+
+namespace {
+
+UINT TideMessage(const wchar_t* name) { return RegisterWindowMessageW(name); }
+
+// The program runs at medium integrity, outside an app container: the helper it starts runs as the
+// user does, neither elevated nor sandboxed.
+bool MediumIntegrity() {
+    HANDLE token = nullptr;
+    if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token)) return false;
+    bool medium = false;
+    BYTE buffer[sizeof(TOKEN_MANDATORY_LABEL) + SECURITY_MAX_SID_SIZE];
+    DWORD size = 0;
+    DWORD container = 0;
+    if (GetTokenInformation(token, TokenIntegrityLevel, buffer, sizeof(buffer), &size)) {
+        const auto* label = reinterpret_cast<TOKEN_MANDATORY_LABEL*>(buffer);
+        const DWORD rid = *GetSidSubAuthority(label->Label.Sid, *GetSidSubAuthorityCount(label->Label.Sid) - 1);
+        medium = rid >= SECURITY_MANDATORY_MEDIUM_RID && rid < SECURITY_MANDATORY_HIGH_RID;
+    }
+    if (GetTokenInformation(token, TokenIsAppContainer, &container, sizeof(container), &size) && container) {
+        medium = false;
+    }
+    CloseHandle(token);
+    return medium;
+}
+
+// The helper beside the DLL; for the 32-bit DLL, the 64-bit one if there is none beside it.
+std::wstring HelperPath() {
+    wchar_t buffer[MAX_PATH];
+    const DWORD n = GetModuleFileNameW(DllInstance(), buffer, MAX_PATH);
+    if (!n || n >= MAX_PATH) return {};
+    const std::filesystem::path dir = std::filesystem::path(std::wstring(buffer, n)).parent_path();
+    for (const std::filesystem::path& p : {dir / tide::ipc::kHelperExe, dir.parent_path() / L"x64" / tide::ipc::kHelperExe}) {
+        std::error_code ec;
+        if (std::filesystem::is_regular_file(p, ec)) return p.wstring();
+    }
+    return {};
+}
+
+bool HasTranslators(const std::filesystem::path& dir) {
+    std::error_code ec;
+    for (const auto& entry : std::filesystem::directory_iterator(dir, ec)) {
+        if (entry.path().extension() == L".json") return true;
+    }
+    return false;
+}
+
+// The key a tide keyboard reported, as the Japanese layout would have it (src/core/keys.cpp reads
+// the scan code).
+RawKey TideRawKey(const tide::ipc::KeyEvent& event) {
+    struct Known {
+        const char* code;
+        unsigned vk, scan;
+    };
+    static constexpr Known kKeys[] = {{"Backquote", 0xF3, 0x29}, {"NonConvert", 0x1D, 0x7B}, {"Convert", 0x1C, 0x79},
+                                      {"KanaMode", 0xF2, 0x70},  {"Lang2", 0x19, 0x71},      {"Lang1", 0x15, 0x72},
+                                      {"CapsLock", 0x14, 0x3A}};
+    RawKey key;
+    for (const Known& k : kKeys) {
+        if (event.code == k.code) {
+            key.vk = k.vk;
+            key.scan = k.scan;
+        }
+    }
+    key.mods = event.mods;
+    key.caps = (GetKeyState(VK_CAPITAL) & 1) != 0;
+    return key;
+}
+
+}  // namespace
+
+// Starts the helper when the settings folder has a translator and no helper runs. Not from an
+// elevated or sandboxed program, and not more than once in ten seconds from one process.
+void EnsureTideHelper(const std::filesystem::path& settings_dir) {
+    static ULONGLONG tried = 0;
+    if (FindWindowW(tide::ipc::kHelperClass, nullptr)) return;
+    const ULONGLONG now = GetTickCount64();
+    if (tried && now - tried < 10000) return;
+    tried = now;
+    if (!HasTranslators(settings_dir / L"tide") || !MediumIntegrity()) return;
+    const std::wstring exe = HelperPath();
+    if (exe.empty()) {
+        log::Write(L"tide: %s isn't installed", tide::ipc::kHelperExe);
+        return;
+    }
+    std::wstring command = L"\"" + exe + L"\"";
+    const std::wstring dir = std::filesystem::path(exe).parent_path().wstring();
+    STARTUPINFOW startup = {sizeof(startup)};
+    PROCESS_INFORMATION info = {};
+    // Out of the program's job, if it lets it: the helper outlives the program that started it.
+    BOOL ok = CreateProcessW(exe.c_str(), command.data(), nullptr, nullptr, FALSE,
+                             CREATE_NO_WINDOW | DETACHED_PROCESS | CREATE_BREAKAWAY_FROM_JOB, nullptr, dir.c_str(),
+                             &startup, &info);
+    if (!ok) {
+        ok = CreateProcessW(exe.c_str(), command.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW | DETACHED_PROCESS,
+                            nullptr, dir.c_str(), &startup, &info);
+    }
+    if (!ok) {
+        log::Write(L"tide: couldn't start %s (%lu)", exe.c_str(), GetLastError());
+        return;
+    }
+    log::Write(L"tide: started %s (pid %lu)", exe.c_str(), info.dwProcessId);
+    CloseHandle(info.hThread);
+    CloseHandle(info.hProcess);
+}
+
+LRESULT CALLBACK TextService::TideWindowProc(HWND window, UINT message, WPARAM wparam, LPARAM lparam) {
+    auto* self = reinterpret_cast<TextService*>(GetWindowLongPtrW(window, GWLP_USERDATA));
+    static const UINT key = TideMessage(tide::ipc::kKeyMessage);
+    static const UINT ask = TideMessage(tide::ipc::kAskMessage);
+    static const UINT status = TideMessage(tide::ipc::kStatusMessage);
+    if (self && self->active_) {
+        if (message == key) {
+            if (const auto event = tide::ipc::UnpackKey(wparam, lparam)) self->TideKey(*event);
+            return 0;
+        }
+        if (message == ask) {
+            self->tide_helper_ = nullptr;  // a new helper, maybe
+            self->SendTideHost(true);
+            return 0;
+        }
+        if (message == status) {
+            self->TideStatusChanged();
+            return 0;
+        }
+    }
+    return DefWindowProcW(window, message, wparam, lparam);
+}
+
+void TextService::OpenTideWindow() {
+    if (tide_window_) return;
+    static const bool registered = [] {
+        WNDCLASSW wc = {};
+        wc.lpfnWndProc = TideWindowProc;
+        wc.hInstance = DllInstance();
+        wc.lpszClassName = tide::ipc::kThreadClass;
+        return RegisterClassW(&wc) != 0 || GetLastError() == ERROR_CLASS_ALREADY_EXISTS;
+    }();
+    if (!registered) return;
+    tide_window_ = CreateWindowExW(0, tide::ipc::kThreadClass, std::to_wstring(GetCurrentThreadId()).c_str(), 0, 0, 0,
+                                   0, 0, HWND_MESSAGE, nullptr, DllInstance(), nullptr);
+    if (!tide_window_) return;
+    SetWindowLongPtrW(tide_window_, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(this));
+    // The helper runs at medium integrity; in an elevated program its messages must be let in.
+    for (const wchar_t* name : {tide::ipc::kKeyMessage, tide::ipc::kAskMessage, tide::ipc::kStatusMessage}) {
+        ChangeWindowMessageFilterEx(tide_window_, TideMessage(name), MSGFLT_ALLOW, nullptr);
+    }
+    tide_sent_valid_ = false;
+}
+
+void TextService::CloseTideWindow() {
+    if (!tide_window_) return;
+    SetWindowLongPtrW(tide_window_, GWLP_USERDATA, 0);
+    DestroyWindow(tide_window_);
+    tide_window_ = nullptr;
+    tide_helper_ = nullptr;
+    tide_sent_valid_ = false;
+}
+
+// Tells the helper the harness's state when it changed (bada-tide §3: it renews at once). It takes
+// the language keys the key table binds, never Caps Lock, which Windows keeps the lock of.
+void TextService::SendTideHost(bool force) {
+    if (!tide_window_) return;
+    if (!tide_helper_ || !IsWindow(tide_helper_)) {
+        tide_helper_ = FindWindowW(tide::ipc::kHelperClass, nullptr);
+        tide_sent_valid_ = false;
+    }
+    if (!tide_helper_) return;
+    Process& process = GetProcess();
+    std::lock_guard<std::recursive_mutex> lock(process.mutex);
+    if (!process.session) return;
+    const Session& session = *process.session;
+    tide::Host host;
+    host.mode = session.mode();
+    const std::vector<std::string>& cycle = session.table().cycle;
+    const auto it = std::find(cycle.begin(), cycle.end(), session.profile());
+    host.profile = session.profile().empty() || it == cycle.end() ? -1 : static_cast<int>(it - cycle.begin());
+    host.caps = (GetKeyState(VK_CAPITAL) & 1) != 0;
+    for (const Binding& b : session.table().bindings) {
+        for (const std::string& k : {b.key, b.key2}) {
+            if (k != "CapsLock" && IsLanguageKey(k)) host.take.insert(k);
+        }
+    }
+    const std::uint32_t word = tide::ipc::PackHost(host);
+    if (!force && tide_sent_valid_ && word == tide_sent_) return;
+    if (PostMessageW(tide_helper_, TideMessage(tide::ipc::kHostMessage), GetCurrentThreadId(), static_cast<LPARAM>(word))) {
+        tide_sent_ = word;
+        tide_sent_valid_ = true;
+    }
+}
+
+// A key the keyboard reported over bada-tide, that bada took: Windows never saw it. It runs through
+// the key table as the key itself would have, in the field that has focus. A press the harness
+// doesn't eat is handed to the app as a key.
+void TextService::TideKey(const tide::ipc::KeyEvent& event) {
+    const RawKey key = TideRawKey(event);
+    if (!key.scan) return;
+    Process& process = GetProcess();
+    std::lock_guard<std::recursive_mutex> lock(process.mutex);
+    if (!process.session) {
+        if (event.down) ForwardKey(key);
+        return;
+    }
+    Session& session = *process.session;
+    ComPtr<ITfContext> focus = FocusContext();
+    ITfContext* target = Target(focus.Get());
+    if (!event.down) {
+        Context* field_context = FindField(target);
+        if (!field_context) return;
+        TsfField field(this, target);
+        field_context->KeyUp(key, field, Info());
+        if (field.invisible()) DropInvisible();
+        AfterHarness();
+        return;
+    }
+    if (session.Poll(GetTickCount64())) log::Enable(session.harness().log);
+    Settle();
+    CheckOrphan();
+    ReconcileLock();
+    lock_target_.reset();
+    Context* field_context = FieldFor(target);
+    if (!field_context) {
+        ForwardKey(key);
+        return;
+    }
+    TsfField field(this, target);
+    const bool eaten = field_context->KeyDown(key, field, Info());
+    if (field.invisible()) DropInvisible();
+    AfterHarness();
+    if (!eaten) ForwardKey(key);
+    log::Write(L"tide key %hs, %hs -> %hs", event.code.c_str(), eaten ? "eaten" : "handed to the app",
+               session.ModeText().c_str());
+}
+
+// The helper's status changed: the state says so (`harness.tide`).
+void TextService::TideStatusChanged() {
+    Process& process = GetProcess();
+    std::lock_guard<std::recursive_mutex> lock(process.mutex);
+    if (!process.session) return;
+    ComPtr<ITfContext> focus = FocusContext();
+    if (Context* field_context = focus ? FindField(focus.Get()) : nullptr) {
+        field_context->Publish(Info());
+    } else {
+        process.session->PublishIdle();
+    }
 }
 
 }  // namespace bada::tip

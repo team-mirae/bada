@@ -139,7 +139,8 @@ it.
  "retry_ms": 10000,
  "conflicts": [{"id": "pfu-hhkb-keymap-tool", "name": "HHKB Keymap Tool",
                 "reason": "uses the same vendor channel",
-                "match": {"macos": {"bundle_id": ["jp.co.pfu.hhkb-keymap-tool"]}}}]}
+                "match": {"macos": {"bundle_id": ["jp.co.pfu.hhkb-keymap-tool"]},
+                          "windows": {"process": ["HHKBKeymapTool.exe"]}}}]}
 ```
 
 - **`match`**: the HID interface that carries tide: vendor and product id, usage page and usage, and
@@ -159,8 +160,11 @@ it.
   libraries open exclusively by default, hidapi on macOS among them: a tool that does takes the
   channel from the harness, whose lease then runs out.)
 - Where the platform delivers a keyboard's input reports unreliably to the input method's own
-  process, the harness holds the link in a helper process. bada's macOS harness does: an input
-  method is an NSApplication, and there macOS mostly doesn't deliver them (its README).
+  process, or where the input method runs in many processes, the harness holds the link in a helper
+  process. bada's macOS harness does: an input method is an NSApplication, and there macOS mostly
+  doesn't deliver them (its README). So does bada's Windows harness: its text service runs in every
+  app, and a keyboard has one link (its README, "bada-tide"). bada's Linux harness doesn't: Fcitx5
+  and IBus each hold every text field in one process, which holds the link (its README, "bada-tide").
 - **`retry_ms`**: how long to wait after `blocked` before the next `hello` (default 10000).
 - **`conflicts`**: §5. Each has an `id`, a `name`, a `reason`, and per platform what identifies it:
   `macos.bundle_id`, `windows.process` (executable file names), `linux.process`.

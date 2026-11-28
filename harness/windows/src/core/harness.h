@@ -83,6 +83,9 @@ public:
         StateSink* sink = nullptr;
         // One line for the log. Never typed text.
         std::function<void(const std::string&)> log;
+        // bada-tide's status (docs/bada-tide-v1.md §8), as the helper published it: JSON
+        // {"links": [...], "problems": [...]}, "" when there is none. Unset: the harness has no tide.
+        std::function<std::string()> tide;
     };
     // Builds the data and the session and reads the settings folder. nullptr and `error` when the
     // engine can't be used: another major version, or it refuses to start.

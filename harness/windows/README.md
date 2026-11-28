@@ -29,9 +29,10 @@ it — add an `aarch64-pc-windows-msvc` target and a preset).
 
 | Path | What |
 |---|---|
-| `src/core/` | C++20 with no Windows headers: `keytable` (§9), `keys` (Windows messages → key codes, §4), `engine` (the C ABI, §3), `reply` (replies, and how one is applied: §6.3), `settings` (the folder: §10.1), `harness` (the session and one context per text field), `state_block` (the published state's shared memory: §6.7), `json`. Tested on any OS |
+| `src/core/` | C++20 with no Windows headers: `keytable` (§9), `keys` (Windows messages → key codes, §4), `engine` (the C ABI, §3), `reply` (replies, and how one is applied: §6.3), `settings` (the folder: §10.1), `harness` (the session and one context per text field), `state_block` (the published state's shared memory: §6.7), `tide` (bada-tide's translators and lease) and `tide_ipc` (the text service and the tide helper's messages), `json`. Tested on any OS |
 | `src/tip/` | The TSF text service, `bada-tsf.dll`: the text input processor, key event sink, edit sessions, the composition, the candidate window, the taskbar indicator, the state and its shared memory, registration |
-| `tests/` | The key-table cases, the conformance transcripts, the core, the state, and the text service end to end (`tsf_host`, on a TSF text store of its own) |
+| `src/tide/` | bada-tide's helper, `bada-tide.exe`: the keyboards' links ("bada-tide", below) |
+| `tests/` | The key-table cases, the conformance transcripts, the core, the state, bada-tide's core, and the text service end to end (`tsf_host`, on a TSF text store of its own) |
 | `tools/` | `build.ps1`, `test.ps1`, `register.ps1`, `send.sh`, `make-icon.py` |
 
 The engine is linked in (`bada.lib`, the static CRT), so the DLL is one file. **Its data is a folder
@@ -75,6 +76,7 @@ tools\test.ps1 -Registered   # the text service as the registered profile (tools
 | `bada_transcript` | Replays `tools/conformance/transcripts/any-engine.jsonl` and `bada.jsonl` on the linked engine, through the engine wrapper, applying every reply to a plain text field as §6.3 says |
 | `bada_core_tests` | The core, typed into the linked engine: Windows' keys, the settings folder, the key flow, `types`, Caps Lock, two fields and a password field, the mode shared between processes, and the published state with its shared-memory block |
 | `bada_state_tests` | The state's shared memory, written and read as the text service and a reader do; the window message |
+| `bada_tide_tests` | bada-tide's core: the repository's translators and ikarosu's, templates, the deny list (§7), and the lease on a clock of its own: `hello`, renewals, take, keys, a quiet keyboard, a conflict, `blocked`, `no-lease`, a keyboard that never answers |
 | `bada_tsf_host` | **The text service end to end**, with no desktop: a TSF thread manager and a document on an `ITextStoreACP` of the test's own, the service activated on it, every key fed in through its key event sink, the text read back out of the store. Covers QWERTY muhenkan, the JIS legends, Caps Lock, Korean 2-set (`gks` → 한, Space commits), romaji (`ka` → か), a mode switch and a profile switch through the key table, the menu and its display attributes, 半角/全角 reading the selection, a pair of language keys, a settings error in the state, and the mode shared across two processes |
 
 **TSF works only in an interactive logon.** Over SSH (a service logon, session 0) the thread manager
@@ -227,6 +229,43 @@ build\x64\bada_state.exe --watch    # again at every message, until Ctrl+C
 
 **Nothing typed is published in a password field**: `staged`, `preedit` and `menu` are empty and
 `harness.secure` is true.
+
+## bada-tide
+
+[bada-tide](../../docs/bada-tide-v1.md) links bada to a keyboard that reports its language keys
+itself, such as ikarosu on the HHKB Professional HYBRID Type-S (JIS). It is off until a translator
+is in the settings folder: `%APPDATA%\bada\tide\<id>.json` (bada-tide §9). ikarosu publishes its
+own; this repository's are in [tide/](../../tide/). Removing the file turns it off.
+
+- **One link per keyboard, in a helper.** `bada-tide.exe`, beside the 64-bit DLL, holds every
+  link: one per logon session (a named mutex), since the text service runs in every app. The text
+  service starts it when bada activates or takes focus and the folder has a translator, only from
+  a program at medium integrity (not elevated, not sandboxed), at most once in ten seconds. It stops
+  by itself once the folder has none, and the leases then run out. `src/core/tide.h` decides the
+  lease; `src/tide/main.cpp` moves the reports.
+- **Finding the keyboard.** By the translator's `match`: vendor and product id, usage page and usage,
+  and the report size (64 bytes, plus the report id byte Windows adds). The HID interface is opened
+  non-exclusively, so PFU's tool and other programs still reach it. A send waits at most 250 ms.
+- **The lease.** `hello` after every connect, then `state` every third of the lease and at once on
+  every change of mode, profile, Caps Lock or take. A keyboard silent for two seconds is let go.
+- **What it takes.** The language keys the key table binds, never Caps Lock, and only while a text
+  service of bada has the keyboard focus (its state is published with focus and its program is in
+  the foreground). Anywhere else bada takes nothing, and the keys are Windows'.
+- **The keys.** A taken key goes to the focused thread's text service (a message-only window,
+  `src/core/tide_ipc.h`) and runs through the key table as the key itself would; a press the table
+  doesn't eat is handed to the app as a key. A key reports what the keyboard's own keymap made it:
+  where it sends かな and 英数, bada gets `Lang1` and `Lang2`, not Windows' reading of them.
+- **Conflicts** (bada-tide §5). Each translator's `windows.process` names; the running programs are
+  read four times a second, so before every `hello`. ikarosu's lists PFU's HHKB Keymap Tool,
+  `HHKBKeymapTool.exe`. While it runs bada sends nothing, and the lease runs out.
+- **The state** has `harness.tide` (bada-tide §8) and the translators' problems, from the helper's
+  status block `Local\com.teammirae.bada.tide.status.v1`.
+- **The log**: with the harness setting `"log": true`, the helper writes to `bada.log` too.
+  `bada-tide.exe --verbose`, run from a console, says what happens there.
+
+**Tested** on Windows 11 Pro with ikarosu on an HHKB Professional HYBRID Type-S (JIS, rev A8):
+the lease (the keyboard's own status reads active), the keys in Notepad, the helper started by the
+text service, and PFU's Keymap Tool pausing the link and the link coming back when it quits.
 
 ## Verify by hand
 

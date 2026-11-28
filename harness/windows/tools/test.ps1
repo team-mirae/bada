@@ -66,6 +66,7 @@ Run 'transcripts' "$build\bada_transcript.exe" @("$root\tools\conformance\transc
                                                  "$root\tools\conformance\transcripts\bada.jsonl")
 Run 'core' "$build\bada_core_tests.exe" @()
 Run 'state' "$build\bada_state_tests.exe" @()
+Run 'tide' "$build\bada_tide_tests.exe" @()
 $hostArguments = if ($Registered) { @('--registered') } else { @('--dll', "`"$build\bada-tsf.dll`"") }
 if ($InSession) {
     RunInSession 'text service' $hostArguments

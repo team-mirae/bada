@@ -58,6 +58,9 @@ public:
         StateSink* sink = nullptr;
         // One line for the log. Never typed text.
         std::function<void(const std::string&)> log;
+        // bada-tide's status (docs/bada-tide-v1.md §8), as src/common/tide_hub.h has it: JSON
+        // {"links": [...], "problems": [...]}. Unset: the harness has no tide.
+        std::function<std::string()> tide;
     };
     // Where `cmake --install` puts the engine's data, or the folder $BADA_DATA_DIR names.
     static std::filesystem::path DataDir();
@@ -146,6 +149,9 @@ public:
     const Reply& last() const { return last_; }
     // The published state (§6.7), as it would be now with this field in focus.
     std::string State(const ContextInfo& info) const { return session_.State(&last_, &info); }
+    // Publishes the state again with this field in focus: something the harness has besides the
+    // field changed (bada-tide's links).
+    void Publish(const ContextInfo& info);
 
 private:
     // Follows the session: `select` after bada_new, and when mode, profile or settings changed.
@@ -162,7 +168,6 @@ private:
     // A key the table doesn't take: the engine reads it (§6.4). True: eaten.
     bool SendKey(const std::string& code, const RawKey& key, HostField& field, const ContextInfo& info);
     bool LockOn() const;
-    void Publish(const ContextInfo& info);
 
     Session& session_;
     Engine engine_;
